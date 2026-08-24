@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>particles test — shapes + scene (THROWAWAY)</title>
+<!--
+  THROWAWAY. Part-2 check of js/shapes.js + js/scene.js. Not part of the site.
+  Serve the folder and open /particles-test.html.
+  URL params: ?morph=2.5  (0..6)   &auto=0 to stop tone/accent following morph
+              &spread=0.7 &size=2.2 &drift=0.006 &count=60000 &rotY=0 &camZ=5.6
+-->
+<style>
+  :root { --bg: rgb(8,8,11); }
+  html, body { margin: 0; height: 100%; background: var(--bg); font: 13px/1.4 ui-monospace, Menlo, monospace; color: #888; }
+  #stage { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+  #hud { position: fixed; left: 12px; bottom: 12px; right: 12px; display: grid; grid-template-columns: 90px 1fr 70px; gap: 4px 10px; align-items: center; background: rgba(128,128,128,.12); padding: 10px 12px; border-radius: 6px; backdrop-filter: blur(4px); }
+  #hud input[type=range] { width: 100%; }
+  #hud label { text-align: right; }
+  #info { position: fixed; top: 10px; left: 12px; white-space: pre; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/build/three.module.js", "animejs": "./vendor/animejs/anime.esm.js" } }
+</script>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="info">loading…</div>
+<div id="hud">
+  <label>morph</label><input type="range" id="morph" min="0" max="6" step="0.005" value="0"><span id="morph-v">0.000</span>
+  <label>spread</label><input type="range" id="spread" min="0" max="2" step="0.01" value="0.45"><span id="spread-v"></span>
+  <label>size</label><input type="range" id="size" min="0.5" max="6" step="0.1" value="2.2"><span id="size-v"></span>
+  <label>drift</label><input type="range" id="drift" min="0" max="0.05" step="0.001" value="0.006"><span id="drift-v"></span>
+  <label>tone</label><input type="range" id="tone" min="0" max="1" step="0.01" value="0"><span id="tone-v"></span>
+  <label>accentMix</label><input type="range" id="accentMix" min="0" max="1" step="0.01" value="0"><span id="accentMix-v"></span>
+  <label>rotY</label><input type="range" id="rotY" min="-1.5" max="1.5" step="0.01" value="0"><span id="rotY-v"></span>
+  <label>camZ</label><input type="range" id="camZ" min="2" max="10" step="0.1" value="5.6"><span id="camZ-v"></span>
+  <label>auto</label><input type="checkbox" id="auto" checked><span>tone/accent follow morph</span>
+</div>
+
+<script type="module">
+import { loadAllClouds } from './js/clouds.js';
+import { buildAllShapes, SHAPE_NAMES } from './js/shapes.js';
+import { createScene } from './js/scene.js';
+
+const q = new URLSearchParams(location.search);
+const num = (k, d) => q.has(k) ? Number(q.get(k)) : d;
+const count = num('count', 60000);
+
+const clouds = await loadAllClouds();
+const built = buildAllShapes(count, { clouds });
+const canvas = document.getElementById('stage');
+const sc = createScene(canvas, { count, shapes: built.shapes, onFrame });
+const { state } = sc;
+
+state.morph = num('morph', 0);
+state.spread = num('spread', state.spread);
+state.size = num('size', state.size);
+state.drift = num('drift', state.drift);
+state.rotY = num('rotY', 0);
+state.camZ = num('camZ', state.camZ);
+let auto = q.get('auto') !== '0';
+if (q.get('hud') === '0') { document.getElementById('hud').style.display = 'none'; }
+
+const COLD = [8, 8, 11], WARM = [244, 238, 227];
+const ACCENTS = { crowd: [0.78, 0.50, 0.22], device: [0.29, 0.47, 0.94], unformed: [0.55, 0.55, 0.58] };
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+function onFrame(s) {
+  if (auto) {
+    // Act III flips the ground: cold until the Thinker→Epicurus crossing, warm after.
+    s.tone = smooth(0.3, 0.7, s.morph);
+    // lens accents peak on each resolved lens shape
+    let mix = 0, col = [1, 1, 1];
+    for (const [name, c] of Object.entries(ACCENTS)) {
+      const i = SHAPE_NAMES.indexOf(name);
+      const w = Math.max(0, 1 - Math.abs(s.morph - i));
+      if (w > mix) { mix = w; col = c; }
+    }
+    s.accentMix = mix * 0.85;
+    [s.accentR, s.accentG, s.accentB] = col;
+  }
+  const t = s.tone;
+  document.documentElement.style.setProperty('--bg', `rgb(${COLD.map((c, i) => Math.round(lerp(c, WARM[i], t))).join(',')})`);
+  for (const k of ['morph', 'spread', 'size', 'drift', 'tone', 'accentMix', 'rotY', 'camZ']) {
+    const el = document.getElementById(k);
+    if (document.activeElement !== el) el.value = s[k];
+    document.getElementById(k + '-v').textContent = (+s[k]).toFixed(3);
+  }
+  const seg = Math.min(5, Math.floor(s.morph));
+  document.getElementById('info').textContent =
+    `${count.toLocaleString('en-US')} particles · base ${built.baseCount} / form ${built.formCount}` +
+    `\nmorph ${s.morph.toFixed(3)} → ${SHAPE_NAMES[seg]} → ${SHAPE_NAMES[seg + 1]}  (${((s.morph - seg) * 100).toFixed(0)} %)` +
+    `\nclouds: thinker ${clouds.thinker ? 'baked' : 'STAND-IN'}, epicurus ${clouds.epicurus ? 'baked' : 'STAND-IN'}`;
+}
+
+for (const k of ['morph', 'spread', 'size', 'drift', 'tone', 'accentMix', 'rotY', 'camZ']) {
+  document.getElementById(k).addEventListener('input', (e) => { state[k] = Number(e.target.value); if (k === 'tone' || k === 'accentMix') auto = false; });
+}
+document.getElementById('auto').addEventListener('change', (e) => { auto = e.target.checked; });
+addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') state.morph = Math.min(6, state.morph + (e.shiftKey ? 0.5 : 0.02));
+  if (e.key === 'ArrowLeft') state.morph = Math.max(0, state.morph - (e.shiftKey ? 0.5 : 0.02));
+});
+
+sc.start();
+// for headless screenshots: flag once the first real frame has rendered
+requestAnimationFrame(() => requestAnimationFrame(() => { document.documentElement.dataset.ready = '1'; }));
+</script>
+</body>
+</html>

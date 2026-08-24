@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Aporia — a student philosophy magazine</title>
+<meta name="description" content="A student-run philosophy magazine for the takes that don't fit in a journal. Issue 01: the philosophy of sociology, out now.">
+<meta name="theme-color" content="#08080b">
+<meta property="og:title" content="The Aporia">
+<meta property="og:description" content="Philosophy, with the plinth taken away. A student magazine. Issue 01 out now.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://REPLACE-WITH-YOUR-DOMAIN/">
+<meta property="og:image" content="https://REPLACE-WITH-YOUR-DOMAIN/assets/social.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Rodin's Thinker rendered as a cloud of points on a black ground, beside the words: This is what we were shown.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Aporia">
+<meta name="twitter:description" content="Philosophy, with the plinth taken away. A student magazine. Issue 01 out now.">
+<meta name="twitter:image" content="https://REPLACE-WITH-YOUR-DOMAIN/assets/social.jpg">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://REPLACE-WITH-YOUR-DOMAIN/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500;600;800&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+
+<script>document.documentElement.classList.add('js');</script>
+<script type="importmap">
+{
+  "imports": {
+    "three":   "./vendor/three/build/three.module.js",
+    "animejs": "./vendor/animejs/anime.esm.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- The particle field. Fixed, under everything. Painted by js/scene.js; the
+     page background behind it is --bg, written per frame by js/main.js. -->
+<canvas id="stage" aria-hidden="true"></canvas>
+
+<!-- Act I's jargon field: a fixed layer of words crowding the monument.
+     Fades in across Act I and scatters when the plinth goes. js/page.js. -->
+<div id="jargon" aria-hidden="true">
+  <span style="--x:44%; --y:12%; --s:1.3;  --r:-4deg">phenomenological</span>
+  <span style="--x:63%; --y:18%; --s:1.0;  --r:3deg">Dasein</span>
+  <span style="--x:37%; --y:26%; --s:0.9;  --r:-7deg">apodictic</span>
+  <span style="--x:62%; --y:32%; --s:1.5;  --r:2deg">supervenience</span>
+  <span style="--x:66%; --y:46%; --s:1.1;  --r:-3deg">quiddity</span>
+  <span style="--x:40%; --y:44%; --s:1.05; --r:5deg">a priori</span>
+  <span style="--x:62%; --y:69%; --s:0.95; --r:-2deg">noumenon</span>
+  <span style="--x:40%; --y:64%; --s:1.2;  --r:-5deg">hermeneutic circle</span>
+  <span style="--x:69%; --y:76%; --s:0.9;  --r:6deg">qua</span>
+  <span style="--x:57%; --y:86%; --s:1.0;  --r:3deg">sublation</span>
+  <span style="--x:67%; --y:82%; --s:1.15; --r:-4deg">haecceity</span>
+  <span style="--x:38%; --y:90%; --s:0.95; --r:2deg">ceteris paribus</span>
+  <span style="--x:52%; --y:5%;  --s:0.9;  --r:4deg">transcendental unity of apperception</span>
+  <span style="--x:34%; --y:77%; --s:1.0;  --r:-6deg">telos</span>
+  <span style="--x:41%; --y:57%; --s:0.85; --r:-3deg">eidetic reduction</span>
+  <span style="--x:48%; --y:94%; --s:0.9;  --r:2deg">modal realism</span>
+</div>
+
+<a class="skip" href="#main-start">Skip to the reading</a>
+<header class="masthead">
+  <a class="masthead__mark" href="#top">The Aporia</a>
+  <p class="masthead__sub">a student philosophy magazine</p>
+  <p class="masthead__issue"><span class="masthead__dot"></span>Issue 01 · out now</p>
+</header>
+
+<!--
+  The five <section class="act"> elements are what js/main.js measures. Their
+  CSS heights are the choreography. Keep the classes and data-act attributes.
+  .reveal: data-at = play when that fraction of the section has passed the
+  viewport centre; data-leave = reverse out at that fraction.
+-->
+<main id="scroll">
+  <span id="main-start" tabindex="-1"></span>
+
+  <!-- ================================================================ -->
+  <!-- ACT I — THE MONUMENT                                             -->
+  <!-- ================================================================ -->
+  <section class="act act--monument" id="top" data-act="1">
+    <div class="act__sticky">
+      <img class="act__art act__art--monument" src="assets/static/monument.webp" width="1400" height="1000" alt="" loading="lazy" decoding="async">
+      <div class="act__inner act__inner--left">
+        <p class="label reveal" data-at="0">001 / the monument</p>
+        <h1 class="display reveal" data-at="0">This is what<br><span class="marg-anchor">we were shown.<svg class="marg marg--underline" data-marg="1" viewBox="0 0 240 14" preserveAspectRatio="none" aria-hidden="true"><path d="M3 9 C 40 4, 82 12, 124 7 S 204 3, 237 9" /></svg><span class="marg__note marg__note--i" data-marg-note="1" aria-hidden="true">says who?</span></span></h1>
+        <div class="prose reveal" data-at="0.22">
+          <p>Bronze. On a plinth. Above eye level. A man thinking so hard it looks like it hurts.</p>
+          <p>Around him, a vocabulary you were supposed to have already.</p>
+        </div>
+        <div class="prose reveal" data-at="0.5">
+          <p>Most people take one look and decide philosophy is for someone else. That is a fair reading of the packaging.</p>
+        </div>
+      </div>
+      <a class="scroll-cue" id="scroll-cue" href="#main-start" aria-label="Scroll down to read">
+        <span class="scroll-cue__label">Scroll</span>
+        <span class="scroll-cue__line" aria-hidden="true"></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- ACT II — THE IMPASSE                                             -->
+  <!-- ================================================================ -->
+  <section class="act act--impasse" data-act="2">
+    <div class="act__sticky">
+      <div class="act__inner act__inner--right">
+        <p class="label reveal" data-at="0.06">002 / <span class="grc" lang="grc">ἀπορία</span></p>
+        <h2 class="display display--word reveal" data-at="0.1">aporia</h2>
+        <p class="gloss reveal" data-at="0.22"><em>noun.</em> From the Greek <em lang="grc">ἀπορία</em>: <em>a-</em>, without, and <em>poros</em>, a passage. No way through.</p>
+        <div class="prose reveal" data-at="0.38">
+          <p>In Plato it is a specific moment. The argument runs out of road. Someone who was sure a minute ago has nothing left to say.</p>
+          <p class="marg-anchor">Socrates thought that was where the thinking started.<span class="marg marg--note-only" aria-hidden="true"><svg class="marg__svg marg--arrow" data-marg="2" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 50 C 22 18, 60 8, 104 22" /><path d="M92 10 L 105 22 L 90 30" /></svg><span class="marg__note marg__note--ii" data-marg-note="2">wait, is this<br>actually true?</span></span></p>
+          <p>Most students read it as the sign to stop.</p>
+        </div>
+        <div class="prose reveal" data-at="0.58">
+          <p class="prose__em">We named the magazine after the stuck part. It is the only part that was ever interesting.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- ACT III — THE FRACTURE                                           -->
+  <!-- Left column pins; the swap list in the right column flows through -->
+  <!-- the viewport, so the reader scrubs each translation by scrolling. -->
+  <!-- ================================================================ -->
+  <section class="act act--fracture" data-act="3">
+    <div class="act__cols">
+      <div class="act__sticky act__sticky--col">
+        <div class="act__inner act__inner--left">
+          <p class="label reveal" data-at="0.37">003 / the fracture</p>
+          <h2 class="display reveal" data-at="0.39">So we took<br>him down.</h2>
+          <div class="prose reveal" data-at="0.48">
+            <p>Epicurus taught in a garden behind his house. Anyone could come. Women did, which scandalised Athens. So did a slave called Mys.</p>
+            <p>He thought philosophy had one job: to make an ordinary life go better. Pain, fear, what to want, who to have dinner with. If an argument didn't help with any of that, he wasn't interested.</p>
+          </div>
+          <blockquote class="quote reveal" data-at="0.57">
+            <p>“Let no one delay the study of philosophy while young, nor weary of it when old.”</p>
+            <footer>Epicurus, <cite>Letter to Menoeceus</cite>. He meant everyone, and he meant now.</footer>
+          </blockquote>
+        </div>
+      </div>
+
+      <div class="act__flow">
+        <img class="act__art act__art--bust" src="assets/static/epicurus.webp" width="1400" height="1000" alt="" loading="lazy" decoding="async">
+        <div class="swap-block">
+          <p class="label">the same ideas, undressed</p>
+          <ul class="swap-list" id="swap-list">
+            <li class="swap" data-from="epistemic humility" data-to="you might be wrong about this"><span class="swap__from" aria-hidden="true">epistemic humility</span><span class="swap__to">you might be wrong about this</span></li>
+            <li class="swap" data-from="the hard problem of consciousness" data-to="why does any of this feel like anything?"><span class="swap__from" aria-hidden="true">the hard problem of consciousness</span><span class="swap__to">why does any of this feel like anything?</span></li>
+            <li class="swap" data-from="the categorical imperative" data-to="would it still be fine if everyone did it?"><span class="swap__from" aria-hidden="true">the categorical imperative</span><span class="swap__to">would it still be fine if everyone did it?</span></li>
+            <li class="swap marg-anchor" data-from="akrasia" data-to="knowing better and doing it anyway"><span class="swap__from" aria-hidden="true">akrasia</span><span class="swap__to">knowing better and doing it anyway</span><span class="marg marg--note-only marg--iii" aria-hidden="true"><svg class="marg__svg marg--arrow" data-marg="3" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 50 C 22 18, 60 8, 104 22" /><path d="M92 10 L 105 22 L 90 30" /></svg><span class="marg__note marg__note--iii" data-marg-note="3">every deadline<br>I have ever had</span></span></li>
+            <li class="swap" data-from="reification" data-to="treating an idea like a thing you can hold"><span class="swap__from" aria-hidden="true">reification</span><span class="swap__to">treating an idea like a thing you can hold</span></li>
+            <li class="swap" data-from="the is–ought gap" data-to="how things are won't tell you how they should be"><span class="swap__from" aria-hidden="true">the is–ought gap</span><span class="swap__to">how things are won't tell you how they should be</span></li>
+          </ul>
+          <p class="swap-block__note">Nothing was lost in that translation. The hard part was never the words.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- ACT IV — THE LENSES                                              -->
+  <!-- The covers below are the list of issues. js/main.js reads them:   -->
+  <!-- data-shape = the particle shape (shapes.js LENS_BUILDERS),       -->
+  <!-- --tint = the issue's colour (also the scene accent). To add      -->
+  <!-- Issue 04, add one <article class="cover"> — nothing else.        -->
+  <!-- ================================================================ -->
+  <section class="act act--lenses" data-act="4">
+    <div class="act__sticky">
+      <div class="act__inner act__inner--left act__inner--top">
+        <p class="label reveal" data-at="0.06">004 / one field at a time</p>
+        <h2 class="display reveal" data-at="0.08">Pick a field.<br>Ask it awkward questions.</h2>
+        <div class="prose reveal" data-at="0.16">
+          <p>Philosophy on its own goes in circles. Pointed at something, it gets useful. So every issue borrows a discipline and presses on the things everyone there agreed to stop asking about.</p>
+        </div>
+      </div>
+
+      <div class="covers reveal" data-at="0.1" data-leave="0.97" aria-label="Issues">
+        <article class="cover" data-lens="0" data-accent="sociology" data-shape="crowd" style="--tint: 199, 128, 56">
+          <p class="cover__no"><span>01</span><span class="cover__status cover__status--out">out now</span></p>
+          <h3 class="cover__title">The Philosophy<br>of Sociology</h3>
+          <p class="cover__line">The rules nobody wrote down. Who is enforcing them, and what happens when you ask.</p>
+          <a class="cover__link is-placeholder" href="#TODO-issue-01-url" data-placeholder="link to Issue 01 not set yet">Read it <span class="placeholder-tag">link pending</span></a>
+          <p class="cover__mark">The Aporia</p>
+        </article>
+        <article class="cover" data-lens="1" data-accent="technology" data-shape="device" style="--tint: 74, 120, 240">
+          <p class="cover__no"><span>02</span><span class="cover__status">in progress</span></p>
+          <h3 class="cover__title">The Philosophy<br>of Technology</h3>
+          <p class="cover__line">The tools have started deciding things for us. Nobody voted on the criteria.</p>
+          <p class="cover__mark">The Aporia</p>
+        </article>
+        <article class="cover" data-lens="2" data-accent="undecided" data-shape="unformed" style="--tint: 140, 140, 148">
+          <p class="cover__no"><span>03</span><span class="cover__status cover__status--open">undecided</span></p>
+          <h3 class="cover__title">Pitch us.</h3>
+          <p class="cover__line">Genuinely open. If a field deserves the treatment, tell us which one and why.</p>
+          <a class="cover__link is-placeholder" href="#TODO-pitch-url" data-placeholder="pitch form not set yet">Pitch a subject <span class="placeholder-tag">link pending</span></a>
+          <p class="cover__mark">The Aporia</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- ACT V — YOUR TURN                                                -->
+  <!-- ================================================================ -->
+  <section class="act act--invite" data-act="5">
+    <div class="act__sticky">
+      <div class="act__inner act__inner--left">
+        <p class="label reveal" data-at="0.08" data-leave="0.55">005 / your turn</p>
+        <h2 class="display reveal" data-at="0.12" data-leave="0.55">Your take goes here.</h2>
+        <div class="prose reveal" data-at="0.24" data-leave="0.55">
+          <p>You don't need a thesis. You need something you noticed and can't put down, and about a thousand words to chase it.</p>
+          <p>Write it the way you'd explain it to a friend who is interested but not impressed.</p>
+          <p class="marg-anchor">We would rather publish an <span class="marg-anchor marg-anchor--inline">interesting mistake<svg class="marg marg--circle" data-marg="4" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M112 6 C 160 2, 196 18, 190 36 C 184 56, 120 60, 70 56 C 22 52, 2 40, 8 24 C 14 8, 60 4, 124 8" /></svg></span> than a safe summary.<span class="marg__note marg__note--v" data-marg-note="4" aria-hidden="true">this one</span></p>
+        </div>
+        <div class="cta reveal" data-at="0.36" data-leave="0.55">
+          <a class="btn btn--primary is-placeholder" href="#TODO-submission-url" data-placeholder="submission form not set yet">Send us a piece <span class="placeholder-tag">link pending</span></a>
+          <a class="btn is-placeholder" href="#TODO-issue-01-url" data-placeholder="link to Issue 01 not set yet">Read Issue 01 <span class="placeholder-tag">link pending</span></a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- COLOPHON — inside <main> so the master timeline spans it too;    -->
+  <!-- the wordmark is resolved by the time this scrolls in.            -->
+  <!-- ================================================================ -->
+  <!-- The portal: the only way to the shelf. At the end of Act V the wordmark falls
+       and a ring of particles gathers; this aperture is placed inside that ring by
+       js/main.js every frame, and opens onto the shelf. -->
+  <a class="portal" id="portal" href="shelf.html" aria-hidden="true" tabindex="-1">
+    <span class="portal__label">Go through to the shelf: every issue of The Aporia</span>
+  </a>
+  <span class="portal-note marg" id="portal-note" aria-hidden="true">
+    <svg class="marg__svg marg--arrow" viewBox="0 0 120 60"><path d="M116 8 C 100 34, 70 50, 18 44" /><path d="M30 32 L 16 44 L 32 54" /></svg>
+    <span class="marg__note marg__note--portal">go on, click it</span>
+  </span>
+
+  <footer class="colophon">
+    <div class="colophon__grid">
+      <div>
+        <p class="colophon__mark">The Aporia</p>
+        <p class="shelf-link"><a href="shelf.html">The issues are on a shelf. Go and look &rarr;</a></p>
+        <p>Edited by students, who argue about every line. Issue 01 is out. Issue 02 is being written. Issue 03 is whatever you talk us into.</p>
+      </div>
+      <div>
+        <p class="label">Type</p>
+        <p>Bodoni Moda for the part we were sold. Inter for the rest. Caveat for the notes in the margin.</p>
+      </div>
+      <div>
+        <p class="label">Made with</p>
+        <p>three.js and anime.js, no build step. The Thinker and the bust of Epicurus are 3D scans rendered as points.</p>
+        <p class="colophon__attrib" id="attribution"><span class="placeholder-tag">attribution pending</span> <em>The Thinker</em>: licence and creator to be confirmed. <em>Bust of Epicurus</em>: licence and creator to be confirmed.</p>
+      </div>
+      <div>
+        <p class="label">Contact</p>
+        <p><a class="is-placeholder" href="#TODO-email" data-placeholder="editorial email not set yet">editors@ — address pending</a></p>
+        <p class="colophon__fine">© 2026 The Aporia. Read things you disagree with.</p>
+      </div>
+    </div>
+  </footer>
+
+</main>
+
+
+<noscript>
+  <style>#stage, #jargon { display: none; } .reveal { opacity: 1 !important; transform: none !important; }</style>
+</noscript>
+
+<script type="module" src="js/main.js"></script>
+<script type="module" src="js/page.js"></script>
+</body>
+</html>

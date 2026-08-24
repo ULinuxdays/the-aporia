@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Complete Shelf — The Aporia</title>
+<meta name="description" content="Every issue of The Aporia on one shelf: the three that exist and the sixteen that don't yet.">
+<meta name="theme-color" content="#f4eee3">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/shelf.css">
+<script>
+  document.documentElement.classList.add('js');
+  // came through the portal? open out of the circle (js/shelf/main.js finishes it)
+  try { if (sessionStorage.getItem('aporia:portal') === '1' && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('arriving'); } catch {}
+</script>
+<script type="importmap">
+{
+  "imports": {
+    "three":   "./vendor/three/build/three.module.js",
+    "animejs": "./vendor/animejs/anime.esm.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="stage" aria-label="The shelf. Use the arrow keys to move along it and Enter to take a book down."></canvas>
+
+<header class="masthead">
+  <a class="masthead__back" href="index.html">← The Aporia</a>
+  <h1 class="masthead__title">The Complete Shelf</h1>
+  <p class="masthead__count" id="count"></p>
+</header>
+
+<p class="loading" id="loading">Shelving…</p>
+
+<!-- the centred book is named on the brass plaque in the room; this is the same for screen readers -->
+<p class="sr-only" id="live" aria-live="polite"></p>
+<div class="vignette" aria-hidden="true"></div>
+
+<!-- browsing controls -->
+<div class="controls">
+  <button class="arrow arrow--prev" id="prev" type="button" aria-label="Previous book">←</button>
+  <div class="markers" id="markers" role="group" aria-label="Position on the shelf"></div>
+  <button class="arrow arrow--next" id="next" type="button" aria-label="Next book">→</button>
+</div>
+<p class="hint" id="hint"></p>
+<button class="open" id="open" type="button">Take it down</button>
+
+<!-- inspection -->
+<aside class="panel" id="panel" hidden>
+  <p class="panel__no" id="panel-no"></p>
+  <h2 class="panel__title" id="panel-title"></h2>
+  <p class="panel__line" id="panel-line"></p>
+  <p class="panel__status" id="panel-status"></p>
+  <a class="panel__link" id="panel-link" href="#"></a>
+  <button class="panel__close" id="close" type="button">Put it back</button>
+</aside>
+
+<!-- the same run, for anyone without WebGL or JavaScript -->
+<noscript><style>#stage, .controls, .hint, .open, .loading, .vignette { display: none !important; } .fallback { display: block !important; }</style></noscript>
+<section class="fallback" aria-label="The run, as a list">
+  <h2>The run</h2>
+  <ol>
+    <li><strong>Issue 01</strong> · The Philosophy of Sociology · out now</li>
+    <li><strong>Issue 02</strong> · The Philosophy of Technology · in progress</li>
+    <li><strong>Issue 03</strong> · Undecided · pitch us</li>
+    <li><strong>Issues 04–19</strong> · unwritten</li>
+  </ol>
+  <p><a href="index.html">← Back to The Aporia</a></p>
+</section>
+
+<script type="module" src="js/shelf/main.js"></script>
+</body>
+</html>

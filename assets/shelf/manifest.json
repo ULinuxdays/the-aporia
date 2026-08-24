@@ -1,0 +1,360 @@
+{
+  "version": 1,
+  "title": "The Complete Shelf",
+  "description": "The planned run of The Aporia. Three issues exist; the rest are unwritten.",
+  "generated": "2026-08-21T14:55:24.333Z",
+  "units": "cm",
+  "books": [
+    {
+      "id": "book-01",
+      "number": 1,
+      "title": "The Philosophy of Sociology",
+      "line": "The rules nobody wrote down. Who is enforcing them, and what happens when you ask.",
+      "status": "out",
+      "cloth": "#8a6a4a",
+      "foil": {
+        "motif": "roundel",
+        "color": "#caa46a"
+      },
+      "size": {
+        "w": 14.7,
+        "h": 23.6,
+        "d": 3.5
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": "#TODO-issue-01-url",
+      "attribution": ""
+    },
+    {
+      "id": "book-02",
+      "number": 2,
+      "title": "The Philosophy of Technology",
+      "line": "The tools have started deciding things for us. Nobody voted on the criteria.",
+      "status": "progress",
+      "cloth": "#5b6b84",
+      "foil": {
+        "motif": "grid",
+        "color": "#b8c3d8"
+      },
+      "size": {
+        "w": 17.6,
+        "h": 25.4,
+        "d": 3.7
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-03",
+      "number": 3,
+      "title": "Undecided",
+      "line": "Genuinely open. If a field deserves the treatment, tell us which one and why.",
+      "status": "open",
+      "cloth": "#6f7b6a",
+      "foil": {
+        "motif": "lozenge",
+        "color": "#c9c2a6"
+      },
+      "size": {
+        "w": 16.8,
+        "h": 24.5,
+        "d": 4
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": "#TODO-pitch-url",
+      "attribution": ""
+    },
+    {
+      "id": "book-04",
+      "number": 4,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#b9ad97",
+      "foil": null,
+      "size": {
+        "w": 15.7,
+        "h": 22.6,
+        "d": 3.4
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-05",
+      "number": 5,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#7d7a74",
+      "foil": null,
+      "size": {
+        "w": 15,
+        "h": 23.1,
+        "d": 4.5
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-06",
+      "number": 6,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#6b5c66",
+      "foil": null,
+      "size": {
+        "w": 16.4,
+        "h": 24,
+        "d": 2.4
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-07",
+      "number": 7,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#9a8268",
+      "foil": null,
+      "size": {
+        "w": 16.4,
+        "h": 25.7,
+        "d": 2.7
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-08",
+      "number": 8,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#5f6e6b",
+      "foil": null,
+      "size": {
+        "w": 16.8,
+        "h": 27.1,
+        "d": 4.3
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-09",
+      "number": 9,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#a48d7c",
+      "foil": null,
+      "size": {
+        "w": 15.1,
+        "h": 22.6,
+        "d": 4.4
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-10",
+      "number": 10,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#4f5a66",
+      "foil": null,
+      "size": {
+        "w": 16.5,
+        "h": 24.3,
+        "d": 2.4
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-11",
+      "number": 11,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#8b7b5f",
+      "foil": null,
+      "size": {
+        "w": 13.8,
+        "h": 21.2,
+        "d": 4.2
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-12",
+      "number": 12,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#7a6a5a",
+      "foil": null,
+      "size": {
+        "w": 14.5,
+        "h": 23.2,
+        "d": 4.2
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-13",
+      "number": 13,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#9b9a8c",
+      "foil": null,
+      "size": {
+        "w": 18.3,
+        "h": 27.4,
+        "d": 3.6
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-14",
+      "number": 14,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#6a7a8a",
+      "foil": null,
+      "size": {
+        "w": 17.7,
+        "h": 25.5,
+        "d": 4.5
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-15",
+      "number": 15,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#857262",
+      "foil": null,
+      "size": {
+        "w": 14.3,
+        "h": 21.1,
+        "d": 2.9
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-16",
+      "number": 16,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#5e6a5a",
+      "foil": null,
+      "size": {
+        "w": 17,
+        "h": 24.9,
+        "d": 3.1
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-17",
+      "number": 17,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#a39484",
+      "foil": null,
+      "size": {
+        "w": 16.1,
+        "h": 25,
+        "d": 2.8
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-18",
+      "number": 18,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#75665c",
+      "foil": null,
+      "size": {
+        "w": 13.4,
+        "h": 21,
+        "d": 3.3
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    },
+    {
+      "id": "book-19",
+      "number": 19,
+      "title": "Unwritten",
+      "line": "Not yet. This one is whatever you talk us into.",
+      "status": "unwritten",
+      "cloth": "#6c6f78",
+      "foil": null,
+      "size": {
+        "w": 14.4,
+        "h": 23.1,
+        "d": 2.2
+      },
+      "file": null,
+      "requiresDraco": false,
+      "href": null,
+      "attribution": ""
+    }
+  ]
+}

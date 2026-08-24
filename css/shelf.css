@@ -1,0 +1,152 @@
+/* ==========================================================================
+   The Complete Shelf — warm editorial minimalism. Cream paper, walnut, serif.
+   Same faces and tokens as the landing page's warm state.
+   ========================================================================== */
+
+:root {
+  --bg: rgb(31, 27, 24);
+  --ink: rgb(236, 226, 208);
+  --ink-soft: rgba(236, 226, 208, 0.62);
+  --rule: rgba(236, 226, 208, 0.18);
+  --brass: rgb(196, 160, 98);
+  --walnut: rgb(92, 58, 38);
+  --accent: rgb(212, 170, 104);
+  --didone: "Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
+  --grot: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+/* Arriving through the portal: the landing page handed over with the viewport
+   solid, so nothing here may show until the curtain is up (js/shelf/main.js
+   adds .curtained the moment it is). The curtain then travels on in the same
+   direction and uncovers the room. */
+html.arriving { background: rgb(10, 9, 11); }
+html.arriving body { visibility: hidden; }
+html.arriving.curtained body { visibility: visible; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--grot); font-weight: 300; font-size: clamp(1rem, 0.4vw + 0.9rem, 1.1rem); line-height: 1.55;
+  overflow: hidden;
+}
+a { color: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+#stage { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.controls, .hint, .open, .masthead { user-select: none; -webkit-user-select: none; }
+#stage.is-dragging { cursor: grabbing; }
+html.no-webgl #stage { display: none; }
+
+/* ---- masthead ---- */
+.masthead {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 3;
+  background: linear-gradient(rgba(31,27,24,0.7), transparent);
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; gap: 1rem;
+  padding: 1.1rem var(--gutter);
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft);
+  pointer-events: none;
+}
+.masthead > * { pointer-events: auto; margin: 0; }
+.masthead__back { text-decoration: none; }
+.masthead__back:hover { color: var(--ink); }
+.masthead__title { font-family: var(--didone); font-weight: 400; font-size: 1.35rem; letter-spacing: 0; text-transform: none; color: var(--brass); text-align: center; }
+.masthead__count { text-align: right; }
+
+.loading { position: fixed; inset: 0; display: grid; place-content: center; margin: 0; font-family: var(--didone); font-style: italic; font-size: 1.4rem; color: var(--ink-soft); pointer-events: none; z-index: 2; }
+.loading[hidden] { display: none; }
+
+/* ---- the room's edges ---- */
+.vignette { position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 42%, transparent 48%, rgba(12, 9, 7, 0.55) 100%); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- take it down ---- */
+.open { position: fixed; left: 50%; bottom: 6.6rem; transform: translateX(-50%); z-index: 2;
+  padding: 0.55em 1.2em; border: 1px solid var(--brass); border-radius: 999px; color: var(--ink);
+  font-size: 0.86rem; font-weight: 400; letter-spacing: 0.01em; background: rgba(31, 27, 24, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: background 200ms, opacity 300ms; }
+.open:hover { background: rgba(196, 160, 98, 0.18); }
+body.is-inspecting .open { opacity: 0; pointer-events: none; }
+
+/* ---- browsing controls ---- */
+.controls {
+  position: fixed; left: 50%; bottom: 3.6rem; transform: translateX(-50%); z-index: 2;
+  display: flex; align-items: center; gap: 1rem;
+  width: min(56rem, calc(100vw - 2 * var(--gutter)));
+}
+.arrow { width: 2.4rem; height: 2.4rem; border: 1px solid var(--rule); border-radius: 50%; font-size: 1rem; flex: none; transition: border-color 200ms, opacity 200ms; }
+.arrow:hover { border-color: var(--ink); }
+.arrow:disabled { opacity: 0.3; cursor: default; }
+.markers { flex: 1; display: flex; justify-content: space-between; align-items: flex-end; height: 2.2rem; border-bottom: 1px solid var(--rule); }
+.marker { position: relative; flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0; }
+.marker__tick { display: block; width: 1px; height: 0.55rem; background: var(--ink-soft); transition: height 200ms, background 200ms; }
+.marker--real .marker__tick { height: 0.9rem; background: var(--ink); }
+.marker__label { position: absolute; top: -0.1rem; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.12em; color: var(--ink-soft); }
+.marker.is-current .marker__tick { height: 1.4rem; background: var(--brass); width: 2px; }
+.marker.is-current .marker__label { color: var(--brass); }
+.marker:hover .marker__tick { background: var(--brass); }
+.hint { position: fixed; left: 50%; bottom: 1.3rem; transform: translateX(-50%); margin: 0; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; z-index: 2; }
+body.is-inspecting .controls { opacity: 0; pointer-events: none; }
+.controls, .hint { transition: opacity 300ms ease; }
+
+/* ---- inspection: a catalogue card ---- */
+/* Cream index stock, a red head rule, typewritten metadata, the title in Bodoni. */
+.panel {
+  position: fixed; right: calc(var(--gutter) + 1rem); top: 50%; z-index: 3;
+  width: min(21rem, calc(100vw - 2 * var(--gutter)));
+  color: rgb(40, 30, 24);
+  padding: 1.1rem 1.5rem 1.35rem;
+  background: linear-gradient(135deg, #f3ecdb, #ebe2cf);
+  border-top: 3px solid rgb(196, 72, 60);
+  border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 18px 40px rgba(0, 0, 0, 0.45), 0 3px 8px rgba(0, 0, 0, 0.3);
+  transform: translate(1.2rem, -50%) rotate(-1.4deg); opacity: 0;
+  transform-origin: 50% 50%;
+  transition: opacity 400ms ease, transform 600ms cubic-bezier(.2,.7,.2,1);
+  user-select: none; -webkit-user-select: none;
+}
+.panel.is-open { transform: translate(0, -50%) rotate(-1.4deg); opacity: 1; }
+.panel__no { margin: 0 0 0.8rem; font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(120, 95, 80); }
+.panel__title { margin: 0 0 0.8rem; font-family: var(--didone); font-weight: 400; font-size: 1.8rem; line-height: 1.08; letter-spacing: -0.01em; text-wrap: balance; }
+.panel__line { margin: 0 0 1rem; font-family: var(--mono); font-size: 0.78rem; line-height: 1.6; color: rgb(70, 56, 48); }
+.panel__status { margin: 0 0 0.9rem; padding-top: 0.8rem; border-top: 1px solid rgba(40, 30, 24, 0.18); font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(120, 95, 80); }
+.panel__link { display: inline-block; margin: 0 0 1.1rem; font-family: var(--mono); font-size: 0.82rem; font-weight: 500; color: rgb(40, 30, 24); text-decoration: none; border-bottom: 1px solid rgb(196, 72, 60); }
+.panel__link[hidden] { display: none; }
+.panel__close {
+  display: block; margin-top: 0.1rem; padding: 0; text-align: left;
+  font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(120, 95, 80);
+  border: 0; border-bottom: 1px solid transparent;
+}
+.panel__close::before { content: "↩ "; }
+.panel__close:hover, .panel__close:focus-visible { color: rgb(40, 30, 24); border-bottom-color: currentColor; outline: none; }
+/* placeholders, stamped */
+.is-placeholder { cursor: not-allowed; }
+.placeholder-tag {
+  display: inline-block; margin-left: 0.6em; padding: 0.12em 0.45em; vertical-align: middle;
+  font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.2;
+  color: rgb(196, 72, 60); border: 1.5px solid rgb(196, 72, 60); border-radius: 2px; opacity: 0.8;
+  transform: rotate(-4deg);
+}
+
+/* ---- fallback list ---- */
+.fallback { display: none; position: relative; z-index: 1; max-width: 40rem; margin: 0 auto; padding: 8rem var(--gutter) 4rem; }
+html.no-webgl .fallback { display: block; }
+html.no-webgl body { overflow: auto; }
+html.no-webgl .open, html.no-webgl .controls, html.no-webgl .hint, html.no-webgl .vignette { display: none; }
+.fallback h2 { font-family: var(--didone); font-weight: 400; font-size: 2rem; margin: 0 0 1rem; }
+.fallback ol { padding-left: 1.2em; }
+.fallback li { margin: 0.4em 0; }
+
+@media (max-width: 48rem) {
+  .masthead { grid-template-columns: 1fr auto; }
+  .masthead__count { display: none; }
+  .marker__label { display: none; }
+  .hint { white-space: normal; text-align: center; width: calc(100vw - 2rem); }
+  .panel { right: 1rem; left: 1rem; width: auto; top: auto; bottom: 1rem; transform: translateY(1rem) rotate(0); }
+  .panel.is-open { transform: rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .open, .panel, .controls, .hint, .marker__tick { transition: none; }
+}

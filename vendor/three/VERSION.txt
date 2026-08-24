@@ -1,0 +1,9 @@
+three.js r185 — npm package three@0.185.0 — MIT (see LICENSE)
+Files copied verbatim from https://cdn.jsdelivr.net/npm/three@0.185.0/
+  build/three.module.js
+  build/three.core.js
+  examples/jsm/controls/OrbitControls.js   (smoke test only)
+  examples/jsm/loaders/GLTFLoader.js, DRACOLoader.js
+  examples/jsm/utils/BufferGeometryUtils.js, SkeletonUtils.js
+  examples/jsm/libs/draco/gltf/*   (Draco decoder, self-hosted; loaded lazily by the shelf only when a Mint GLB needs it)
+  examples/jsm/environments/RoomEnvironment.js  (shelf lighting)

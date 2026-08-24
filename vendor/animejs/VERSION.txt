@@ -1,0 +1,5 @@
+anime.js v4.5.0 — npm package animejs@4.5.0 — MIT (see LICENSE.md)
+Single-file ESM bundle copied verbatim from
+https://cdn.jsdelivr.net/npm/animejs@4.5.0/dist/bundles/anime.esm.js
+(The 69-file dist/modules tree used until part 5 was byte-identical to upstream;
+ the bundle replaces it to cut requests. Same exports.)

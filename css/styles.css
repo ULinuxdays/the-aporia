@@ -1,0 +1,488 @@
+/* ==========================================================================
+   The Aporia — styles (part 4)
+
+   The type is the argument. Acts I and II are set in a cold, high-contrast
+   Didone on black: the philosophy we were sold. From Act III on the display
+   face is a plain grotesque on paper. That switch is done per act in CSS, so
+   it survives with JavaScript off (see the html:not(.js) block at the end,
+   which also gives each act its own ground).
+
+   Colours come from custom properties. js/main.js rewrites --bg / --ink /
+   --ink-soft / --rule / --accent every frame from the scene state; the values
+   below are what the page looks like before the scene starts.
+
+   The .act heights are the scroll choreography (CONTRACTS.md §12).
+   ========================================================================== */
+
+:root {
+  --bg: rgb(8, 8, 11);
+  --ink: rgb(244, 241, 234);
+  --ink-soft: rgba(244, 241, 234, 0.62);
+  --rule: rgba(244, 241, 234, 0.16);
+  --accent: rgb(199, 128, 56);
+  --pen: rgb(204, 82, 77);                 /* the student's pen, constant */
+
+  --didone: "Bodoni Moda", "Bodoni 72", Didot, "Didot LT STD", "Times New Roman", serif;
+  --grot: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --hand: Caveat, "Bradley Hand", "Segoe Print", cursive;
+
+  --gutter: clamp(1.25rem, 4.5vw, 5.5rem);
+  --col: clamp(18rem, 30vw, 28rem);        /* the copy column */
+  --aside: clamp(16rem, 26vw, 24rem);      /* the right-hand column */
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* focus: visible on everything, in the accent, on both grounds */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.skip { position: absolute; left: var(--gutter); top: -3rem; z-index: 20; padding: 0.5em 0.9em; background: var(--accent); color: var(--bg); font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; border-radius: 0.25em; transition: top 150ms; }
+.skip:focus { top: 1rem; }
+
+/* the ground steps from black to paper at the flip; soften the switch */
+body, .masthead, .masthead::before { transition: background-color 480ms ease, color 480ms ease; }
+.act *:not(.cover):not(.cover *):not(.gate):not(.gate *):not(.reveal), .colophon, .colophon * { transition: color 480ms ease, border-color 480ms ease, background-color 480ms ease; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--grot);
+  font-weight: 300;
+  font-size: clamp(1rem, 0.45vw + 0.9rem, 1.15rem);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a { color: inherit; }
+em { font-style: italic; }
+
+/* ---- layers ------------------------------------------------------------ */
+
+#stage {
+  position: fixed; inset: 0;
+  width: 100vw; height: 100vh; height: 100dvh;
+  display: block; z-index: 0;
+  opacity: 0; transition: opacity 1200ms ease;
+}
+#stage.is-ready { opacity: 1; }
+html.no-webgl #stage, html.static #stage { display: none; }
+
+#jargon { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+main { position: relative; z-index: 2; }
+.masthead { z-index: 3; }
+
+/* ---- masthead ------------------------------------------------------------ */
+
+.masthead {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: baseline; gap: 1.25rem;
+  padding: 1.1rem var(--gutter);
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+.masthead::before {
+  content: ""; position: absolute; inset: 0; height: 5.5rem; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, var(--bg) 35%, transparent);
+}
+.masthead > * { pointer-events: auto; margin: 0; }
+.masthead__mark { color: var(--ink); text-decoration: none; font-weight: 500; letter-spacing: 0.18em; }
+.masthead__sub { display: none; }
+.masthead__issue { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+.masthead__dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--accent); display: inline-block; }
+@media (min-width: 48rem) { .masthead__sub { display: block; } }
+
+/* ---- acts ---------------------------------------------------------------- */
+/* Heights are the choreography. Change them to re-time the page; nothing else. */
+.act { position: relative; }
+.act--monument { height: 220vh; }
+.act--impasse  { height: 300vh; }
+.act--fracture { height: 340vh; }
+.act--lenses   { height: 480vh; }
+.act--invite   { height: 380vh; }
+
+.act__sticky {
+  position: sticky; top: 0;
+  height: 100vh; height: 100dvh;
+  display: grid;
+  grid-template-columns: var(--col) minmax(0, 1fr) var(--aside);
+  grid-template-areas: "left stage right";
+  align-content: center; align-items: center;
+  column-gap: var(--gutter);
+  padding: 0 var(--gutter);
+}
+.act__inner { position: relative; max-width: 100%; }
+.act__inner--left  { grid-area: left; }
+.act__inner--right { grid-area: right; }
+.act__inner--top   { align-self: start; padding-top: 14vh; }
+.act--lenses .act__sticky { grid-template-rows: minmax(0, 1fr); align-content: stretch; }
+
+/* Act III: two real columns. The left one pins; the right one flows. */
+.act__cols {
+  display: grid;
+  grid-template-columns: var(--col) minmax(0, 1fr) var(--aside);
+  grid-template-areas: "left stage right";
+  column-gap: var(--gutter);
+  padding: 0 var(--gutter);
+  height: 100%;
+}
+.act__sticky--col { grid-area: left; display: block; padding: 0; }
+.act__sticky--col .act__inner { height: 100vh; height: 100dvh; display: grid; align-content: center; }
+.act__flow { grid-area: right; padding-top: 175vh; padding-bottom: 40vh; }
+
+/* ---- type ---------------------------------------------------------------- */
+
+.label {
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-soft); margin: 0 0 1.1rem;
+}
+.label .grc { text-transform: none; letter-spacing: 0.1em; font-size: 0.85rem; }
+.display {
+  margin: 0 0 1.25rem;
+  font-size: clamp(2rem, 2.9vw + 0.5rem, 3.6rem);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+.prose p { margin: 0 0 1em; max-width: 38ch; }
+.prose p:last-child { margin-bottom: 0; }
+.prose + .prose { margin-top: 1em; }
+.prose__em { color: var(--accent); }
+
+/* The part we were sold: Didone, tight, a little cruel. */
+.act--monument, .act--impasse { font-family: var(--didone); font-weight: 400; font-optical-sizing: auto; }
+.act--monument .display, .act--impasse .display { font-family: var(--didone); font-weight: 400; letter-spacing: -0.005em; }
+.act--monument .prose, .act--impasse .prose, .act--impasse .gloss { font-size: 1.08em; line-height: 1.5; }
+.display--word { font-size: clamp(3.5rem, 7.2vw, 7.5rem); font-style: italic; font-weight: 400; letter-spacing: -0.03em; line-height: 0.9; margin-bottom: 1.4rem; }
+.gloss { color: var(--ink-soft); margin: 0 0 1.6rem; max-width: 40ch; }
+.gloss em { color: var(--ink); }
+
+/* The rest: a plain grotesque, nothing to prove. */
+.act--fracture .display, .act--lenses .display, .act--invite .display, .colophon {
+  font-family: var(--grot); font-weight: 500; letter-spacing: -0.025em;
+}
+.act--fracture .prose, .act--lenses .prose, .act--invite .prose { font-weight: 300; }
+
+.quote { margin: 1.6rem 0 0; padding-left: 1rem; border-left: 2px solid var(--accent); max-width: 38ch; }
+.quote p { margin: 0 0 0.5rem; font-weight: 400; }
+.quote footer { font-size: 0.85em; color: var(--ink-soft); }
+.quote cite { font-style: italic; }
+
+/* ---- the jargon field (Act I) ------------------------------------------- */
+
+#jargon span {
+  position: absolute;
+  left: var(--x); top: var(--y);
+  transform: translate(-50%, -50%) rotate(var(--r)) scale(var(--s));
+  font-family: var(--didone); font-style: italic; font-size: 1.25rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+#jargon span i { display: inline-block; position: relative; font-style: inherit; }
+#jargon span i::after {
+  /* a faint tail, so the words look like they are orbiting rather than stuck on */
+  content: ""; position: absolute; left: 100%; top: 55%; width: 2.2em; height: 1px;
+  background: linear-gradient(90deg, var(--rule), transparent); opacity: 0.7;
+}
+#jargon.is-floating span { animation: jargon-float 9s ease-in-out infinite alternate; animation-delay: calc(var(--s) * -4s); }
+@keyframes jargon-float { from { translate: 0 -0.25em; } to { translate: 0 0.25em; } }
+@media (max-width: 48rem) { #jargon span { font-size: 0.95rem; } }
+
+/* ---- the swap list (Act III) --------------------------------------------- */
+
+.swap-block { max-width: 100%; }
+.swap-block .label { margin-bottom: 1.4rem; }
+.swap-list { list-style: none; margin: 0; padding: 0; }
+.swap {
+  position: relative;
+  display: grid;                      /* both phrasings occupy the same cell… */
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--rule);
+  font-size: clamp(1.05rem, 1.1vw + 0.6rem, 1.45rem);
+  line-height: 1.3;
+  font-weight: 400;
+}
+.swap:last-child { border-bottom: 1px solid var(--rule); }
+.swap > span { grid-area: 1 / 1; }  /* …so the row is sized by the longer one and never reflows mid-swap */
+.swap__from, .swap__to { visibility: hidden; }
+.swap__from { font-family: var(--didone); font-style: italic; }
+.swap__live { font-family: var(--grot); }
+.swap__live.is-academic { font-family: var(--didone); font-style: italic; }
+.swap-block__note { margin: 1.4rem 0 0; color: var(--ink-soft); max-width: 34ch; }
+
+/* ---- issue covers (Act IV) ------------------------------------------------- */
+/* Three magazine covers fanned in a stack. The cover for the current lens
+   (js/page.js sets .is-active) comes to the front and straightens up. */
+
+.covers {
+  grid-area: right; align-self: center; justify-self: end;
+  position: relative;
+  width: min(100%, 19rem); aspect-ratio: 3 / 4;
+  --lift: 0;
+}
+.cover {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 1.1rem 1.2rem 1rem;
+  border: 1px solid rgba(var(--tint), 0.55);
+  background:
+    linear-gradient(rgba(var(--tint), 0.16), rgba(var(--tint), 0.16)),
+    var(--bg);
+  color: var(--ink);
+  transform-origin: 50% 110%;
+  transform: rotate(var(--rot, 0deg)) translateY(var(--dy, 0)) scale(var(--sc, 1));
+  opacity: var(--fade, 1);
+  transition: transform 700ms cubic-bezier(.2,.7,.2,1), opacity 500ms ease, border-color 500ms ease;
+  will-change: transform;
+}
+/* resting fan: --rot / --dy / --sc / --fade / z-index are set per cover by js/page.js from its position in the stack */
+.cover { --rot: var(--fan-rot, 0deg); --dy: var(--fan-dy, 0.3rem); --sc: var(--fan-sc, 0.97); --fade: var(--fan-fade, 0.8); z-index: var(--fan-z, 1); }
+/* the current lens comes forward */
+.cover.is-active { --rot: -1.5deg; --dy: -0.4rem; --sc: 1; --fade: 1; z-index: 20; border-color: rgb(var(--tint)); }
+.covers:has(.is-active) .cover:not(.is-active) { --fade: 0.45; }
+
+.cover__no {
+  display: flex; align-items: baseline; justify-content: space-between; margin: 0 0 auto;
+  font-family: var(--grot); font-weight: 800; letter-spacing: -0.04em; font-size: 3.4rem; line-height: 1;
+  color: rgb(var(--tint));
+}
+.cover__status {
+  font-family: var(--mono); font-weight: 500; font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-soft); padding: 0.25em 0.6em; border: 1px solid var(--rule); border-radius: 999px;
+}
+.cover__status--out { color: var(--ink); border-color: rgb(var(--tint)); font-weight: 500; }
+.cover__title { margin: 0 0 0.5rem; font-family: var(--grot); font-weight: 500; letter-spacing: -0.025em; font-size: 1.45rem; line-height: 1.05; }
+.cover__line { margin: 0; font-size: 0.86rem; line-height: 1.45; color: var(--ink-soft); }
+.cover__link { display: inline-block; margin-top: 0.7rem; font-size: 0.86rem; text-decoration: none; border-bottom: 1px solid rgb(var(--tint)); align-self: flex-start; }
+.cover__mark {
+  margin: 0.9rem 0 0; padding-top: 0.6rem; border-top: 1px solid var(--rule);
+  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft);
+}
+/* ---- calls to action (Act V) --------------------------------------------- */
+
+.cta { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 1.5rem; }
+.btn {
+  font: inherit; font-weight: 500; font-size: 0.95em;
+  color: var(--ink); text-decoration: none;
+  border: 1px solid var(--rule); padding: 0.65em 1.2em; border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+.btn--primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+/* Placeholder links. Clearly marked until the real URLs exist. */
+.is-placeholder { cursor: not-allowed; }
+.placeholder-tag {
+  display: inline-block; margin-left: 0.5em; padding: 0.1em 0.45em;
+  font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px dashed currentColor; border-radius: 0.25em; opacity: 0.75; vertical-align: middle;
+}
+
+/* ---- marginalia ------------------------------------------------------------ */
+/* Hand-drawn strokes (svg, drawn on by js/page.js) and notes in the margin. */
+
+.marg-anchor { position: relative; }
+.marg-anchor--inline { display: inline-block; }
+.marg, .marg__svg { position: absolute; overflow: visible; pointer-events: none; }
+.marg path, .marg__svg path {
+  fill: none; stroke: var(--pen); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.marg__note {
+  position: absolute; font-family: var(--hand); font-weight: 500; font-size: 1.35rem; line-height: 1.05;
+  color: var(--pen); white-space: nowrap; pointer-events: none; opacity: 0;
+}
+/* I — underline beneath "we were shown." with "says who?" off to the right */
+.marg--underline { left: -0.05em; right: -0.05em; bottom: 0.04em; height: 0.16em; width: auto; }
+.marg__note--i { left: calc(100% + 0.45em); bottom: 0.12em; transform: rotate(-5deg); font-size: 1.7rem; }
+/* II — arrow from the margin into the Socrates sentence */
+.marg--note-only { position: absolute; left: 0; top: 0; width: 0; height: 100%; }
+.marg__note--ii { right: calc(100% + 5.8rem); top: -1.4rem; text-align: right; transform: rotate(-3deg); }
+.act--impasse .marg--arrow { right: calc(100% + 0.3rem); top: -0.7rem; width: 5.5rem; height: 2.8rem; }
+/* III — arrow from the right of the akrasia row */
+.marg--iii .marg--arrow { right: calc(100% + 0.3rem); top: -0.4rem; width: 5.5rem; height: 2.8rem; }
+.marg__note--iii { right: calc(100% + 5.8rem); top: -1.3rem; text-align: right; transform: rotate(4deg); }
+/* V — a loop around "interesting mistake" and "this one" in the margin */
+.marg--circle { left: -0.5em; right: -0.5em; top: -0.4em; bottom: -0.1em; width: auto; height: auto; }
+.marg__note--v { left: calc(100% + 0.8rem); bottom: -0.2rem; transform: rotate(-6deg); }
+
+/* ---- the scroll cue ----------------------------------------------------------- */
+.scroll-cue {
+  position: absolute; left: var(--gutter); bottom: 2.4rem; z-index: 2;
+  display: flex; flex-direction: row; align-items: center; gap: 0.9rem;
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ink-soft); text-decoration: none;
+  opacity: 0; animation: cue-in 1200ms ease 2400ms forwards;
+  transition: opacity 500ms ease;
+}
+.scroll-cue:hover { color: var(--ink); }
+.scroll-cue__line { display: block; width: 1px; height: 2.6rem; background: var(--rule); position: relative; overflow: hidden; }
+.scroll-cue__line::after { content: ""; position: absolute; left: 0; top: -100%; width: 100%; height: 100%; background: var(--ink); animation: cue-drop 1800ms cubic-bezier(.4,0,.2,1) infinite; }
+.scroll-cue.is-gone { opacity: 0 !important; pointer-events: none; animation: none; }
+@keyframes cue-in { to { opacity: 1; } }
+@keyframes cue-drop { 0% { top: -100%; } 55% { top: 100%; } 100% { top: 100%; } }
+html.static .scroll-cue { animation-delay: 400ms; }
+@media (prefers-reduced-motion: reduce) { .scroll-cue { animation: none; opacity: 1; } .scroll-cue__line::after { animation: none; top: 0; } }
+
+/* ---- reveals --------------------------------------------------------------- */
+html.js .reveal { opacity: 0; transform: translateY(1.2rem); will-change: opacity, transform; }
+
+/* ---- colophon --------------------------------------------------------------- */
+
+.colophon {
+  position: relative;
+  padding: 165vh 0 0;
+  font-size: 0.92rem; font-weight: 400; letter-spacing: 0;
+  color: var(--ink-soft);
+}
+.colophon__grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 2rem var(--gutter);
+  padding: 4rem var(--gutter) 6vh; border-top: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+}
+.colophon__grid > div { max-width: 80rem; }
+.colophon p { margin: 0 0 0.6em; max-width: 40ch; }
+.colophon__mark { font-family: var(--grot); font-weight: 800; letter-spacing: -0.03em; font-size: 1.6rem; color: var(--ink); }
+.colophon__fine { margin-top: 1.2em; font-size: 0.8em; }
+.colophon__attrib { font-size: 0.85em; }
+
+/* ---- the portal: the last beat, and the only way to the shelf --------------- */
+/* The ring and the vortex inside it are particles; this is only the hit area,
+   placed over them by js/main.js (--px/--py/--pr) and live once --pt opens. */
+.portal {
+  position: fixed; z-index: 2;
+  left: var(--px, 50vw); top: var(--py, 50vh);
+  width: calc(var(--pr, 120px) * 2); height: calc(var(--pr, 120px) * 2);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  opacity: var(--pt, 0);
+  pointer-events: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.portal.is-open { pointer-events: auto; }
+.portal__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.portal:focus-visible { outline: 2px solid var(--accent); outline-offset: 8px; }
+
+/* the annotation: a pen arrow into the ring from the upper right, drawn on with the vortex */
+.portal-note {
+  position: fixed; z-index: 3; pointer-events: none;
+  left: calc(var(--px, 50vw) + var(--pr, 120px) * 0.72);
+  top: calc(var(--py, 50vh) - var(--pr, 120px) * 0.92);
+  width: 10rem; height: 5rem;
+}
+.portal-note .marg--arrow { left: 0; top: 0; width: 6rem; height: 3rem; }
+.portal-note .marg__note { left: 6.4rem; top: -0.7rem; white-space: nowrap; transform: rotate(-6deg); opacity: 0; }
+html.static .portal-note { display: none; }
+
+/* entering: the particles carry the transition, so everything else clears out */
+html.is-entering .portal-note, html.is-entering .masthead, html.is-entering .colophon,
+html.is-entering .scroll-cue, html.is-entering main { opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
+html.is-entering { cursor: progress; }
+/* the ground drops to black quickly rather than drifting through grey */
+html.is-entering body { transition: background-color 200ms ease; }
+
+html.static .portal { display: none; }
+
+/* the static page (and no-JS) has no particles to walk through, so it gets a plain link */
+.shelf-link { display: none; }
+html.static .shelf-link, html:not(.js) .shelf-link { display: block; margin-bottom: 1em; }
+.shelf-link a { font-weight: 500; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--accent); }
+
+/* ---- debug readout (?debug) ------------------------------------------------ */
+#debug {
+  position: fixed; right: 12px; top: 48px; z-index: 10;
+  font: 12px/1.5 var(--mono); color: #fff; background: rgba(0, 0, 0, 0.7);
+  padding: 8px 10px; border-radius: 4px; white-space: pre; pointer-events: none;
+}
+
+/* ---- small screens ------------------------------------------------------------ */
+@media (max-width: 64rem) {
+  .act__sticky, .act__cols { grid-template-columns: minmax(0, 1fr); grid-template-areas: "left"; }
+  .act__inner--right, .act__flow { grid-area: left; }
+  /* Act IV on one column: copy first, then the cover stack beneath it, never on top of it */
+  .act--lenses .act__sticky { grid-template-rows: auto auto; align-content: end; row-gap: 1.2rem; padding-bottom: 6vh; }
+  .act--lenses .act__inner--top { grid-area: auto; padding-top: 0; align-self: end; }
+  .covers { grid-area: auto; justify-self: center; width: min(60vw, 12rem); }
+  .cover { padding: 0.8rem 0.9rem 0.7rem; }
+  .cover__no { font-size: 2.2rem; }
+  .cover__title { font-size: 1.1rem; }
+  .cover__line { display: none; }
+  .cover__mark { display: none; }
+  .act__sticky { align-content: end; padding-bottom: 10vh; }
+  .act__inner--top { padding-top: 0; }
+  .act__flow { padding-top: 120vh; }
+  /* Act III: the Epicurus copy flows above the swap list (no sticky column) */
+  .act__sticky--col { display: block; position: relative; }
+  .act__sticky--col .act__inner { height: auto; min-height: 100vh; min-height: 100dvh; display: grid; align-content: end; padding-bottom: 10vh; }
+  .act__flow { padding-top: 8vh; padding-bottom: 30vh; }
+  .marg__note--ii, .marg__note--iii, .act--impasse .marg--arrow, .marg--iii .marg--arrow { display: none; }
+  /* the figure sits behind the copy here: dim it and stand the copy on a scrim of the page colour */
+  #stage.is-ready { opacity: 0.72; }
+  .act__sticky { position: sticky; }
+  .act__sticky::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; z-index: 0; pointer-events: none;
+    background: linear-gradient(to top, var(--bg) 0%, var(--bg) 30%, color-mix(in srgb, var(--bg) 72%, transparent) 62%, transparent 100%);
+  }
+  .act__inner, .covers, .act__flow, .issues { position: relative; z-index: 1; }
+  .act__sticky--col .act__inner { z-index: 1; }
+  #jargon { display: none; }
+}
+
+/* ---- the static page ------------------------------------------------------------- */
+/* html.static: reduced motion, a weak device, no WebGL, or ?static. Same page,
+   every word, the same black-to-paper shift — done in CSS, section by section,
+   with a pre-rendered still of the figure where the cloud would be. */
+html.static .reveal { opacity: 1 !important; transform: none !important; }
+html.static .masthead { position: absolute; }
+html.static .masthead::before { display: none; }
+html.static #jargon { display: none; }
+html.static .marg__note { opacity: 1; }
+html.static .act__sticky, html.static .act__sticky--col .act__inner { position: relative; height: auto; min-height: 100vh; }
+html.static .act { height: auto; }
+html.static .act__flow { padding-top: 6vh; padding-bottom: 12vh; }
+html.static .act--monument, html.static .act--impasse { background: rgb(8, 8, 11); color: rgb(244, 241, 234); }
+html.static .act--fracture, html.static .act--lenses {
+  --bg: rgb(244, 238, 227); --ink: rgb(28, 22, 20); --ink-soft: rgba(28, 22, 20, 0.62); --rule: rgba(28, 22, 20, 0.16);
+  background: var(--bg); color: var(--ink);
+}
+/* Act V and the colophon are on black again, as on the dynamic page */
+html.static .colophon { background: rgb(8, 8, 11); color: rgba(244, 241, 234, 0.72); }
+html.static .colophon .colophon__mark { color: rgb(244, 241, 234); }
+html.static .colophon__grid { border-top-color: rgba(244, 241, 234, 0.16); }
+html.static .act--invite { background: linear-gradient(rgb(244, 238, 227) 0%, rgb(244, 238, 227) 4%, rgb(8, 8, 11) 26%, rgb(8, 8, 11) 100%); color: rgb(244, 241, 234); }
+html.static .act--invite .label, html.static .act--invite .prose { color: rgba(244, 241, 234, 0.85); }
+html.static .act--fracture { background: linear-gradient(rgb(8, 8, 11) 0%, rgb(8, 8, 11) 8%, rgb(244, 238, 227) 42%, rgb(244, 238, 227) 100%); }
+html.static .act--fracture .act__sticky--col .act__inner { padding-top: 46vh; }
+html.static .swap__live { display: none; }
+html.static .swap__from, html.static .swap__to { visibility: visible; }
+html.static .swap { grid-template-columns: 1fr 1fr; gap: 1rem; }
+html.static .swap > span { grid-area: auto; }
+html.static .act__art { display: block; }
+.act__art { display: none; grid-area: stage; align-self: center; justify-self: center; max-width: 100%; max-height: 80vh; width: auto; height: auto; pointer-events: none; }
+.act__art--monument { grid-column: stage / right; }
+.act__art--bust { max-height: 52vh; margin: 0 auto 3rem; }
+@media (max-width: 64rem) { .act__art { grid-area: left; max-height: 40vh; margin: 0 auto 2rem; } }
+
+/* ---- no JavaScript -------------------------------------------------------------- */
+/* The argument still runs: black Didone first, paper grotesque after. */
+html:not(.js) .act { height: auto; min-height: 100vh; }
+html:not(.js) .act__sticky, html:not(.js) .act__sticky--col .act__inner { position: static; height: auto; padding-top: 16vh; padding-bottom: 16vh; }
+html:not(.js) .act__flow { padding: 0 0 16vh; }
+html:not(.js) .act--monument, html:not(.js) .act--impasse { background: rgb(8, 8, 11); color: rgb(244, 241, 234); }
+html:not(.js) .act--fracture, html:not(.js) .act--lenses, html:not(.js) .act--invite, html:not(.js) .colophon {
+  --bg: rgb(244, 238, 227); --ink: rgb(28, 22, 20); --ink-soft: rgba(28, 22, 20, 0.62); --rule: rgba(28, 22, 20, 0.16);
+  background: var(--bg); color: var(--ink);
+}
+html:not(.js) .swap__live { display: none; }
+html:not(.js) .swap__from, html:not(.js) .swap__to { visibility: visible; }
+html:not(.js) .swap { grid-template-columns: 1fr 1fr; gap: 1rem; }
+html:not(.js) .swap > span { grid-area: auto; }
+html:not(.js) .marg__note { opacity: 1; }
+html:not(.js) .masthead { position: static; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.js .reveal { transform: none; }
+}

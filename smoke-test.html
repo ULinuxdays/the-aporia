@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>smoke test — baked clouds (THROWAWAY)</title>
+<!--
+  THROWAWAY. Part-1 visual check of assets/clouds/*.bin. Not part of the site.
+  Serve the folder (python3 -m http.server 8080) and open /smoke-test.html.
+  Delete once the owner has confirmed the bakes. See CONTRACTS.md §7.
+
+  URL params (for screenshots):
+    ?cloud=thinker|epicurus       which cloud to show          (default thinker)
+    &view=front|side|back|low|top camera preset                (default front)
+    &bg=dark|light                background                   (default dark)
+    &n=60000                      how many points (prefix)     (default all)
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #ddd; font: 13px/1.4 ui-monospace, Menlo, monospace; }
+  #c { display: block; width: 100vw; height: 100vh; }
+  #hud { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,.6); padding: 10px 12px; border-radius: 6px; max-width: 360px; }
+  #hud button { font: inherit; margin: 2px 4px 2px 0; padding: 3px 8px; cursor: pointer; }
+  #hud .on { outline: 2px solid #6cf; }
+  #hud p { margin: 6px 0 0; white-space: pre-wrap; }
+  #hud small { color: #999; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three":   "./vendor/three/build/three.module.js",
+    "animejs": "./vendor/animejs/index.js"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div>
+    <button data-cloud="thinker">thinker</button>
+    <button data-cloud="epicurus">epicurus</button>
+    &nbsp;
+    <button data-view="front">front</button>
+    <button data-view="side">side</button>
+    <button data-view="back">back</button>
+    <button data-view="low">low</button>
+    <button data-view="top">top</button>
+    &nbsp;
+    <button data-bg="toggle">bg</button>
+  </div>
+  <p id="info">loading…</p>
+  <p><small>drag: orbit · wheel: zoom · right-drag: pan · grid = y 0 plane, 0.1 units · red X · green Y · blue Z</small></p>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from './vendor/three/examples/jsm/controls/OrbitControls.js';
+import { loadAllClouds } from './js/clouds.js';
+
+const params = new URLSearchParams(location.search);
+const state = {
+  cloud: params.get('cloud') || 'thinker',
+  view: params.get('view') || 'front',
+  bg: params.get('bg') || 'dark',
+  n: params.get('n') ? Number(params.get('n')) : null,
+};
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 0.5, 0);
+controls.enableDamping = false;
+
+// Reference geometry: ground at y = 0 (the contract), axes at the origin.
+const grid = new THREE.GridHelper(1.2, 12, 0x446688, 0x223344);
+scene.add(grid);
+const axes = new THREE.AxesHelper(0.35);
+scene.add(axes);
+
+let points = null;
+let info = document.getElementById('info');
+let manifest = null;
+let clouds = null;
+
+function setBg(mode) {
+  state.bg = mode;
+  renderer.setClearColor(mode === 'dark' ? 0x000000 : 0xf4eee3, 1);
+  if (points) points.material.color.set(mode === 'dark' ? 0xffffff : 0x111111);
+  document.body.style.background = mode === 'dark' ? '#000' : '#f4eee3';
+  document.body.style.color = mode === 'dark' ? '#ddd' : '#222';
+}
+
+function setView(name) {
+  state.view = name;
+  const d = 2.6;
+  const presets = {
+    front: [0, 0.55, d],
+    side:  [d, 0.5, 0],
+    back:  [0, 0.55, -d],
+    low:   [d * 0.75, 0.12, d * 0.75],
+    top:   [0.001, d, 0],
+  };
+  const p = presets[name] || presets.front;
+  camera.position.set(p[0], p[1], p[2]);
+  controls.target.set(0, name === 'low' ? 0.08 : 0.5, 0);
+  controls.update();
+  markButtons();
+}
+
+function setCloud(name) {
+  state.cloud = name;
+  if (points) { scene.remove(points); points.geometry.dispose(); points.material.dispose(); points = null; }
+  const data = clouds && clouds[name];
+  if (!data) {
+    info.textContent = `${name}: cloud missing (loadCloud resolved null). Run: node tools/bake.mjs`;
+    markButtons();
+    return;
+  }
+  const n = state.n ? Math.min(state.n, data.length / 3) : data.length / 3;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(data.subarray(0, n * 3), 3));
+  const mat = new THREE.PointsMaterial({ size: 0.006, sizeAttenuation: true, color: state.bg === 'dark' ? 0xffffff : 0x111111 });
+  points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  geo.computeBoundingBox();
+  const b = geo.boundingBox;
+  const m = manifest && manifest.clouds && manifest.clouds[name];
+  info.textContent =
+    `${name}: ${n.toLocaleString('en-US')} / ${(data.length / 3).toLocaleString('en-US')} points\n` +
+    `bbox min [${[b.min.x, b.min.y, b.min.z].map(v => v.toFixed(3)).join(', ')}]\n` +
+    `     max [${[b.max.x, b.max.y, b.max.z].map(v => v.toFixed(3)).join(', ')}]\n` +
+    (m ? `source ${m.source}\n${m.sourceTriangles.toLocaleString('en-US')} tris → ${m.bakedTriangles.toLocaleString('en-US')} baked` +
+         (m.raft && m.raft.stripped ? `\nraft stripped below z=${m.raft.zThresholdSource.toFixed(3)} ${m.sourceUnits} (${m.raft.trianglesRemoved.toLocaleString('en-US')} tris)` : '') : '');
+  markButtons();
+}
+
+function markButtons() {
+  for (const b of document.querySelectorAll('#hud button')) {
+    b.classList.toggle('on', b.dataset.cloud === state.cloud || b.dataset.view === state.view);
+  }
+}
+
+document.getElementById('hud').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.cloud) setCloud(b.dataset.cloud);
+  if (b.dataset.view) setView(b.dataset.view);
+  if (b.dataset.bg) setBg(state.bg === 'dark' ? 'light' : 'dark');
+});
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+function frame() {
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+(async () => {
+  resize();
+  setBg(state.bg);
+  setView(state.view);
+  try { manifest = await (await fetch('assets/clouds/manifest.json')).json(); } catch { manifest = null; }
+  clouds = await loadAllClouds();
+  setCloud(state.cloud);
+  frame();
+  // Signal for headless screenshots.
+  renderer.render(scene, camera);
+  document.documentElement.dataset.ready = '1';
+})();
+</script>
+</body>
+</html>

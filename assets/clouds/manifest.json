@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "generated": "2026-08-21T16:25:16.601Z",
+  "generator": "tools/bake.mjs",
+  "format": {
+    "dtype": "int16",
+    "scale": 0.00003051850947599719,
+    "layout": "xyz-interleaved",
+    "endian": "little",
+    "up": "+Y",
+    "height": 1,
+    "centred": "x,z by bbox",
+    "order": "random — any prefix is a uniform subsample",
+    "note": "per-cloud dtype/scale in clouds.*; multiply int16 values by scale"
+  },
+  "clouds": {
+    "thinker": {
+      "file": "thinker.bin",
+      "bytes": 360000,
+      "dtype": "int16",
+      "scale": 0.00003051850947599719,
+      "pointCount": 60000,
+      "source": "the-thinker-at-the-musee-rodin-france-1.stl",
+      "sourceTriangles": 837482,
+      "sourceVertices": 2512446,
+      "bakedTriangles": 821178,
+      "sourceUp": "+Z",
+      "sourceUnits": "mm",
+      "yawDegrees": 0,
+      "raft": {
+        "stripped": true,
+        "zThresholdSource": 3.300784,
+        "thicknessSource": 3.300781,
+        "thicknessFractionOfHeight": 0.025391,
+        "raftFootprintArea": 5977.643961,
+        "modelBaseFootprintArea": 4028.204474,
+        "trianglesRemoved": 16304,
+        "method": "footprint drop: bottom 10 % sliced 256×; raft = contiguous band with XY bbox area >= 0.8 × max; threshold = top of that band"
+      },
+      "bbox": {
+        "min": [
+          -0.244664,
+          0,
+          -0.374881
+        ],
+        "max": [
+          0.244664,
+          1,
+          0.374881
+        ]
+      },
+      "seed": 1,
+      "attribution": ""
+    },
+    "epicurus": {
+      "file": "epicurus.bin",
+      "bytes": 360000,
+      "dtype": "int16",
+      "scale": 0.00003051850947599719,
+      "pointCount": 60000,
+      "source": "Epikur_Timvias.obj",
+      "sourceTriangles": 1130836,
+      "sourceVertices": 565677,
+      "bakedTriangles": 1130836,
+      "sourceUp": "+Y",
+      "sourceUnits": "unlabelled (normalised away)",
+      "yawDegrees": 180,
+      "raft": {
+        "stripped": false
+      },
+      "bbox": {
+        "min": [
+          -0.276074,
+          0,
+          -0.269273
+        ],
+        "max": [
+          0.276074,
+          1,
+          0.269273
+        ]
+      },
+      "seed": 1,
+      "attribution": ""
+    }
+  }
+}

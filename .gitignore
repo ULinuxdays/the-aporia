@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+._*
+
+# editor / OS noise
+*.swp
+.vscode/
+.idea/
+
+# nothing here is generated at build time — there is no build step.
+# assets/clouds/*.bin ARE committed on purpose: tools/bake.mjs is run by hand
+# and the site fetches the result directly.
