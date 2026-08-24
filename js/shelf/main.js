@@ -13,13 +13,15 @@ import { buildAllBooks } from './books.js';
 import { createBrowser } from './browse.js';
 import { createInspector } from './inspect.js';
 import { createUI } from './ui.js';
-import { createCurtain } from '../curtain.js';
+import { createCurtain, removeCurtains } from '../curtain.js';
 
 const MANIFEST_URL = 'assets/shelf/manifest.json';
 const BROWSE = { y: 0.34, z: 1.2, lookY: 0.1 };
 
 main().catch((err) => {
   console.error('[shelf] failed to start', err);
+  removeCurtains();                                  // whatever went wrong, do not leave the page covered
+  document.documentElement.classList.remove('arriving', 'curtained');
   document.documentElement.classList.add('no-webgl');
   const el = document.getElementById('loading');
   if (el) el.textContent = 'The shelf needs WebGL. The list below is the same run.';
@@ -29,12 +31,21 @@ async function main() {
   // Came through the portal: the landing page handed over with the viewport
   // solid, so put the curtain up before anything else is on screen. It carries
   // on along the same diagonal once the room is ready to be seen.
+  removeCurtains();                                  // never inherit one from a restored page
   const arriving = document.documentElement.classList.contains('arriving');
   const curtain = arriving ? createCurtain() : null;
   if (curtain) {
     curtain.show(0, 'uncover');
     document.documentElement.classList.add('curtained');   // reveals the body under it
     try { sessionStorage.removeItem('aporia:portal'); } catch {}
+    // A curtain is opaque. If the room never arrives — no WebGL, a failed
+    // fetch, a thrown frame — this takes it down anyway rather than leaving
+    // a black screen.
+    setTimeout(() => {
+      if (!document.documentElement.classList.contains('arriving')) return;
+      curtain.dispose();
+      document.documentElement.classList.remove('arriving', 'curtained');
+    }, 6000);
   }
 
   const canvas = document.getElementById('stage');

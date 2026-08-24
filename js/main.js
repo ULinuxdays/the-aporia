@@ -24,7 +24,7 @@ import { createTimeline, animate, onScroll, svg } from 'animejs';
 import { loadAllClouds } from './clouds.js';
 import { STATE_DEFAULTS, PORTAL } from './state.js';
 import { createSmoothScroll } from './smooth-scroll.js';
-import { createCurtain } from './curtain.js';
+import { createCurtain, removeCurtains } from './curtain.js';
 // three.js, the shapes and the scene are imported lazily, and only on the
 // dynamic path — the static page never fetches them.
 
@@ -138,6 +138,13 @@ function goStatic(reason) {
 }
 
 async function main() {
+  // The back button can restore this page from the bfcache mid-transition, with
+  // the curtain still covering everything and `is-entering` still hiding the
+  // rest. Clear both before anything else: an opaque curtain with nothing left
+  // to take it down is a black screen with no way out.
+  removeCurtains();
+  document.documentElement.classList.remove('is-entering');
+
   const mode = decideMode();
   const html = document.documentElement;
   const smooth = createSmoothScroll({ lerp: 0.055 });     // eased wheel scrolling; off under reduced motion / touch
@@ -634,7 +641,7 @@ function createPortal(scroll) {
   const v = new THREE_LITE.Vec3(), u = new THREE_LITE.Vec3();
   const note = createPortalNote();
   let lastKey = '';
-  let liveScene = null, entering = false;
+  let liveScene = null, entering = false, liveCurtain = null;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Entering: the camera dives through the ring while the aperture swells to
@@ -665,8 +672,10 @@ function createPortal(scroll) {
     document.documentElement.classList.add('is-entering');
     scroll?.timeline?.pause();                       // the scroll must not fight the transition
     const st = liveScene.state;
+    removeCurtains();
     const curtain = createCurtain();
     curtain.show(0, 'cover');
+    liveCurtain = curtain;
     let done = false;
     const once = () => { if (!done) { done = true; go(); } };
     const wipe = { p: 0 };
@@ -684,13 +693,21 @@ function createPortal(scroll) {
     setTimeout(once, 1500 * T);                      // never strand the reader on a half-finished animation
   });
 
-  // Coming back (bfcache): undo the dive.
-  addEventListener('pageshow', (ev) => {
-    if (!entering && !ev.persisted) return;
+  // Coming back — from the bfcache, or from a navigation that never happened.
+  // Everything the transition laid over the page comes off, unconditionally.
+  const restore = () => {
     entering = false;
+    liveCurtain?.dispose();
+    liveCurtain = null;
+    removeCurtains();
     document.documentElement.classList.remove('is-entering');
     scroll?.rebuild?.();
-  });
+    // the timeline was rebuilt at its start; tell the observer where the page
+    // actually is, or the scene sits on Act I while the reader is at the end
+    dispatchEvent(new Event('scroll'));
+  };
+  addEventListener('pageshow', (ev) => { if (entering || ev.persisted) restore(); });
+  addEventListener('popstate', restore);
 
   return {
     update(s, scene) {

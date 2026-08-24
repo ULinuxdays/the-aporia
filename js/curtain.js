@@ -36,6 +36,20 @@ function mulberry32(seed) {
   };
 }
 
+export const CURTAIN_CLASS = 'aporia-curtain';
+
+/**
+ * Take down every curtain on the page.
+ *
+ * A curtain is opaque by design, so one left up is a black screen with no way
+ * out. That can happen without any bug in the transition itself: the back
+ * button restores the landing page from the bfcache with the curtain frozen
+ * mid-cover. Both pages call this on load and on pageshow.
+ */
+export function removeCurtains() {
+  document.querySelectorAll('.' + CURTAIN_CLASS).forEach((el) => el.remove());
+}
+
 export function createCurtain(opts = {}) {
   const o = { ...DEFAULTS, ...opts };
   const len = Math.hypot(o.dir[0], o.dir[1]) || 1;
@@ -43,6 +57,7 @@ export function createCurtain(opts = {}) {
   const perp = [-d[1], d[0]];
 
   const canvas = document.createElement('canvas');
+  canvas.className = CURTAIN_CLASS;
   canvas.setAttribute('aria-hidden', 'true');
   Object.assign(canvas.style, {
     position: 'fixed', left: '0', top: '0', width: '100%', height: '100%',

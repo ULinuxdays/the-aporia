@@ -15,7 +15,13 @@
 <script>
   document.documentElement.classList.add('js');
   // came through the portal? open out of the circle (js/shelf/main.js finishes it)
-  try { if (sessionStorage.getItem('aporia:portal') === '1' && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('arriving'); } catch {}
+  try {
+    if (sessionStorage.getItem('aporia:portal') === '1' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('arriving');
+      // last resort: `arriving` hides the body, so it may never outlive the load
+      setTimeout(function () { document.documentElement.classList.remove('arriving', 'curtained'); }, 8000);
+    }
+  } catch (e) {}
 </script>
 <script type="importmap">
 {
