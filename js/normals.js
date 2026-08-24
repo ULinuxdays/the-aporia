@@ -17,9 +17,16 @@
  * ~150 ms for 90k points; scene.js runs it lazily, one shape at a time.
  */
 
-export function estimateNormals(pts, { k = 16 } = {}) {
+/**
+ * @param {Float32Array} pts  the whole cloud (needed for neighbour search)
+ * @param {{k?: number, from?: number, to?: number}} [opts]  compute only points [from, to)
+ * @returns {Float32Array} 4 floats per point IN THAT RANGE (normal xyz + confidence)
+ */
+export function estimateNormals(pts, { k = 16, from = 0, to = -1 } = {}) {
   const n = pts.length / 3;
-  const out = new Float32Array(n * 4);
+  const hi = to < 0 ? n : Math.min(to, n);
+  const lo = Math.max(0, from);
+  const out = new Float32Array(Math.max(0, hi - lo) * 4);
   if (n < k + 1) return out;
 
   // bounding box
@@ -53,7 +60,8 @@ export function estimateNormals(pts, { k = 16 } = {}) {
   const ni = new Int32Array(k);    // indices
   const cov = new Float64Array(6);
 
-  for (let i = 0; i < n; i++) {
+  for (let i = lo; i < hi; i++) {
+    const o4 = (i - lo) * 4;
     const px = pts[i * 3], py = pts[i * 3 + 1], pz = pts[i * 3 + 2];
     const cx = ((px - xmin) / cell) | 0, cy = ((py - ymin) / cell) | 0, cz = ((pz - zmin) / cell) | 0;
     let found = 0;
@@ -84,7 +92,7 @@ export function estimateNormals(pts, { k = 16 } = {}) {
         }
       }
     }
-    if (found < 4) { out[i * 4 + 3] = 0; continue; }
+    if (found < 4) { out[o4 + 3] = 0; continue; }
 
     // centroid and covariance of the neighbourhood (including the point)
     let mx = px, my = py, mz = pz;
@@ -123,7 +131,7 @@ export function estimateNormals(pts, { k = 16 } = {}) {
     let len = vx * vx + vy * vy + vz * vz;
     if (len < 1e-20) { vx = r0y * r2z - r0z * r2y; vy = r0z * r2x - r0x * r2z; vz = r0x * r2y - r0y * r2x; len = vx * vx + vy * vy + vz * vz; }
     if (len < 1e-20) { vx = r1y * r2z - r1z * r2y; vy = r1z * r2x - r1x * r2z; vz = r1x * r2y - r1y * r2x; len = vx * vx + vy * vy + vz * vz; }
-    if (len < 1e-20) { out[i * 4 + 3] = 0; continue; }
+    if (len < 1e-20) { out[o4 + 3] = 0; continue; }
     len = 1 / Math.sqrt(len);
     vx *= len; vy *= len; vz *= len;
 
@@ -134,7 +142,7 @@ export function estimateNormals(pts, { k = 16 } = {}) {
     // confidence: surface-likeness. surfaces: l0 ≪ l1 ≈ l2; lines: l0 ≈ l1 ≪ l2; blobs: all similar.
     const w = l2 > 1e-20 ? Math.min(1, Math.max(0, ((l1 - l0) / l2) * 1.6)) : 0;
 
-    out[i * 4] = vx; out[i * 4 + 1] = vy; out[i * 4 + 2] = vz; out[i * 4 + 3] = w;
+    out[o4] = vx; out[o4 + 1] = vy; out[o4 + 2] = vz; out[o4 + 3] = w;
   }
   return out;
 }

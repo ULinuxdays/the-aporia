@@ -18,7 +18,7 @@ The Aporia Web/
 │   └── shelf.css            the shelf page
 ├── js/
 │   ├── clouds.js            point-cloud loader       (part 1; int16-aware since part 5)
-│   ├── state.js             the state defaults as data (no three.js) — the static path's only scene import
+│   ├── state.js             the state defaults and PORTAL as data (no three.js) — the static path imports nothing else
 │   ├── shapes.js            the seven morph targets  (part 2, stable)
 │   ├── scene.js             THREE.Points + shader    (part 2, stable)
 │   ├── main.js              scroll choreography      (part 3)
@@ -408,6 +408,16 @@ mentions a lens is generated from that list: the Act IV beats (one equal slice
 per issue, morph `2+k`, accent = tint), the yaw schedule (`YAW.lens[k]`), the
 pre-rotation, the page/wordmark indices (`2+N`, `3+N`). Adding an issue is
 adding a cover (README).
+
+**Boot order** (main.js `main()`): decide the mode → spawn the normal-worker
+pool (so it warms while everything downloads) → start the timeline, reveals
+and theme so the page is readable → `import()` scene.js + shapes.js and fetch
+the clouds in parallel → build **shapes 0 and 1 only**, the rest standing in
+as references to shape 1 → create the scene → reveal when shape 0's normals
+land or after 700 ms → build the remaining shapes in scroll order, shading
+each as it arrives → rebuild the two text shapes once the webfonts load.
+`index.html`'s head preloads scene.js and three under the same conditions
+`decideMode()` uses; the two must stay in step.
 
 **Capability and tiers.** `decideMode()` picks the static page or a particle
 budget before any heavy import (README has the table). The static page is

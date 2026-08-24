@@ -26,7 +26,35 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500;600;800&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 
-<script>document.documentElement.classList.add('js');</script>
+<script>
+  document.documentElement.classList.add('js');
+  // Start the renderer's downloads now, not four round trips from now.
+  // Without this the browser only learns about three.js after main.js has been
+  // fetched, parsed and run, and then scene.js after that. The conditions below
+  // are the cheap half of decideMode() in js/main.js — KEEP THE TWO IN STEP: a
+  // visitor who will get the static page must never download three.js.
+  (function () {
+    try {
+      var q = location.search;
+      if (/[?&]static\b/.test(q)) return;
+      var m = matchMedia;
+      if (!/[?&]webgl\b/.test(q)) {
+        if (m('(prefers-reduced-motion: reduce)').matches) return;
+      }
+      if (!/[?&]webgl\b/.test(q)) {
+        if (navigator.connection && navigator.connection.saveData) return;
+        if ((navigator.hardwareConcurrency || 8) <= 2) return;
+        if ((navigator.deviceMemory || 8) <= 2) return;
+        if (Math.min(innerWidth, innerHeight) < 340) return;
+      }
+      ['./js/scene.js', './vendor/three/build/three.module.js', './vendor/three/build/three.core.js'].forEach(function (href) {
+        var l = document.createElement('link');
+        l.rel = 'modulepreload'; l.href = href;
+        document.head.appendChild(l);
+      });
+    } catch (e) {}
+  })();
+</script>
 <script type="importmap">
 {
   "imports": {

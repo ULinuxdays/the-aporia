@@ -3,6 +3,13 @@
  * static (no-WebGL) path can use it without ever touching three.js.
  * The table of meanings lives in CONTRACTS.md §10.
  */
+/**
+ * Where the ending's portal ring sits, in world units. Lives here rather than
+ * in shapes.js so main.js can place the DOM aperture without importing the
+ * shape builders — the static page must never pull them.
+ */
+export const PORTAL = Object.freeze({ x: 0, y: 1.12, z: 0, r: 0.58 });
+
 export const STATE_DEFAULTS = Object.freeze({
   morph: 0, spread: 0.45, drift: 0.006, size: 1.45, opacity: 1, tone: 0,
   accentMix: 0, accentR: 0.78, accentG: 0.50, accentB: 0.22,

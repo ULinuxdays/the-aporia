@@ -48,6 +48,47 @@ DPR 2; the GPU is not the limit, the normals' clarity is.)
 The text is readable and correctly coloured before a single cloud byte
 arrives; the canvas fades in when the scene is ready.
 
+## How fast it loads, and why
+
+Time from navigation to the model appearing, measured in headless Chrome at
+1440×900 (`window.__aporia.timing` holds the stage marks on any `?expose` load):
+
+| | desktop | 4× CPU throttle | 4× CPU + 5 Mbps |
+|---|---|---|---|
+| before | 1,941 ms | 5,812 ms | 5,983 ms |
+| now | **759 ms** | **1,581 ms** | **3,972 ms** |
+
+Four things get it there, and they are worth keeping:
+
+1. **Only two shapes are built up front** — the monument and the bust. The
+   other six are built after the first paint, in scroll order, and swapped in
+   with `scene.setShape()`. Building all eight cost 447 ms on a fast machine
+   and 2.6 s on a slow one, all of it before anything was on screen.
+2. **Normals are estimated by a pool of workers**, one shape at a time split
+   across up to four of them, priority given to the shape the reader is
+   actually looking at.
+3. **The pool is spawned at boot**, before the clouds are even requested, so
+   the workers' module fetch and parse overlap with the download instead of
+   following it.
+4. **The renderer is preloaded from the HTML head.** Without it the browser
+   only learns about three.js four round trips deep (`html → main.js →
+   scene.js → three.module.js → three.core.js`). The inline script that does
+   this repeats the cheap half of `decideMode()` — **if you change the static
+   page's trigger conditions, change them in both places**, or a
+   reduced-motion visitor will download a renderer they never use.
+
+The canvas is revealed as soon as the monument is shaded, or after 700 ms,
+whichever comes first, then fades in over 500 ms.
+
+## Caching: the site is meant to be edited constantly
+
+`vercel.json` sets `Cache-Control: public, max-age=0, must-revalidate` on
+**everything**. Nothing is served from a browser or edge cache without asking
+first, so a push reaches every visitor on their next reload — minutes after
+you make it, not days. Unchanged files answer with a 304 and no body, so the
+cost is a round trip, not a download. If you ever want to trade freshness for
+speed again, that one rule is the only place to change.
+
 ## Re-running the bake (different model, more points)
 
 The Thinker and the bust are point clouds baked offline by `tools/bake.mjs`

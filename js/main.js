@@ -22,14 +22,19 @@
 
 import { createTimeline, animate, onScroll, svg } from 'animejs';
 import { loadAllClouds } from './clouds.js';
-import { STATE_DEFAULTS } from './state.js';
+import { STATE_DEFAULTS, PORTAL } from './state.js';
 import { createSmoothScroll } from './smooth-scroll.js';
-import { PORTAL } from './shapes.js';
 import { createCurtain } from './curtain.js';
 // three.js, the shapes and the scene are imported lazily, and only on the
 // dynamic path — the static page never fetches them.
 
 const PARAMS = new URLSearchParams(location.search);
+
+/** Load timings, readable from the console and from window.__aporia.timing. */
+const T0 = performance.now();
+const TIMING = {};
+const mark = (name) => { TIMING[name] = Math.round(performance.now() - T0); };
+mark('module');
 const DEBUG = PARAMS.has('debug');
 const DAMPING = 0.35;           // onScroll sync: smaller is heavier
 
@@ -148,45 +153,81 @@ async function main() {
   //    reading-ready and colour-correct before a single cloud byte arrives.
   INITIAL.size = STATE_DEFAULTS.size * Math.pow(90000 / mode.count, 0.3);   // fewer particles → bigger grains, same density on screen
   const state = { ...INITIAL };
+  // The normal workers take a moment to boot (a module fetch and parse each),
+  // so start them now: they warm up while the clouds download and the first
+  // shapes are built, instead of costing that time afterwards.
+  const pool = spawnNormalWorkers();
   const debug = DEBUG ? makeDebugReadout() : null;
   const scroll = createScrollChoreography(state, { debug });
   createReveals();
   let themeRaf = requestAnimationFrame(function tick() { applyTheme(state); if (debug) debug.update(state, scroll); themeRaf = requestAnimationFrame(tick); });
-  if (DEBUG || PARAMS.has('expose')) window.__aporia = { state, scroll, scene: null, measureActs, mode };
+  if (DEBUG || PARAMS.has('expose')) window.__aporia = { state, scroll, scene: null, measureActs, mode, timing: TIMING };
 
-  // 2. The heavy parts, in parallel: three + scene + shapes modules, and the clouds.
+  // 2. The heavy parts. Only what the first screenful needs is built up front:
+  //    the monument and the bust. The other six shapes, and the shading for
+  //    all of them, arrive behind the reader while they are still on Act I.
   const canvas = document.getElementById('stage');
   let scene = null;
   try {
-    const [{ createScene }, { buildAllShapes, buildShape }, clouds] = await Promise.all([
+    const [{ createScene }, shapesMod, clouds] = await Promise.all([
       import('./scene.js'),
       import('./shapes.js'),
       loadAllClouds(),
     ]);
+    mark('modulesAndClouds');
+    const { buildShape, shapeNamesFor } = shapesMod;
     const count = mode.count;
-    const built = buildAllShapes(count, { clouds, lenses: LENSES.map((l) => l.shape) });
-    preYawShapes(built.shapes);
-    if (built.usedStandIn.thinker || built.usedStandIn.epicurus) {
-      console.info('[aporia] using stand-in geometry for', Object.entries(built.usedStandIn).filter(([, v]) => v).map(([k]) => k).join(', '), '— run node tools/bake.mjs');
+    const lenses = LENSES.map((l) => l.shape);
+    const names = shapeNamesFor(lenses);
+    const opts = { clouds, lenses };
+
+    // the two shapes the first two acts need, and nothing else yet
+    const shapes = new Array(names.length);
+    shapes[0] = buildShape(0, count, opts);
+    shapes[1] = yawShape(buildShape(1, count, opts), YAW.bust);
+    for (let i = 2; i < names.length; i++) shapes[i] = shapes[1];   // stand-ins until built; never yawed twice
+    mark('firstShapes');
+    if (!clouds.thinker || !clouds.epicurus) {
+      console.info('[aporia] using stand-in geometry for', [!clouds.thinker && 'thinker', !clouds.epicurus && 'epicurus'].filter(Boolean).join(', '), '— run node tools/bake.mjs');
     }
-    scene = createScene(canvas, { count, shapes: built.shapes, onFrame });
+
+    scene = createScene(canvas, { count, shapes, onFrame });
+    mark('sceneCreated');
     Object.assign(scene.state, state);               // hand the live values over; the timeline keeps animating this object
     scroll.retarget(scene.state);
     cancelAnimationFrame(themeRaf);
     if (mode.narrow) scene.setViewOffset(-0.55);     // lift the figure above the copy on phones
     scene.start();
     if (window.__aporia) { window.__aporia.scene = scene; window.__aporia.state = scene.state; }
-    // The cloud fades in only once the monument is shaded: an unshaded cloud
-    // reads as an X-ray blob, and first impressions are the whole point.
+
+    // Show the cloud as soon as the monument is shaded — or after a short wait,
+    // whichever comes first. An unshaded cloud reads as an X-ray blob, but a
+    // blank screen reads as broken, and that is the worse of the two.
     const shown = { done: false };
-    const show = () => { if (shown.done) return; shown.done = true; requestAnimationFrame(() => canvas.classList.add('is-ready')); };
-    setTimeout(show, 4000);
-    estimateNormalsInBackground(scene, built.shapes.length, {
-      nextIndex: () => Math.round(Math.min(built.shapes.length - 1, Math.max(0, scene.state.morph))),   // the shape under the reader first
-      onDone: (i) => { if (i === 0) show(); },
+    const show = () => { if (shown.done) return; shown.done = true; mark('visible'); requestAnimationFrame(() => canvas.classList.add('is-ready')); };
+    const showTimer = setTimeout(show, 700);
+
+    mark('poolReady');
+    const normals = createNormalService(scene, names.length, {
+      pool,
+      nextIndex: () => Math.round(Math.min(names.length - 1, Math.max(0, scene.state.morph))),
+      onDone: (i) => { if (i === 0) { mark('normals0'); clearTimeout(showTimer); show(); } },
     });
-    rebuildTextShapesWhenFontsLoad(scene, count, clouds, buildShape);
-    console.info(`[aporia] scene: ${count.toLocaleString('en-US')} particles (${mode.tier})`);
+
+    // the remaining shapes, in scroll order, yielding to the renderer between each
+    (async () => {
+      for (let i = 2; i < names.length; i++) {
+        await new Promise((r) => setTimeout(r, 0));
+        const yaw = i - 2 < lenses.length ? YAW.lens[i - 2].resolve : (names[i] === 'page' ? YAW.page : 0);
+        const shape = buildShape(i, count, opts);
+        scene.setShape(i, yaw ? yawShape(shape, yaw) : shape);
+        normals.invalidate(i);
+      }
+      mark('allShapes');
+      rebuildTextShapesWhenFontsLoad(scene, count, clouds, buildShape, lenses, names, normals);
+    })();
+
+    console.info(`[aporia] scene: ${count.toLocaleString('en-US')} particles (${mode.tier})`, TIMING);
   } catch (err) {
     console.warn('[aporia] no renderer — static page', err.message);
     cancelAnimationFrame(themeRaf);
@@ -215,62 +256,100 @@ async function main() {
 }
 
 /**
- * Estimate a surface normal per point for every shape, off the main thread,
- * and hand each one to the scene as it arrives. Until a shape's normals land
- * it renders unshaded, so this is pure progressive enhancement. Shapes are
- * done in scroll order, so the monument is shaded before anyone reaches it.
+ * Estimate a surface normal per point for every shape, off the main thread.
+ *
+ * One shape at a time, but that shape is split across a pool of workers, so
+ * the *first* one — the shape the reader is actually looking at — lands in a
+ * fraction of the time. Until a shape's normals arrive it renders unshaded,
+ * so this is pure progressive enhancement.
  */
-function estimateNormalsInBackground(scene, shapeCount, { nextIndex, onDone } = {}) {
-  let worker = null;
+function spawnNormalWorkers() {
+  const cores = navigator.hardwareConcurrency || 4;
+  const n = Math.max(1, Math.min(4, cores - 1));
+  const workers = [];
   try {
-    worker = new Worker(new URL('./normals-worker.js', import.meta.url), { type: 'module' });
+    for (let i = 0; i < n; i++) workers.push(new Worker(new URL('./normals-worker.js', import.meta.url), { type: 'module' }));
   } catch (err) {
     console.info('[aporia] no module worker; clouds stay unshaded.', err.message);
-    onDone?.(0);
-    return () => {};
+    workers.forEach((w) => w.terminate());
+    return [];
   }
+  return workers;
+}
+
+function createNormalService(scene, shapeCount, { pool, nextIndex, onDone } = {}) {
+  let workers = pool && pool.length ? pool.slice() : spawnNormalWorkers();
+  if (!workers.length) { onDone?.(0); return { invalidate() {}, dispose() {} }; }
+
   const pending = new Set();
-  for (let k = 0; k < shapeCount; k++) if (scene.getShape(k)) pending.add(k);
-  const next = () => {
-    if (!pending.size) { worker.terminate(); worker = null; return; }
-    // the shape the reader is on (or nearest to it) goes first, then the rest in order
-    let index = nextIndex ? nextIndex() : -1;
-    if (!pending.has(index)) {
-      let best = null;
-      for (const k of pending) if (best === null || Math.abs(k - index) < Math.abs(best - index)) best = k;
-      index = best;
-    }
+  for (let i = 0; i < shapeCount; i++) if (scene.getShape(i)) pending.add(i);
+  let running = false;
+
+  function pick() {
+    const want = nextIndex ? nextIndex() : 0;
+    if (pending.has(want)) return want;
+    let best = null;
+    for (const k of pending) if (best === null || Math.abs(k - want) < Math.abs(best - want)) best = k;
+    return best;
+  }
+
+  function next() {
+    if (running || !pending.size || !workers.length) return;
+    const index = pick();
+    if (index == null) return;
     pending.delete(index);
-    const copy = scene.getShape(index).slice();
-    worker.postMessage({ id: index, positions: copy }, [copy.buffer]);
-  };
-  worker.onmessage = (e) => {
-    const { id, normals } = e.data;
-    try { scene.setNormals(id, normals); } catch (err) { console.warn('[aporia] normals rejected', err.message); }
-    onDone?.(id);
-    next();
-  };
-  worker.onerror = (err) => {
-    console.info('[aporia] normal worker failed; clouds stay unshaded.', err.message);
-    worker.terminate();
-    worker = null;
-    onDone?.(0);
-  };
+    running = true;
+
+    const src = scene.getShape(index);
+    const n = src.length / 3;
+    const merged = new Float32Array(n * 4);
+    const slice = Math.ceil(n / workers.length);
+    let left = 0;
+    workers.forEach((w, k) => {
+      const from = k * slice, to = Math.min(n, from + slice);
+      if (from >= to) return;
+      left++;
+      const copy = src.slice();                       // each worker needs the whole cloud to find neighbours
+      const onMsg = (e) => {
+        w.removeEventListener('message', onMsg);
+        merged.set(e.data.normals, e.data.from * 4);
+        if (--left === 0) {
+          running = false;
+          try { scene.setNormals(index, merged); } catch (err) { console.warn('[aporia] normals rejected', err.message); }
+          onDone?.(index);
+          if (pending.size) next();
+        }
+      };
+      w.addEventListener('message', onMsg);
+      w.postMessage({ id: index, positions: copy, from, to }, [copy.buffer]);
+    });
+    if (left === 0) { running = false; next(); }
+  }
+
+  function dispose() { workers.forEach((w) => w.terminate()); workers = []; }
+  workers.forEach((w) => { w.onerror = (err) => { console.info('[aporia] normal worker failed; clouds stay unshaded.', err.message); dispose(); onDone?.(0); }; });
+
   next();
-  return () => { if (worker) { worker.terminate(); worker = null; } };
+  return {
+    /** A shape's geometry changed: shade it again. */
+    invalidate(i) { if (workers.length) { pending.add(i); next(); } },
+    dispose,
+  };
 }
 
 /** The page and wordmark shapes are sampled from canvas text; re-sample them in the real faces once loaded. */
 const PAGE_FONT = '500 120px Caveat, "Bradley Hand", cursive';
 const WORDMARK_FONT = '800 220px Inter, Helvetica, Arial, sans-serif';
-function rebuildTextShapesWhenFontsLoad(scene, count, clouds, buildShape) {
+function rebuildTextShapesWhenFontsLoad(scene, count, clouds, buildShape, lenses, names, normals) {
   if (!document.fonts?.load) return;
+  const page = names.indexOf('page'), wordmark = names.indexOf('wordmark');
   Promise.all([document.fonts.load(PAGE_FONT), document.fonts.load(WORDMARK_FONT)])
     .then(() => {
-      const lenses = LENSES.map((l) => l.shape);
-      scene.setShape(SHAPE_PAGE, yawShape(buildShape(SHAPE_PAGE, count, { clouds, lenses, pageFont: PAGE_FONT }), YAW.page));
-      scene.setShape(SHAPE_WORDMARK, buildShape(SHAPE_WORDMARK, count, { clouds, lenses, wordmarkFont: WORDMARK_FONT, wordmarkWidth: 3.2 }));
-      estimateNormalsInBackground({ ...scene, getShape: (i) => (i === SHAPE_PAGE || i === SHAPE_WORDMARK ? scene.getShape(i) : null) }, SHAPE_WORDMARK + 1, {});
+      const opts = { clouds, lenses };
+      scene.setShape(page, yawShape(buildShape(page, count, { ...opts, pageFont: PAGE_FONT }), YAW.page));
+      scene.setShape(wordmark, buildShape(wordmark, count, { ...opts, wordmarkFont: WORDMARK_FONT, wordmarkWidth: 3.2 }));
+      normals?.invalidate(page);
+      normals?.invalidate(wordmark);
     })
     .catch((err) => console.info('[aporia] webfont shapes not rebuilt:', err.message));
 }
@@ -463,7 +542,7 @@ function choreograph(tl, state, acts) {
 
 /**
  * Stage yaw (state.rotY) at the moments that matter, in radians. Shapes that
- * must be seen front-on are built rotated by −YAW[…] (see preYawShapes), so
+ * must be seen front-on are built rotated by −YAW[…] as they are built, so
  * one continuous turn serves every act. The lens entries are spread evenly
  * between the fracture and the page for however many issues there are.
  */
@@ -486,14 +565,6 @@ function yawShape(arr, theta) {
   return arr;
 }
 
-/** Pre-rotate the shapes that have a front, to the yaw at which they resolve. */
-function preYawShapes(shapes) {
-  yawShape(shapes[1], YAW.bust);
-  YAW.lens.forEach((y, k) => yawShape(shapes[2 + k], y.resolve));
-  yawShape(shapes[SHAPE_PAGE], YAW.page);
-  // 0 (monument) is head-on at 0; the wordmark resolves at 2π.
-  return shapes;
-}
 
 // --------------------------------------------------------------------------- reveals
 

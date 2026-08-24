@@ -39,8 +39,8 @@
 export const DEFAULT_LENSES = Object.freeze(['crowd', 'device', 'unformed']);
 export const SHAPE_NAMES = Object.freeze(['monument', 'epicurus', ...DEFAULT_LENSES, 'page', 'wordmark', 'portal']);
 export const shapeNamesFor = (lenses = DEFAULT_LENSES) => ['monument', 'epicurus', ...lenses, 'page', 'wordmark', 'portal'];
-/** Where the portal ring sits, world units — main.js projects this to place the aperture in the DOM. */
-export const PORTAL = Object.freeze({ x: 0, y: 1.12, z: 0, r: 0.58 });
+import { PORTAL } from './state.js';
+export { PORTAL };                      // the ring's geometry, shared with main.js
 export const BASE_SHARE = 0.22;
 export const DEFAULT_SEED = 20260821;
 
