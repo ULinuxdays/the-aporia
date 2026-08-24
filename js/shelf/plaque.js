@@ -6,8 +6,8 @@
  * run. Replaces any floating caption: the label lives in the room.
  */
 
-import * as THREE from 'three';
-import { animate } from 'animejs';
+import * as THREE from '../../vendor/three/build/three.module.js';
+import { animate } from '../../vendor/animejs/anime.esm.js';
 
 const W = 0.21, H = 0.042;  // metres
 const FONT_DISPLAY = '"Bodoni Moda", "Bodoni 72", Didot, Georgia, serif';

@@ -19,7 +19,7 @@
  * The renderer clears to transparent — the page paints the background.
  */
 
-import * as THREE from 'three';
+import * as THREE from '../vendor/three/build/three.module.js';
 import { STATE_DEFAULTS } from './state.js';
 import { PORTAL } from './shapes.js';
 

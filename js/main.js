@@ -20,7 +20,7 @@
  * ?debug adds onScroll's own overlay and a readout of morph / tone / progress.
  */
 
-import { createTimeline, animate, onScroll, svg } from 'animejs';
+import { createTimeline, animate, onScroll, svg } from '../vendor/animejs/anime.esm.js';
 import { loadAllClouds } from './clouds.js';
 import { STATE_DEFAULTS, PORTAL } from './state.js';
 import { createSmoothScroll } from './smooth-scroll.js';
@@ -154,6 +154,7 @@ async function main() {
     if (DEBUG) window.__aporia = { mode };
     return;                 // nothing else: no three.js, no clouds, no timeline
   }
+  html.classList.remove('static');                  // the head's watchdog may have fired first; we are here, so we run
   html.classList.add('dynamic');
 
   // 1. Everything that doesn't need the renderer starts now, so the page is

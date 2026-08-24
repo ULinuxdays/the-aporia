@@ -7,9 +7,9 @@
  * motion. Only one book is ever out.
  */
 
-import * as THREE from 'three';
+import * as THREE from '../../vendor/three/build/three.module.js';
 import { OrbitControls } from '../../vendor/three/examples/jsm/controls/OrbitControls.js';
-import { animate, createTimeline } from 'animejs';
+import { animate, createTimeline } from '../../vendor/animejs/anime.esm.js';
 
 export function createInspector({ camera, renderer, books, getBrowseCamera, onOpen, onClose }) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;

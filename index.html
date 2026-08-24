@@ -28,6 +28,27 @@
 
 <script>
   document.documentElement.classList.add('js');
+
+  // A safety net, because this page hides its own text until JavaScript says
+  // otherwise (.reveal starts at opacity 0). If the scripts never run — an old
+  // browser, a blocked or failed request, an extension, a syntax error — that
+  // would leave a black screen with nothing on it. Either signal below falls
+  // the page back to the static version, which shows every word.
+  (function () {
+    var h = document.documentElement;
+    var rescued = false;
+    function rescue(why) {
+      if (rescued || h.classList.contains('dynamic') || h.classList.contains('static')) return;
+      rescued = true;
+      h.classList.add('static');
+      h.setAttribute('data-static-reason', why);
+    }
+    addEventListener('error', function (e) {
+      // module resolution and load failures surface here before anything runs
+      if (e && (e.target === null || (e.target && e.target.tagName === 'SCRIPT'))) rescue('scripts failed');
+    }, true);
+    setTimeout(function () { rescue('scripts did not start'); }, 4000);
+  })();
   // Start the renderer's downloads now, not four round trips from now.
   // Without this the browser only learns about three.js after main.js has been
   // fetched, parsed and run, and then scene.js after that. The conditions below

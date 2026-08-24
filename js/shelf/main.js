@@ -5,8 +5,8 @@
  *   → inspector → UI. CONTRACTS.md §16.
  */
 
-import * as THREE from 'three';
-import { animate } from 'animejs';
+import * as THREE from '../../vendor/three/build/three.module.js';
+import { animate } from '../../vendor/animejs/anime.esm.js';
 import { createRoom, buildShelf, materials } from './scene.js';
 import { createPlaque } from './plaque.js';
 import { buildAllBooks } from './books.js';

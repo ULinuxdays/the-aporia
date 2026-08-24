@@ -8,7 +8,7 @@
  * one motion language.
  */
 
-import { animate } from 'animejs';
+import { animate } from '../../vendor/animejs/anime.esm.js';
 
 export function createBrowser({ canvas, positions, onChange, onSelect, pick }) {
   const state = { offset: positions[0], enabled: true };

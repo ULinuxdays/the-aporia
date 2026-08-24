@@ -8,7 +8,7 @@
  * Units are metres; the case runs along +X.
  */
 
-import * as THREE from 'three';
+import * as THREE from '../../vendor/three/build/three.module.js';
 import { RoomEnvironment } from '../../vendor/three/examples/jsm/environments/RoomEnvironment.js';
 
 export const SHELF_DEPTH = 0.30;

@@ -15,7 +15,7 @@
  * touches the scene state. CONTRACTS.md §14.
  */
 
-import { animate, createTimeline, onScroll, stagger, svg, scrambleText } from 'animejs';
+import { animate, createTimeline, onScroll, stagger, svg, scrambleText } from '../vendor/animejs/anime.esm.js';
 
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
