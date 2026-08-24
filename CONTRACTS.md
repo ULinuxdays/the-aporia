@@ -437,7 +437,12 @@ and rejected: it translates a wrapper, which breaks sticky.
 
 **The scroll cue** (`#scroll-cue`): at the foot of the first screen, "Scroll"
 in mono caps beside a hairline down which one segment falls, and beneath it
-`.skip-btn` — "Go directly to the shelf (and miss out on the experience)".
+`.shortcut` — "Go directly to the shelf" in mono caps with the aside "(and
+miss out on the experience)" in the marginalia hand and the red pen. It is
+bounded by printers' crop marks rather than a border: four corner rules that
+extend and take the accent on hover, which is how a magazine bounds a thing
+and keeps the page free of UI chrome. (`.skip` is a different element — the
+accessibility skip-link at the top of the document. Do not reuse that name.)
 Fades in after 2 s and goes for good once `scrollY > 40`. Clicking "Scroll"
 eases down one screen; the button is an ordinary navigation. The falling
 segment stops under `prefers-reduced-motion`.
@@ -546,7 +551,7 @@ add a line to `specs`, and position it in CSS. Paths use
 ## 15. The portal, and the way through to the shelf
 
 `shelf.html` is reachable two ways: the button under the scroll cue on the
-first screen (`.skip-btn`, for anyone who does not want to read five acts to
+first screen (`.shortcut`, for anyone who does not want to read five acts to
 find the issues), and the end of Act V, as a particle event — the one that is
 worth the wait.
 

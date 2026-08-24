@@ -330,17 +330,52 @@ main { position: relative; z-index: 2; }
 .scroll-cue__line { display: block; width: 1px; height: 4.6rem; background: var(--rule); position: relative; overflow: hidden; }
 .scroll-cue__line::after { content: ""; position: absolute; left: 0; top: -100%; width: 100%; height: 100%; background: var(--ink); animation: cue-drop 1800ms cubic-bezier(.4,0,.2,1) infinite; }
 
-/* the way past all of it */
-.skip-btn {
-  display: inline-flex; flex-direction: column; gap: 0.25rem;
-  padding: 0.75rem 1.15rem;
-  border: 1px solid var(--rule); border-radius: 2px;
-  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--ink-soft); text-decoration: none; background: transparent;
-  transition: color 250ms ease, border-color 250ms ease, background-color 250ms ease;
+/* ---- the way past all of it ------------------------------------------------ */
+/* Not a UI button: a target bounded by printers' crop marks — how a magazine
+   bounds anything — with the action in mono caps and the aside written in the
+   same red pen as the margins. (Named .shortcut, not .skip: .skip is the
+   accessibility skip-link at the top of this file.) */
+.shortcut {
+  position: relative;
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
+  padding: 1rem 1.6rem 0.9rem;
+  text-decoration: none; color: var(--ink-soft);
+  transition: color 260ms ease;
 }
-.skip-btn:hover, .skip-btn:focus-visible { color: var(--ink); border-color: var(--ink-soft); background: color-mix(in srgb, var(--ink) 6%, transparent); }
-.skip-btn__aside { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: none; opacity: 0.7; }
+.shortcut__frame { position: absolute; inset: 0; pointer-events: none; }
+.shortcut::before, .shortcut::after,
+.shortcut__frame::before, .shortcut__frame::after {
+  content: ""; position: absolute; width: 0.95rem; height: 0.95rem;
+  border: 0 solid color-mix(in srgb, var(--ink) 30%, transparent);
+  transition: border-color 260ms ease, width 260ms cubic-bezier(.2,.7,.2,1), height 260ms cubic-bezier(.2,.7,.2,1);
+}
+.shortcut::before        { top: 0; left: 0;     border-top-width: 1px; border-left-width: 1px; }
+.shortcut::after         { bottom: 0; right: 0; border-bottom-width: 1px; border-right-width: 1px; }
+.shortcut__frame::before { top: 0; right: 0;    border-top-width: 1px; border-right-width: 1px; }
+.shortcut__frame::after  { bottom: 0; left: 0;  border-bottom-width: 1px; border-left-width: 1px; }
+
+.shortcut__label {
+  display: inline-flex; align-items: baseline; gap: 0.65rem;
+  font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.18em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.shortcut__arrow { display: inline-block; transition: transform 260ms cubic-bezier(.2,.7,.2,1); }
+.shortcut__aside {
+  font-family: var(--hand); font-size: 1.2rem; line-height: 1;
+  color: var(--pen); opacity: 0.85;
+  transform: rotate(-1.6deg); transform-origin: left center;
+  transition: opacity 260ms ease;
+}
+
+.shortcut:hover, .shortcut:focus-visible { color: var(--ink); outline: none; }
+.shortcut:hover .shortcut__arrow, .shortcut:focus-visible .shortcut__arrow { transform: translateX(0.4em); }
+.shortcut:hover .shortcut__aside, .shortcut:focus-visible .shortcut__aside { opacity: 1; }
+.shortcut:hover::before, .shortcut:hover::after,
+.shortcut:hover .shortcut__frame::before, .shortcut:hover .shortcut__frame::after,
+.shortcut:focus-visible::before, .shortcut:focus-visible::after,
+.shortcut:focus-visible .shortcut__frame::before, .shortcut:focus-visible .shortcut__frame::after {
+  border-color: var(--accent); width: 1.4rem; height: 1.4rem;
+}
 
 @keyframes cue-in { to { opacity: 1; } }
 @keyframes cue-drop { 0% { top: -100%; } 55% { top: 100%; } 100% { top: 100%; } }
