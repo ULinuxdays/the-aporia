@@ -626,7 +626,10 @@ function createReveals() {
 
 // --------------------------------------------------------------------------- the scroll cue
 
-/** "Scroll" at the foot of the first screen. Goes once the reader has. */
+/**
+ * The cue at the foot of the first screen: "Scroll", and under it the one
+ * shortcut straight to the shelf. Both go once the reader has scrolled.
+ */
 function createScrollCue(smooth) {
   const cue = document.getElementById('scroll-cue');
   if (!cue) return;
@@ -634,7 +637,8 @@ function createScrollCue(smooth) {
   const hide = () => { cue.classList.add('is-gone'); removeEventListener('scroll', onScroll); };
   const onScroll = () => { if (scrollY > 40) hide(); };
   addEventListener('scroll', onScroll, { passive: true });
-  cue.addEventListener('click', (e) => {
+  // only the "Scroll" half eases the page down; the shelf link is an ordinary link
+  cue.querySelector('.cue__scroll')?.addEventListener('click', (e) => {
     e.preventDefault();
     const to = innerHeight * 0.9;
     if (smooth.enabled) smooth.scrollTo(to); else scrollTo({ top: to, behavior: 'smooth' });

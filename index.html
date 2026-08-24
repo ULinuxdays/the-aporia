@@ -149,10 +149,17 @@
           <p>Most people take one look and decide philosophy is for someone else. That is a fair reading of the packaging.</p>
         </div>
       </div>
-      <a class="scroll-cue" id="scroll-cue" href="#main-start" aria-label="Scroll down to read">
-        <span class="scroll-cue__label">Scroll</span>
-        <span class="scroll-cue__line" aria-hidden="true"></span>
-      </a>
+      <!-- The cue, and the one shortcut past the whole thing. Both go when you scroll. -->
+      <div class="cue" id="scroll-cue">
+        <a class="cue__scroll" href="#main-start" aria-label="Scroll down to read">
+          <span class="cue__label">Scroll</span>
+          <span class="cue__stem" aria-hidden="true">
+            <span class="cue__rail"><i class="cue__runner"></i></span>
+            <span class="cue__chevron"></span>
+          </span>
+        </a>
+        <a class="cue__shelf" href="shelf.html">Or go straight to the shelf <span class="cue__arrow" aria-hidden="true">&rarr;</span></a>
+      </div>
     </div>
   </section>
 
