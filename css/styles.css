@@ -314,7 +314,7 @@ main { position: relative; z-index: 2; }
    down it. Nothing added to it. */
 .cue {
   position: absolute; left: var(--gutter); bottom: 2.4rem; z-index: 2;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.85rem;
   /* Present from the first painted frame, like the rest of the page. It used
      to fade itself in with a CSS animation, but such an animation only starts
      at first paint — by which time the copy's JS-driven fade has already
@@ -324,9 +324,13 @@ main { position: relative; z-index: 2; }
   transition: opacity 500ms ease;
 }
 .cue.is-gone { opacity: 0; pointer-events: none; }
+.cue__or {
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.2em; text-transform: lowercase;
+  color: var(--ink-soft); opacity: 0.7; padding-left: 0.1rem;
+}
 
 .scroll-cue {
-  display: flex; flex-direction: row; align-items: center; gap: 1.4rem;
+  display: flex; flex-direction: row; align-items: center; gap: 1.4rem; margin-bottom: 0.35rem;
   font-family: var(--mono); font-size: 0.95rem; letter-spacing: 0.24em; text-transform: uppercase;
   color: var(--ink-soft); text-decoration: none;
   transition: color 250ms ease;
