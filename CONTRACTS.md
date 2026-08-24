@@ -436,11 +436,11 @@ When it is on (`html.smooth`), the master timeline's damping is lightened to
 and rejected: it translates a wrapper, which breaks sticky.
 
 **The scroll cue** (`#scroll-cue`): at the foot of the first screen, "Scroll"
-in mono caps beside a hairline rail down which a bright runner keeps falling,
-a chevron stepping after it, and beneath that the shortcut to the shelf. Fades
-in after 1.8 s and goes for good once `scrollY > 40`. Clicking "Scroll" eases
-down one screen (the shelf link is an ordinary navigation). All of its motion
-stops under `prefers-reduced-motion`.
+in mono caps beside a hairline down which one segment falls, and beneath it
+`.skip-btn` — "Go directly to the shelf (and miss out on the experience)".
+Fades in after 2 s and goes for good once `scrollY > 40`. Clicking "Scroll"
+eases down one screen; the button is an ordinary navigation. The falling
+segment stops under `prefers-reduced-motion`.
 
 **The five acts, as currently tuned** (fractions of each act's span):
 
@@ -545,10 +545,10 @@ add a line to `specs`, and position it in CSS. Paths use
 
 ## 15. The portal, and the way through to the shelf
 
-`shelf.html` is reachable two ways: the shortcut in the scroll cue on the
-first screen (`.cue__shelf`, an ordinary link for anyone who does not want to
-read five acts to find the issues), and the end of Act V, as a particle event
-— the one that is worth the wait.
+`shelf.html` is reachable two ways: the button under the scroll cue on the
+first screen (`.skip-btn`, for anyone who does not want to read five acts to
+find the issues), and the end of Act V, as a particle event — the one that is
+worth the wait.
 
 **The ending.** The wordmark settles (Act V 78 %), holds (78–86 %), then every
 grain falls — `spread` 0.06, no burst, low seeds first so the underline gives
@@ -606,8 +606,8 @@ a direct visit is an ordinary page load.
 ordinary navigation (and the flag is cleared, so the shelf does not try to
 continue a move that never happened). On the static page (§12) there are no particles, so the
 portal is hidden and the colophon shows a plain text link instead
-(`.shelf-link`), which is also what a no-JS visitor gets. Apart from the cue's shortcut, nothing else links to the shelf — the Act IV
-covers keep their `link pending` placeholders. The page
+(`.shelf-link`), which is also what a no-JS visitor gets. Apart from that button, nothing else links to the shelf — the Act IV covers
+keep their `link pending` placeholders. The page
 is `noindex`; direct visits are not redirected.
 
 ## 16. The Complete Shelf — `shelf.html`, `js/shelf/*`
