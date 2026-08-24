@@ -41,7 +41,7 @@
 
 /* the ground steps from black to paper at the flip; soften the switch */
 body, .masthead, .masthead::before { transition: background-color 480ms ease, color 480ms ease; }
-.act *:not(.cover):not(.cover *):not(.gate):not(.gate *):not(.reveal), .colophon, .colophon * { transition: color 480ms ease, border-color 480ms ease, background-color 480ms ease; }
+.act *:not(.cover):not(.cover *):not(.reveal) { transition: color 480ms ease, border-color 480ms ease, background-color 480ms ease; }
 
 html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
 
@@ -160,7 +160,7 @@ main { position: relative; z-index: 2; }
 .gloss em { color: var(--ink); }
 
 /* The rest: a plain grotesque, nothing to prove. */
-.act--fracture .display, .act--lenses .display, .act--invite .display, .colophon {
+.act--fracture .display, .act--lenses .display, .act--invite .display {
   font-family: var(--grot); font-weight: 500; letter-spacing: -0.025em;
 }
 .act--fracture .prose, .act--lenses .prose, .act--invite .prose { font-weight: 300; }
@@ -395,25 +395,6 @@ main { position: relative; z-index: 2; }
 /* ---- reveals --------------------------------------------------------------- */
 html.js .reveal { opacity: 0; transform: translateY(1.2rem); will-change: opacity, transform; }
 
-/* ---- colophon --------------------------------------------------------------- */
-
-.colophon {
-  position: relative;
-  padding: 165vh 0 0;
-  font-size: 0.92rem; font-weight: 400; letter-spacing: 0;
-  color: var(--ink-soft);
-}
-.colophon__grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 2rem var(--gutter);
-  padding: 4rem var(--gutter) 6vh; border-top: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
-}
-.colophon__grid > div { max-width: 80rem; }
-.colophon p { margin: 0 0 0.6em; max-width: 40ch; }
-.colophon__mark { font-family: var(--grot); font-weight: 800; letter-spacing: -0.03em; font-size: 1.6rem; color: var(--ink); }
-.colophon__fine { margin-top: 1.2em; font-size: 0.8em; }
-.colophon__attrib { font-size: 0.85em; }
-
 /* ---- the portal: the last beat, and the only way to the shelf --------------- */
 /* The ring and the vortex inside it are particles; this is only the hit area,
    placed over them by js/main.js (--px/--py/--pr) and live once --pt opens. */
@@ -443,7 +424,7 @@ html.js .reveal { opacity: 0; transform: translateY(1.2rem); will-change: opacit
 html.static .portal-note { display: none; }
 
 /* entering: the particles carry the transition, so everything else clears out */
-html.is-entering .portal-note, html.is-entering .masthead, html.is-entering .colophon,
+html.is-entering .portal-note, html.is-entering .masthead,
 html.is-entering .cue, html.is-entering main { opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
 html.is-entering { cursor: progress; }
 /* the ground drops to black quickly rather than drifting through grey */
@@ -513,10 +494,6 @@ html.static .act--fracture, html.static .act--lenses {
   --bg: rgb(244, 238, 227); --ink: rgb(28, 22, 20); --ink-soft: rgba(28, 22, 20, 0.62); --rule: rgba(28, 22, 20, 0.16);
   background: var(--bg); color: var(--ink);
 }
-/* Act V and the colophon are on black again, as on the dynamic page */
-html.static .colophon { background: rgb(8, 8, 11); color: rgba(244, 241, 234, 0.72); }
-html.static .colophon .colophon__mark { color: rgb(244, 241, 234); }
-html.static .colophon__grid { border-top-color: rgba(244, 241, 234, 0.16); }
 html.static .act--invite { background: linear-gradient(rgb(244, 238, 227) 0%, rgb(244, 238, 227) 4%, rgb(8, 8, 11) 26%, rgb(8, 8, 11) 100%); color: rgb(244, 241, 234); }
 html.static .act--invite .label, html.static .act--invite .prose { color: rgba(244, 241, 234, 0.85); }
 html.static .act--fracture { background: linear-gradient(rgb(8, 8, 11) 0%, rgb(8, 8, 11) 8%, rgb(244, 238, 227) 42%, rgb(244, 238, 227) 100%); }
@@ -537,7 +514,7 @@ html:not(.js) .act { height: auto; min-height: 100vh; }
 html:not(.js) .act__sticky, html:not(.js) .act__sticky--col .act__inner { position: static; height: auto; padding-top: 16vh; padding-bottom: 16vh; }
 html:not(.js) .act__flow { padding: 0 0 16vh; }
 html:not(.js) .act--monument, html:not(.js) .act--impasse { background: rgb(8, 8, 11); color: rgb(244, 241, 234); }
-html:not(.js) .act--fracture, html:not(.js) .act--lenses, html:not(.js) .act--invite, html:not(.js) .colophon {
+html:not(.js) .act--fracture, html:not(.js) .act--lenses, html:not(.js) .act--invite {
   --bg: rgb(244, 238, 227); --ink: rgb(28, 22, 20); --ink-soft: rgba(28, 22, 20, 0.62); --rule: rgba(28, 22, 20, 0.16);
   background: var(--bg); color: var(--ink);
 }

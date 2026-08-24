@@ -143,11 +143,15 @@ note and a visible "link pending" tag. Search for `TODO-`:
 - `#TODO-issue-01-url` — Read Issue 01 (Act IV cover, Act V button, shelf manifest `href`)
 - `#TODO-submission-url` — Send us a piece (Act V)
 - `#TODO-pitch-url` — Pitch a subject (Act IV cover, shelf manifest)
-- `#TODO-email` — the editorial address in the colophon
+- `#TODO-email` — the editorial address (had a home in the colophon, now removed)
 
 Remove the `is-placeholder` class and the `<span class="placeholder-tag">`
-when you set each one, and fill the attribution line in the colophon
-(`#attribution`).
+when you set each one.
+
+**The colophon is gone** (the page now ends on the portal), and it took the
+editorial email, the copyright line and — importantly — the scan attribution
+placeholder with it. If those scans require credit, the site currently gives
+none: pick it a home before launch. The shelf page is the obvious candidate.
 
 The site's canonical domain is **https://aporia.press/** — set in `og:url`,
 `og:image`, `twitter:image` and `canonical` in `index.html`. If you ever move

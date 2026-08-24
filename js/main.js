@@ -396,8 +396,8 @@ export function measureActs() {
   });
   acts.forEach((a, i) => {
     a.start = i === 0 ? 0 : clamp(a.top - focus, 0, maxScroll);
-    // The last act ends at its own bottom too; anything after it inside <main>
-    // (the colophon) scrolls in with the final state held.
+    // The last act ends at its own bottom, which is now the end of the
+    // document: the portal is the last thing on the page.
     a.end = clamp(a.top + a.height - focus, 0, maxScroll);
     a.len = Math.max(1, a.end - a.start);
   });

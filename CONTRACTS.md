@@ -390,8 +390,8 @@ well under a second.
 vertical centre is inside it (that is also the midpoint of the hand-over
 between neighbouring sticky blocks). Its scroll span in px becomes its span on
 the timeline in ms (1 ms = 1 px; the timeline is pinned to `maxScroll`). The
-last act ends at its own bottom like the others; anything after it inside
-`<main>` (the colophon) scrolls in with the final state held. So:
+last act ends at its own bottom, which is now the end of the document — the
+portal is the last thing on the page, and there is no footer after it. So:
 
 - To make a beat longer or shorter, **change the section's CSS height** in
   `css/styles.css` (`.act--monument { height: 220vh }` etc.). Nothing else.
