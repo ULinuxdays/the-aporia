@@ -134,7 +134,21 @@ function goStatic(reason) {
   html.classList.remove('dynamic');
   html.classList.add('static');
   html.dataset.staticReason = reason;
+  publishMode('static');
   console.info(`[aporia] static page: ${reason}`);
+}
+
+/**
+ * Announce which way the page went, once and for all. js/page.js waits for
+ * this rather than reading a class: the head's watchdog can set `static`
+ * before this module runs, and this module can take it straight back off, so
+ * the class is not a safe thing to read at an arbitrary moment.
+ */
+function publishMode(mode) {
+  const html = document.documentElement;
+  if (html.dataset.mode === mode) return;
+  html.dataset.mode = mode;
+  dispatchEvent(new CustomEvent('aporia:mode', { detail: mode }));
 }
 
 async function main() {
@@ -156,6 +170,7 @@ async function main() {
   }
   html.classList.remove('static');                  // the head's watchdog may have fired first; we are here, so we run
   html.classList.add('dynamic');
+  publishMode('dynamic');
 
   // 1. Everything that doesn't need the renderer starts now, so the page is
   //    reading-ready and colour-correct before a single cloud byte arrives.

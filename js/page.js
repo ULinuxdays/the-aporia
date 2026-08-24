@@ -21,18 +21,37 @@ const DEBUG = new URLSearchParams(location.search).has('debug');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DAMPING = 0.35;
 
-// The static page (html.static — reduced motion, weak device, no WebGL) gets
-// none of the scroll-driven mechanics: CSS shows everything resolved, and the
-// issue covers mark the first issue. main.js decides the mode synchronously
-// before this module runs.
-if (document.documentElement.classList.contains('static')) {
-  fanCovers([...document.querySelectorAll('.cover[data-lens]')]);
-  document.querySelector('.cover[data-lens="0"]')?.classList.add('is-active');
-} else {
-  jargonField();
-  swapList();
-  marginalia();
-  issueCards();
+/**
+ * The static page (reduced motion, weak device, no WebGL) gets none of the
+ * scroll-driven mechanics: CSS shows everything resolved, and the issue covers
+ * mark the first issue.
+ *
+ * The mode comes from main.js, never from reading a class here. The head's
+ * watchdog can set `static` before main.js runs and main.js can take it off
+ * again, so a class read at an arbitrary moment is a coin toss — and losing it
+ * leaves the page dynamic but with none of these mechanics running, which
+ * looks exactly like a broken site.
+ */
+whenMode((mode) => {
+  if (mode === 'static') {
+    fanCovers([...document.querySelectorAll('.cover[data-lens]')]);
+    document.querySelector('.cover[data-lens="0"]')?.classList.add('is-active');
+  } else {
+    jargonField();
+    swapList();
+    marginalia();
+    issueCards();
+  }
+});
+
+function whenMode(fn) {
+  const html = document.documentElement;
+  let done = false;
+  const once = (m) => { if (!done) { done = true; fn(m); } };
+  if (html.dataset.mode) { once(html.dataset.mode); return; }
+  addEventListener('aporia:mode', (e) => once(e.detail), { once: true });
+  // main.js never reported in: treat it as static, which is what the page is showing
+  setTimeout(() => once(html.dataset.mode || (html.classList.contains('dynamic') ? 'dynamic' : 'static')), 5000);
 }
 
 // --------------------------------------------------------------------------- 1. jargon field

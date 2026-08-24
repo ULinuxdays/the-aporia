@@ -26,6 +26,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500;600;800&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 
+<!-- The import map comes first: a browser rejects one that appears after any
+     module has begun loading or preloading. -->
+<script type="importmap">
+{
+  "imports": {
+    "three":   "./vendor/three/build/three.module.js",
+    "animejs": "./vendor/animejs/anime.esm.js"
+  }
+}
+</script>
+
 <script>
   document.documentElement.classList.add('js');
 
@@ -44,8 +55,8 @@
       h.setAttribute('data-static-reason', why);
     }
     addEventListener('error', function (e) {
-      // module resolution and load failures surface here before anything runs
-      if (e && (e.target === null || (e.target && e.target.tagName === 'SCRIPT'))) rescue('scripts failed');
+      var t = e && e.target;
+      if (t && t.tagName === 'SCRIPT' && t.src && t.src.indexOf('/js/') > -1) rescue('a script failed to load');
     }, true);
     setTimeout(function () { rescue('scripts did not start'); }, 4000);
   })();
@@ -76,14 +87,7 @@
     } catch (e) {}
   })();
 </script>
-<script type="importmap">
-{
-  "imports": {
-    "three":   "./vendor/three/build/three.module.js",
-    "animejs": "./vendor/animejs/anime.esm.js"
-  }
-}
-</script>
+
 </head>
 <body>
 
