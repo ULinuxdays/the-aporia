@@ -105,9 +105,12 @@ note and a visible "link pending" tag. Search for `TODO-`:
 - `#TODO-email` — the editorial address in the colophon
 
 Remove the `is-placeholder` class and the `<span class="placeholder-tag">`
-when you set each one. Also replace `REPLACE-WITH-YOUR-DOMAIN` in the
-`og:url`, `og:image`, `twitter:image` and `canonical` tags once the site has a
-domain, and fill the attribution line in the colophon (`#attribution`).
+when you set each one, and fill the attribution line in the colophon
+(`#attribution`).
+
+The site's canonical domain is **https://aporia.press/** — set in `og:url`,
+`og:image`, `twitter:image` and `canonical` in `index.html`. If you ever move
+it or prefer `www.`, those four lines are the only place it appears.
 
 ## The Complete Shelf
 
