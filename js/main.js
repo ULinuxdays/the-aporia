@@ -753,6 +753,9 @@ function createPortal(scroll) {
       el.classList.toggle('is-open', t > 0.02);
       el.setAttribute('aria-hidden', t > 0.02 ? 'false' : 'true');
       el.tabIndex = t > 0.02 ? 0 : -1;
+      // the note draws on the same window as the aperture, so the mark appears
+      // as the ring gathers and is finished as it settles — rather than being
+      // triggered once the portal had already formed, which read as late
       note.update(cx, cy, r, t);
     },
   };
@@ -765,26 +768,29 @@ function createPortalNote() {
   const paths = [...el.querySelectorAll('path')];
   const drawables = svg.createDrawable(paths);
   const text = el.querySelector('.marg__note');
-  let drawn = false, hidden = false;
-  const show = () => {
-    if (drawn) return; drawn = true; hidden = false;
-    el.classList.add('is-on');
-    const tl = createTimeline({ defaults: { ease: 'inOutSine' } });
-    tl.add(drawables, { draw: { from: '0 0', to: '0 1' }, duration: 900, delay: (_, i) => i * 300 }, 200);
-    if (text) tl.add(text, { opacity: { from: 0, to: 1 }, translateY: { from: '0.3rem', to: '0rem' }, duration: 450 }, 700);
-  };
-  const hide = () => {
-    if (!drawn || hidden) return; hidden = true; drawn = false;
-    el.classList.remove('is-on');
-    animate(drawables, { draw: '0 0', duration: 300, ease: 'inSine' });
-    if (text) animate(text, { opacity: 0, duration: 200 });
-  };
+
+  // Scrubbed, not triggered: the arrow strokes on in step with the ring
+  // gathering out of the fallen letters, the way every other mark on the page
+  // is drawn by the scroll itself. Triggering it meant it arrived after the
+  // portal had already formed.
+  const tl = createTimeline({ autoplay: false, defaults: { ease: 'inOutSine' } });
+  tl.add(drawables, { draw: { from: '0 0', to: '0 1' }, duration: 600, delay: (_, i) => i * 220 }, 0);
+  if (text) tl.add(text, { opacity: { from: 0, to: 1 }, translateY: { from: '0.35rem', to: '0rem' }, duration: 380 }, 520);
+  const span = tl.duration;
+  let last = -1;
+
   return {
     update(cx, cy, r, t) {
       el.style.setProperty('--px', `${cx}px`);
       el.style.setProperty('--py', `${cy}px`);
       el.style.setProperty('--pr', `${r}px`);
-      if (t > 0.85) show(); else if (t < 0.5) hide();
+      // complete a little before the portal does, so the note is finished
+      // rather than still drawing when the ring settles
+      const p = Math.min(1, Math.max(0, t / 0.85));   // finished just before the portal settles
+      if (Math.abs(p - last) < 0.002) return;
+      last = p;
+      el.classList.toggle('is-on', p > 0.001);
+      tl.seek(span * p);
     },
   };
 }
