@@ -315,11 +315,15 @@ main { position: relative; z-index: 2; }
 .cue {
   position: absolute; left: var(--gutter); bottom: 2.4rem; z-index: 2;
   display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem;
-  /* up with the copy, not two seconds behind it */
-  opacity: 0; animation: cue-in 700ms ease 60ms forwards;
+  /* Present from the first painted frame, like the rest of the page. It used
+     to fade itself in with a CSS animation, but such an animation only starts
+     at first paint — by which time the copy's JS-driven fade has already
+     finished, so the cue always trailed it. No entry animation: it is simply
+     there when the page is. Only the exit is animated. */
+  opacity: 1;
   transition: opacity 500ms ease;
 }
-.cue.is-gone { opacity: 0 !important; pointer-events: none; animation: none; }
+.cue.is-gone { opacity: 0; pointer-events: none; }
 
 .scroll-cue {
   display: flex; flex-direction: row; align-items: center; gap: 1.4rem;
@@ -378,11 +382,8 @@ main { position: relative; z-index: 2; }
   border-color: var(--accent); width: 1.4rem; height: 1.4rem;
 }
 
-@keyframes cue-in { to { opacity: 1; } }
 @keyframes cue-drop { 0% { top: -100%; } 55% { top: 100%; } 100% { top: 100%; } }
-html.static .cue { animation-delay: 60ms; }
 @media (prefers-reduced-motion: reduce) {
-  .cue { animation: none; opacity: 1; }
   .scroll-cue__line::after { animation: none; top: 0; }
 }
 @media (max-width: 48rem) {
