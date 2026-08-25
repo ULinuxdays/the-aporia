@@ -118,6 +118,7 @@
   <span style="--x:48%; --y:94%; --s:0.9;  --r:2deg">modal realism</span>
 </div>
 
+<div id="progress" aria-hidden="true"><span></span></div>
 <a class="skip" href="#main-start">Skip to the reading</a>
 <header class="masthead">
   <a class="masthead__mark" href="#top">The Aporia</a>
@@ -306,6 +307,20 @@
     <svg class="marg__svg marg--arrow" viewBox="0 0 120 60"><path d="M116 8 C 100 34, 70 50, 18 44" /><path d="M30 32 L 16 44 L 32 54" /></svg>
     <span class="marg__note marg__note--portal">go on, click it</span>
   </span>
+
+  <!-- Scroll that holds on the finished portal. Act V's last beat completes the
+       ring at 98 % of the act, and with nothing after it the act's end was being
+       clamped to the end of the document: 59px of scroll once the ring had
+       formed. The ring arrived and the page stopped in the same motion, so a
+       reader still moving could pass the only door on the page without seeing
+       it was a door.
+
+       Deliberately NOT a <section class="act">. measureActs() only looks at
+       those, so Act V keeps its exact span and every beat keeps its timing; the
+       tail simply has no beats, which parks the scene with the ring open and
+       clickable. It does not read as frozen — the drift in scene.js runs off
+       uTime, so the grains keep moving whether or not the scroll does. -->
+  <div class="portal-hold" aria-hidden="true"></div>
 
 
 </main>

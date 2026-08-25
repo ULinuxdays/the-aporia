@@ -31,6 +31,15 @@ const SWEEP_DIR = /* @__PURE__ */ (() => new THREE.Vector3(0.78, 0.62, 0.1).norm
 const REF_DISTANCE = 5;
 const REF_HEIGHT = 900;
 const MAX_DPR = 2;
+/* Phones are fill-rate bound, not vertex bound. The field is alpha-blended
+   points with depthTest off, so every grain pays fragments wherever it lands and
+   the cost scales with device pixels, not with the particle count. Dropping the
+   ceiling from 2 to 1.5 on a narrow viewport cuts fragment work to 56 % of what
+   it was. Nothing moves on screen: uPointScale multiplies by dpr, so a grain
+   keeps the same size in CSS pixels and is only rendered a little softer.
+   Read inside resize(), so rotating into a narrow orientation re-picks it. */
+const MAX_DPR_NARROW = 1.5;
+const NARROW_PX = 720;            // the `narrow` threshold in decideMode()
 
 const VERT = /* glsl */ `
   attribute vec3 aPosA;
@@ -345,7 +354,8 @@ export function createScene(canvas, { count, shapes, onFrame, seed = 1, coldColo
   function resize() {
     const w = canvas.clientWidth || canvas.width || 1;
     const h = canvas.clientHeight || canvas.height || 1;
-    dpr = Math.min(MAX_DPR, (typeof devicePixelRatio === 'number' && devicePixelRatio) || 1);
+    const ceiling = innerWidth < NARROW_PX ? MAX_DPR_NARROW : MAX_DPR;
+    dpr = Math.min(ceiling, (typeof devicePixelRatio === 'number' && devicePixelRatio) || 1);
     if (w === width && h === height && renderer.getPixelRatio() === dpr) return;
     width = w; height = h;
     renderer.setPixelRatio(dpr);

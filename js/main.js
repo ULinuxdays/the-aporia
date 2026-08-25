@@ -25,6 +25,7 @@ import { loadAllClouds } from './clouds.js';
 import { STATE_DEFAULTS, PORTAL } from './state.js';
 import { createSmoothScroll } from './smooth-scroll.js';
 import { createCurtain, removeCurtains } from './curtain.js';
+import { createScrollProgress } from './progress.js';
 // three.js, the shapes and the scene are imported lazily, and only on the
 // dynamic path — the static page never fetches them.
 
@@ -163,6 +164,7 @@ async function main() {
   const html = document.documentElement;
   const smooth = createSmoothScroll({ lerp: 0.055 });     // eased wheel scrolling; off under reduced motion / touch
   createScrollCue(smooth);
+  createScrollProgress();                                 // before the static bail-out: the static page scrolls too
   if (mode.static) {
     goStatic(mode.reason);
     if (DEBUG) window.__aporia = { mode };

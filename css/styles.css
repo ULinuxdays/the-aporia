@@ -45,6 +45,12 @@ body, .masthead, .masthead::before { transition: background-color 480ms ease, co
 
 html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
 
+/* The native scrollbar is replaced by #progress. Scoped to the document
+   scroller: any inner scroller (and shelf.html, which loads its own sheet)
+   keeps its own bar. Keyboard, touch and anchor scrolling are untouched. */
+html { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -84,6 +90,24 @@ main { position: relative; z-index: 2; }
   color: var(--ink-soft);
   pointer-events: none;
 }
+/* --- reading progress ------------------------------------------------------
+   Sits above the masthead's scrim so it stays legible over the gradient, and
+   under .skip so the skip link still wins on focus. Painted with a transform
+   rather than a width: no layout on any frame of the scroll. */
+#progress {
+  position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 12;
+  background: var(--rule);
+  pointer-events: none;
+  opacity: 0; transition: opacity 500ms ease;
+}
+#progress.is-live { opacity: 1; }
+#progress span {
+  display: block; height: 100%; width: 100%;
+  transform: scaleX(0); transform-origin: 0 50%;
+  background: var(--accent);
+  will-change: transform;
+}
+
 .masthead::before {
   content: ""; position: absolute; inset: 0; height: 5.5rem; z-index: -1; pointer-events: none;
   background: linear-gradient(to bottom, var(--bg) 35%, transparent);
@@ -103,6 +127,21 @@ main { position: relative; z-index: 2; }
 .act--fracture { height: 340vh; }
 .act--lenses   { height: 480vh; }
 .act--invite   { height: 380vh; }
+
+/* Phones scroll with a thumb, not a wheel. One flick covers well under a screen,
+   so the desktop runway — 19 screens end to end — is something like thirty
+   swipes. Same acts, same beats, about two thirds the length. Safe by
+   measurement: the tallest real content in any act is Act III's flowing column,
+   which ends 63vh in, so nothing here comes close to overflowing its box. */
+@media (max-width: 48rem) {
+  .act--monument { height: 150vh; }
+  .act--impasse  { height: 190vh; }
+  .act--fracture { height: 230vh; }
+  .act--lenses   { height: 320vh; }
+  .act--invite   { height: 260vh; }
+  /* .portal-hold is shortened next to its own rule further down: at equal
+     specificity the later declaration wins, and the base one is below this. */
+}
 
 .act__sticky {
   position: sticky; top: 0;
@@ -407,6 +446,7 @@ html.js .reveal { opacity: 0; transform: translateY(1.2rem); will-change: opacit
   left: var(--px, 50vw); top: var(--py, 50vh);
   width: calc(var(--pr, 120px) * 2); height: calc(var(--pr, 120px) * 2);
   transform: translate(-50%, -50%);
+  min-width: 44px; min-height: 44px;   /* never smaller than a thumb, however small the ring projects */
   border-radius: 50%;
   opacity: var(--pt, 0);
   pointer-events: none; cursor: pointer;
@@ -429,12 +469,25 @@ html.static .portal-note { display: none; }
 
 /* entering: the particles carry the transition, so everything else clears out */
 html.is-entering .portal-note, html.is-entering .masthead,
-html.is-entering .cue, html.is-entering main { opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
+html.is-entering .cue, html.is-entering main, html.is-entering #progress { opacity: 0; transition: opacity 300ms ease; pointer-events: none; }
 html.is-entering { cursor: progress; }
 /* the ground drops to black quickly rather than drifting through grey */
 html.is-entering body { transition: background-color 200ms ease; }
 
 html.static .portal { display: none; }
+
+/* The run-out after the ring forms. Half of it is spent by measureActs(), which
+   ends an act half a viewport past its own bottom, so 180vh here buys about
+   1.4 screens of scroll with the portal already open. Note this also un-clamps
+   Act V: its end used to be pinned to the end of the document, which cost it
+   450px of its designed 380vh and left 59px after the ring completed. The
+   static page has no ring to hold on (it gets .shelf-link), so it gets none. */
+.portal-hold { height: 180vh; pointer-events: none; }
+/* Shortened with the acts, but less aggressively: momentum scrolling means a
+   single fling travels a long way, and 130vh left only 0.76 of a screen with the
+   ring open — inside one flick. 160vh keeps it above a full screen. */
+@media (max-width: 48rem) { .portal-hold { height: 160vh; } }
+html.static .portal-hold { display: none; }
 
 /* the static page (and no-JS) has no particles to walk through, so it gets a plain link */
 .shelf-link { display: none; }
