@@ -77,6 +77,27 @@ em { font-style: italic; }
 html.no-webgl #stage, html.static #stage { display: none; }
 
 #jargon { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+
+/* The scrim that stands the copy off the figure once the layout goes to one
+   column. Fixed to the viewport, not to an act.
+
+   It used to be .act__sticky::after — one per act — and a sticky block unpins
+   and scrolls away at the end of its act, which dragged a 576px band with a
+   solid bottom third right up the screen at every chapter change while the next
+   act's band rose to meet it. Two opaque bars crossing over the figure, at
+   every boundary. Anchored to the viewport it simply sits still.
+
+   One element also means nothing stacks, and Act III is covered like the rest:
+   its column is not a pinned 100vh block, so its own ::after sat below the fold
+   for most of the act and left that copy over bare particles. */
+#scrim {
+  position: fixed; left: 0; right: 0; bottom: 0; height: 72%;
+  z-index: 1; pointer-events: none; display: none;
+  background: linear-gradient(to top, var(--bg) 0%, var(--bg) 30%, color-mix(in srgb, var(--bg) 72%, transparent) 62%, transparent 100%);
+}
+/* only where the figure is actually behind the copy, and only when there is a
+   figure — the static page paints its own grounds per act */
+@media (max-width: 64rem) { html.dynamic #scrim { display: block; } }
 main { position: relative; z-index: 2; }
 .masthead { z-index: 3; }
 
@@ -484,7 +505,11 @@ html.js .reveal { opacity: 0; transform: translateY(1.2rem); will-change: opacit
 /* the annotation: a pen arrow into the ring from the upper right, drawn on with the vortex */
 .portal-note {
   position: fixed; z-index: 3; pointer-events: none;
-  left: calc(var(--px, 50vw) + var(--pr, 120px) * 0.72);
+  /* min() is a pure safety clamp: on a wide screen the ring sits near the middle
+     and the first term always wins, so this is a no-op there. On a phone the
+     note is 10rem of box plus a nowrap line that reaches about 13rem in total,
+     which ran off the right edge and was clipped by body's overflow-x. */
+  left: min(calc(var(--px, 50vw) + var(--pr, 120px) * 0.72), calc(100vw - 13.5rem));
   top: calc(var(--py, 50vh) - var(--pr, 120px) * 0.92);
   width: 10rem; height: 5rem;
 }
@@ -550,10 +575,6 @@ html.static .shelf-link, html:not(.js) .shelf-link { display: block; margin-bott
   /* the figure sits behind the copy here: dim it and stand the copy on a scrim of the page colour */
   #stage.is-ready { opacity: 0.72; }
   .act__sticky { position: sticky; }
-  .act__sticky::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 72%; z-index: 0; pointer-events: none;
-    background: linear-gradient(to top, var(--bg) 0%, var(--bg) 30%, color-mix(in srgb, var(--bg) 72%, transparent) 62%, transparent 100%);
-  }
   .act__inner, .covers, .act__flow, .issues { position: relative; z-index: 1; }
   .act__sticky--col .act__inner { z-index: 1; }
   #jargon { display: none; }
