@@ -64,6 +64,9 @@ export function readLenses() {
 const LENSES = readLenses();
 const N_LENS = LENSES.length;
 const SHAPE_PAGE = 2 + N_LENS, SHAPE_WORDMARK = 3 + N_LENS, SHAPE_PORTAL = 4 + N_LENS;
+/** How far into Act V the ring has finished forming. Shared by the beat that
+ *  forms it and by the portal mark on the progress rule. */
+export const PORTAL_AT = 0.98;
 /** Page ground and text at the two ends of the tonal shift (0..255). */
 const COLD_BG = [8, 8, 11],      WARM_BG = [244, 238, 227];
 const COLD_INK = [244, 241, 234], WARM_INK = [28, 22, 20];
@@ -164,7 +167,10 @@ async function main() {
   const html = document.documentElement;
   const smooth = createSmoothScroll({ lerp: 0.055 });     // eased wheel scrolling; off under reduced motion / touch
   createScrollCue(smooth);
-  createScrollProgress();                                 // before the static bail-out: the static page scrolls too
+  // Before the static bail-out: the static page scrolls too. The marks are a
+  // callback because the rule re-reads them whenever the document changes
+  // height, which is exactly when the act spans move.
+  createScrollProgress({ marks: progressMarks });
   if (mode.static) {
     goStatic(mode.reason);
     if (DEBUG) window.__aporia = { mode };
@@ -406,6 +412,20 @@ export function measureActs() {
   return { acts, maxScroll, vh };
 }
 
+/**
+ * Where to notch the progress rule: one at the head of every act after the
+ * first (act one starts at the rule's own origin, so it needs no mark), plus
+ * the point where the ring has finished forming. Fractions of maxScroll.
+ */
+function progressMarks() {
+  const { acts, maxScroll } = measureActs();
+  if (!acts.length || maxScroll <= 1) return [];
+  const out = acts.slice(1).map((a) => ({ at: a.start / maxScroll, kind: 'chapter' }));
+  const last = acts[acts.length - 1];
+  out.push({ at: (last.start + PORTAL_AT * last.len) / maxScroll, kind: 'portal' });
+  return out;
+}
+
 // --------------------------------------------------------------------------- the choreography
 
 /**
@@ -562,7 +582,7 @@ function choreograph(tl, state, acts) {
   beat(V, 0.70, 0.86, { drift: 0.016 }, 'inSine');
   // …it holds (78–86 %), then the letters fall and a ring gathers: the portal. No burst —
   // straight down, staggered by seed, reads as falling.
-  beat(V, 0.86, 0.98, { morph: SHAPE_PORTAL, spread: 0.06, accentMix: 0.95, drift: 0.028, ...rgb([0.8, 0.4, 0.16]) }, 'inQuad');   // the ring burns in the orange and shimmers
+  beat(V, 0.86, PORTAL_AT, { morph: SHAPE_PORTAL, spread: 0.06, accentMix: 0.95, drift: 0.028, ...rgb([0.8, 0.4, 0.16]) }, 'inQuad');   // the ring burns in the orange and shimmers
 }
 
 /**

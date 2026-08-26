@@ -95,18 +95,43 @@ main { position: relative; z-index: 2; }
    under .skip so the skip link still wins on focus. Painted with a transform
    rather than a width: no layout on any frame of the scroll. */
 #progress {
-  position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 12;
-  background: var(--rule);
+  position: fixed; top: 0; left: 0; right: 0; height: 6px; z-index: 12;
+  /* A touch stronger than --rule: the chapter notches are cut in --bg, and they
+     have to read against the unfilled track as well as against the fill. */
+  background: color-mix(in srgb, var(--ink) 20%, transparent);
   pointer-events: none;
   opacity: 0; transition: opacity 500ms ease;
 }
 #progress.is-live { opacity: 1; }
-#progress span {
+.progress__fill {
   display: block; height: 100%; width: 100%;
   transform: scaleX(0); transform-origin: 0 50%;
   background: var(--accent);
   will-change: transform;
 }
+
+/* One notch at the head of each act — the chapters the copy numbers 001 to 005.
+   Cut in the page colour rather than drawn in ink, so the rule reads as a
+   divided measure rather than a bar with things on top of it. Above the fill,
+   so a chapter stays legible once it has been read. */
+.progress__mark {
+  position: absolute; top: 0; height: 100%;
+  width: 2px; margin-left: -1px;
+  background: var(--bg);
+}
+
+/* The portal. Not a chapter: it is the door, so it gets the ring's own orange
+   and hangs below the rule where the notches do not. Constant, because the
+   accent has moved on to pen-red by the time the ring forms. */
+.progress__mark--portal {
+  width: 5px; margin-left: -2.5px;
+  height: calc(100% + 3px);
+  background: rgb(204, 102, 41);
+  border-left: 1px solid var(--bg);
+  border-right: 1px solid var(--bg);
+}
+/* the static page has no ring to walk through — it gets .shelf-link instead */
+html.static .progress__mark--portal { display: none; }
 
 .masthead::before {
   content: ""; position: absolute; inset: 0; height: 5.5rem; z-index: -1; pointer-events: none;
