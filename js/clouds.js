@@ -27,12 +27,7 @@ export const MANIFEST_URL = 'assets/clouds/manifest.json';
  */
 export async function loadCloud(url, format = {}) {
   try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      console.info(`[clouds] ${url}: HTTP ${res.status} — cloud unavailable`);
-      return null;
-    }
-    const buf = await res.arrayBuffer();
+    const buf = await fetchCloud(url);
     // Decide the dtype from the bytes themselves, checked against the manifest's
     // point count when we have one: a cached Float32 file read as Int16 (or the
     // reverse) is garbage, and caches are exactly where that happens.
@@ -64,6 +59,29 @@ export async function loadCloud(url, format = {}) {
     console.info(`[clouds] ${url}: ${err && err.message ? err.message : err} — cloud unavailable`);
     return null;
   }
+}
+
+/**
+ * The bytes of one cloud, trying hard. These two files ARE the page: losing one
+ * to a dropped packet used to replace the sculpture with a stand-in made of
+ * tubes for the rest of the visit. So: the .bin, again, then the same bytes as
+ * base64 JSON (some school and office networks block .bin downloads outright),
+ * then both once more.
+ */
+async function fetchCloud(url) {
+  const bin = async () => { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); };
+  const json = async () => {
+    const r = await fetch(url.replace('.bin', '.json')); if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const raw = atob((await r.json()).b64), out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out.buffer;
+  };
+  let last;
+  for (const [attempt, wait] of [[bin, 0], [bin, 300], [json, 0], [bin, 1200], [json, 600]]) {
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    try { return await attempt(); } catch (err) { last = err; }
+  }
+  throw last;
 }
 
 /** True if the first few hundred values read as a normalised float32 cloud. */

@@ -206,6 +206,9 @@ async function main() {
       loadAllClouds(),
     ]);
     mark('modulesAndClouds');
+    // Never draw the procedural stand-ins for a visitor: if a scan truly cannot
+    // be had, the static page shows a rendered still of the real one instead.
+    if (!clouds.thinker || !clouds.epicurus) throw new Error('the scans could not be loaded');
     const { buildShape, shapeNamesFor } = shapesMod;
     const count = mode.count;
     const lenses = LENSES.map((l) => l.shape);
@@ -218,10 +221,6 @@ async function main() {
     shapes[1] = yawShape(buildShape(1, count, opts), YAW.bust);
     for (let i = 2; i < names.length; i++) shapes[i] = shapes[1];   // stand-ins until built; never yawed twice
     mark('firstShapes');
-    if (!clouds.thinker || !clouds.epicurus) {
-      console.info('[aporia] using stand-in geometry for', [!clouds.thinker && 'thinker', !clouds.epicurus && 'epicurus'].filter(Boolean).join(', '), '— run node tools/bake.mjs');
-    }
-
     scene = createScene(canvas, { count, shapes, onFrame });
     mark('sceneCreated');
     Object.assign(scene.state, state);               // hand the live values over; the timeline keeps animating this object
