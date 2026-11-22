@@ -39,9 +39,16 @@
 .skip { position: absolute; left: var(--gutter); top: -3rem; z-index: 20; padding: 0.5em 0.9em; background: var(--accent); color: var(--bg); font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; border-radius: 0.25em; transition: top 150ms; }
 .skip:focus { top: 1rem; }
 
-/* the ground steps from black to paper at the flip; soften the switch */
-body, .masthead, .masthead::before { transition: background-color 480ms ease, color 480ms ease; }
-.act *:not(.cover):not(.cover *):not(.reveal) { transition: color 480ms ease, border-color 480ms ease, background-color 480ms ease; }
+/* The ground steps from black to paper at the flip; soften the switch. The
+   variables themselves are transitioned, once, on the root. Transitioning
+   `color` on every element instead made each level of nesting wait for its
+   parent, so nested copy stayed the old colour — cream on cream — for up to
+   two seconds after the ground had changed. */
+@property --bg       { syntax: "<color>"; inherits: true; initial-value: rgb(8, 8, 11); }
+@property --ink      { syntax: "<color>"; inherits: true; initial-value: rgb(244, 241, 234); }
+@property --ink-soft { syntax: "<color>"; inherits: true; initial-value: rgba(244, 241, 234, 0.62); }
+@property --rule     { syntax: "<color>"; inherits: true; initial-value: rgba(244, 241, 234, 0.16); }
+html.dynamic { transition: --bg 360ms ease, --ink 360ms ease, --ink-soft 360ms ease, --rule 360ms ease; }
 
 html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
 
@@ -59,7 +66,7 @@ body {
   font-weight: 300;
   font-size: clamp(1rem, 0.45vw + 0.9rem, 1.15rem);
   line-height: 1.6;
-  overflow-x: hidden;
+  overflow-x: hidden; overflow-x: clip;
 }
 
 a { color: inherit; }
@@ -69,7 +76,8 @@ em { font-style: italic; }
 
 #stage {
   position: fixed; inset: 0;
-  width: 100vw; height: 100vh; height: 100dvh;
+  /* the large viewport: a phone's toolbar sliding away must not resize the canvas mid-scroll */
+  width: 100%; height: 100vh; height: 100lvh;
   display: block; z-index: 0;
   opacity: 0; transition: opacity 500ms ease;
 }
@@ -78,26 +86,11 @@ html.no-webgl #stage, html.static #stage { display: none; }
 
 #jargon { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
 
-/* The scrim that stands the copy off the figure once the layout goes to one
-   column. Fixed to the viewport, not to an act.
-
-   It used to be .act__sticky::after — one per act — and a sticky block unpins
-   and scrolls away at the end of its act, which dragged a 576px band with a
-   solid bottom third right up the screen at every chapter change while the next
-   act's band rose to meet it. Two opaque bars crossing over the figure, at
-   every boundary. Anchored to the viewport it simply sits still.
-
-   One element also means nothing stacks, and Act III is covered like the rest:
-   its column is not a pinned 100vh block, so its own ::after sat below the fold
-   for most of the act and left that copy over bare particles. */
-#scrim {
-  position: fixed; left: 0; right: 0; bottom: 0; height: 72%;
-  z-index: 1; pointer-events: none; display: none;
-  background: linear-gradient(to top, var(--bg) 0%, var(--bg) 30%, color-mix(in srgb, var(--bg) 72%, transparent) 62%, transparent 100%);
-}
-/* only where the figure is actually behind the copy, and only when there is a
-   figure — the static page paints its own grounds per act */
-@media (max-width: 64rem) { html.dynamic #scrim { display: block; } }
+/* Compact layouts: stands the copy zone off the particles. One element, fixed,
+   so it never travels; and it is only there while there is copy to read
+   (html.has-copy, js/main.js createSteps), so the wordmark and the portal are
+   never dimmed by it. */
+#scrim { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1; pointer-events: none; }
 main { position: relative; z-index: 2; }
 .masthead { z-index: 3; }
 
@@ -160,10 +153,11 @@ html.static .progress__mark--portal { display: none; }
 }
 .masthead > * { pointer-events: auto; margin: 0; }
 .masthead__mark { color: var(--ink); text-decoration: none; font-weight: 500; letter-spacing: 0.18em; }
-.masthead__sub { display: none; }
-.masthead__issue { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+.masthead__issue:hover { color: var(--ink); }
+.masthead__issue { position: relative; }
+.masthead__issue::after { content: ""; position: absolute; inset: -0.9rem -0.6rem; }   /* a thumb-sized target around a small line */
+.masthead__issue { margin-left: auto; color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
 .masthead__dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--accent); display: inline-block; }
-@media (min-width: 48rem) { .masthead__sub { display: block; } }
 
 /* ---- acts ---------------------------------------------------------------- */
 /* Heights are the choreography. Change them to re-time the page; nothing else. */
@@ -174,24 +168,10 @@ html.static .progress__mark--portal { display: none; }
 .act--lenses   { height: 480vh; }
 .act--invite   { height: 380vh; }
 
-/* Phones scroll with a thumb, not a wheel. One flick covers well under a screen,
-   so the desktop runway — 19 screens end to end — is something like thirty
-   swipes. Same acts, same beats, about two thirds the length. Safe by
-   measurement: the tallest real content in any act is Act III's flowing column,
-   which ends 63vh in, so nothing here comes close to overflowing its box. */
-@media (max-width: 48rem) {
-  .act--monument { height: 150vh; }
-  .act--impasse  { height: 190vh; }
-  .act--fracture { height: 230vh; }
-  .act--lenses   { height: 320vh; }
-  .act--invite   { height: 260vh; }
-  /* .portal-hold is shortened next to its own rule further down: at equal
-     specificity the later declaration wins, and the base one is below this. */
-}
 
 .act__sticky {
   position: sticky; top: 0;
-  height: 100vh; height: 100dvh;
+  height: 100vh; height: 100svh;
   display: grid;
   grid-template-columns: var(--col) minmax(0, 1fr) var(--aside);
   grid-template-areas: "left stage right";
@@ -202,7 +182,7 @@ html.static .progress__mark--portal { display: none; }
 .act__inner { position: relative; max-width: 100%; }
 .act__inner--left  { grid-area: left; }
 .act__inner--right { grid-area: right; }
-.act__inner--top   { align-self: start; padding-top: 14vh; }
+.act__inner--top   { align-self: start; padding-top: 11vh; }
 .act--lenses .act__sticky { grid-template-rows: minmax(0, 1fr); align-content: stretch; }
 
 /* Act III: two real columns. The left one pins; the right one flows. */
@@ -215,7 +195,7 @@ html.static .progress__mark--portal { display: none; }
   height: 100%;
 }
 .act__sticky--col { grid-area: left; display: block; padding: 0; }
-.act__sticky--col .act__inner { height: 100vh; height: 100dvh; display: grid; align-content: center; }
+.act__sticky--col .act__inner { height: 100vh; height: 100svh; display: grid; align-content: center; }
 .act__flow { grid-area: right; padding-top: 175vh; padding-bottom: 40vh; }
 
 /* ---- type ---------------------------------------------------------------- */
@@ -290,6 +270,7 @@ html.static .progress__mark--portal { display: none; }
   font-size: clamp(1.05rem, 1.1vw + 0.6rem, 1.45rem);
   line-height: 1.3;
   font-weight: 400;
+  text-wrap: balance;
 }
 .swap:last-child { border-bottom: 1px solid var(--rule); }
 .swap > span { grid-area: 1 / 1; }  /* …so the row is sized by the longer one and never reflows mid-swap */
@@ -358,12 +339,13 @@ html.static .progress__mark--portal { display: none; }
 }
 .btn--primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 
-/* Placeholder links. Clearly marked until the real URLs exist. */
-.is-placeholder { cursor: not-allowed; }
+/* Waiting on a real URL (data-todo in the HTML). Not links, so they go nowhere. */
+.is-placeholder { cursor: default; }
+.btn.is-placeholder { opacity: 0.82; }
 .placeholder-tag {
   display: inline-block; margin-left: 0.5em; padding: 0.1em 0.45em;
   font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase;
-  border: 1px dashed currentColor; border-radius: 0.25em; opacity: 0.75; vertical-align: middle;
+  border: 1px solid currentColor; border-radius: 999px; opacity: 0.7; vertical-align: middle;
 }
 
 /* ---- marginalia ------------------------------------------------------------ */
@@ -381,7 +363,7 @@ html.static .progress__mark--portal { display: none; }
   color: var(--pen); white-space: nowrap; pointer-events: none; opacity: 0;
 }
 /* I — underline beneath "we were shown." with "says who?" off to the right */
-.marg--underline { left: -0.05em; right: -0.05em; bottom: 0.04em; height: 0.16em; width: auto; }
+.marg--underline { left: -0.05em; bottom: 0.04em; height: 0.16em; width: calc(100% + 0.1em); }
 .marg__note--i { left: calc(100% + 0.45em); bottom: 0.12em; transform: rotate(-5deg); font-size: 1.7rem; }
 /* II — arrow from the margin into the Socrates sentence */
 .marg--note-only { position: absolute; left: 0; top: 0; width: 0; height: 100%; }
@@ -391,7 +373,7 @@ html.static .progress__mark--portal { display: none; }
 .marg--iii .marg--arrow { right: calc(100% + 0.3rem); top: -0.4rem; width: 5.5rem; height: 2.8rem; }
 .marg__note--iii { right: calc(100% + 5.8rem); top: -1.3rem; text-align: right; transform: rotate(4deg); }
 /* V — a loop around "interesting mistake" and "this one" in the margin */
-.marg--circle { left: -0.5em; right: -0.5em; top: -0.4em; bottom: -0.1em; width: auto; height: auto; }
+.marg--circle { left: -0.5em; top: -0.35em; width: calc(100% + 1em); height: calc(100% + 0.6em); }
 .marg__note--v { left: calc(100% + 0.8rem); bottom: -0.2rem; transform: rotate(-6deg); }
 
 /* ---- the scroll cue, and the way past it ------------------------------------ */
@@ -475,11 +457,6 @@ html.static .progress__mark--portal { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .scroll-cue__line::after { animation: none; top: 0; }
 }
-@media (max-width: 48rem) {
-  .cue { bottom: 1.5rem; gap: 1.1rem; }
-  .scroll-cue { font-size: 0.8rem; gap: 1rem; }
-  .scroll-cue__line { height: 3.4rem; }
-}
 
 /* ---- reveals --------------------------------------------------------------- */
 html.js .reveal { opacity: 0; transform: translateY(1.2rem); will-change: opacity, transform; }
@@ -505,16 +482,14 @@ html.js .reveal { opacity: 0; transform: translateY(1.2rem); will-change: opacit
 /* the annotation: a pen arrow into the ring from the upper right, drawn on with the vortex */
 .portal-note {
   position: fixed; z-index: 3; pointer-events: none;
-  /* min() is a pure safety clamp: on a wide screen the ring sits near the middle
-     and the first term always wins, so this is a no-op there. On a phone the
-     note is 10rem of box plus a nowrap line that reaches about 13rem in total,
-     which ran off the right edge and was clipped by body's overflow-x. */
-  left: min(calc(var(--px, 50vw) + var(--pr, 120px) * 0.72), calc(100vw - 13.5rem));
+  left: calc(var(--px, 50vw) + var(--pr, 120px) * 0.72);
   top: calc(var(--py, 50vh) - var(--pr, 120px) * 0.92);
   width: 10rem; height: 5rem;
 }
 .portal-note .marg--arrow { left: 0; top: 0; width: 6rem; height: 3rem; }
 .portal-note .marg__note { left: 6.4rem; top: -0.7rem; white-space: nowrap; transform: rotate(-6deg); opacity: 0; }
+.if-touch { display: none; }
+@media (hover: none) and (pointer: coarse) { .if-touch { display: inline; } .if-mouse { display: none; } }
 html.static .portal-note { display: none; }
 
 /* entering: the particles carry the transition, so everything else clears out */
@@ -533,15 +508,11 @@ html.static .portal { display: none; }
    450px of its designed 380vh and left 59px after the ring completed. The
    static page has no ring to hold on (it gets .shelf-link), so it gets none. */
 .portal-hold { height: 180vh; pointer-events: none; }
-/* Shortened with the acts, but less aggressively: momentum scrolling means a
-   single fling travels a long way, and 130vh left only 0.76 of a screen with the
-   ring open — inside one flick. 160vh keeps it above a full screen. */
-@media (max-width: 48rem) { .portal-hold { height: 160vh; } }
 html.static .portal-hold { display: none; }
 
 /* the static page (and no-JS) has no particles to walk through, so it gets a plain link */
 .shelf-link { display: none; }
-html.static .shelf-link, html:not(.js) .shelf-link { display: block; margin-bottom: 1em; }
+html.static .shelf-link, html:not(.js) .shelf-link { display: block; margin: 1.4rem 0 0; }
 .shelf-link a { font-weight: 500; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--accent); }
 
 /* ---- debug readout (?debug) ------------------------------------------------ */
@@ -551,33 +522,173 @@ html.static .shelf-link, html:not(.js) .shelf-link { display: block; margin-bott
   padding: 8px 10px; border-radius: 4px; white-space: pre; pointer-events: none;
 }
 
-/* ---- small screens ------------------------------------------------------------ */
+/* ---- compact: phones and tablets ------------------------------------------------
+   One column. The figure keeps the top of the screen (js/main.js compactFraming)
+   and the copy is paged through a fixed zone below it: each block is shown for
+   its own slice of the act (data-step, createSteps) in the same grid cell as the
+   others, so nothing reflows, overlaps or scrolls across the figure.
+
+   Sections overlap by one viewport, so an act's block pins as the previous one
+   lets go. An act's reading length is therefore its height minus 100vh. */
 @media (max-width: 64rem) {
+  .act--monument { height: 190vh; }
+  .act--impasse  { height: 270vh; }
+  .act--fracture { height: 400vh; }
+  .act--lenses   { height: 350vh; }
+  .act--invite   { height: 330vh; }
+  .portal-hold   { height: 110vh; }
+
+  .masthead { flex-wrap: wrap; gap: 0.1rem 1rem; padding-top: 1rem; padding-bottom: 0.7rem; font-size: 0.68rem; letter-spacing: 0.1em; }
+  .masthead__sub { order: 3; width: 100%; font-size: 0.6rem; letter-spacing: 0.08em; opacity: 0.85; }
+
   .act__sticky, .act__cols { grid-template-columns: minmax(0, 1fr); grid-template-areas: "left"; }
-  .act__inner--right, .act__flow { grid-area: left; }
-  /* Act IV on one column: copy first, then the cover stack beneath it, never on top of it */
-  .act--lenses .act__sticky { grid-template-rows: auto auto; align-content: end; row-gap: 1.2rem; padding-bottom: 6vh; }
-  .act--lenses .act__inner--top { grid-area: auto; padding-top: 0; align-self: end; }
-  .covers { grid-area: auto; justify-self: center; width: min(60vw, 12rem); }
-  .cover { padding: 0.8rem 0.9rem 0.7rem; }
-  .cover__no { font-size: 2.2rem; }
-  .cover__title { font-size: 1.1rem; }
-  .cover__line { display: none; }
-  .cover__mark { display: none; }
-  .act__sticky { align-content: end; padding-bottom: 10vh; }
-  .act__inner--top { padding-top: 0; }
-  .act__flow { padding-top: 120vh; }
-  /* Act III: the Epicurus copy flows above the swap list (no sticky column) */
-  .act__sticky--col { display: block; position: relative; }
-  .act__sticky--col .act__inner { height: auto; min-height: 100vh; min-height: 100dvh; display: grid; align-content: end; padding-bottom: 10vh; }
-  .act__flow { padding-top: 8vh; padding-bottom: 30vh; }
+  .act__inner--right, .act__flow, .covers { grid-area: left; }
   .marg__note--ii, .marg__note--iii, .act--impasse .marg--arrow, .marg--iii .marg--arrow { display: none; }
-  /* the figure sits behind the copy here: dim it and stand the copy on a scrim of the page colour */
-  #stage.is-ready { opacity: 0.72; }
-  .act__sticky { position: sticky; }
-  .act__inner, .covers, .act__flow, .issues { position: relative; z-index: 1; }
-  .act__sticky--col .act__inner { z-index: 1; }
-  #jargon { display: none; }
+  .marg__note--v { left: auto; right: 0; bottom: -1.5rem; }
+
+  html.dynamic .act + .act { margin-top: -100vh; }
+  html.dynamic .act { pointer-events: none; }
+  html.dynamic .act .is-on, html.dynamic .cue:not(.is-gone) { pointer-events: auto; }
+
+  html.dynamic [data-step] {
+    opacity: 0; transform: translateY(0.6rem); pointer-events: none;
+    transition: opacity 320ms ease, transform 420ms cubic-bezier(.2,.7,.2,1);
+  }
+  html.dynamic [data-step].is-on { opacity: 1; transform: none; transition-delay: 120ms; }
+
+  html.dynamic .act__sticky,
+  html.dynamic .act--lenses .act__sticky {
+    grid-template-rows: auto; align-content: end; align-items: end;
+    padding-bottom: max(1.6rem, env(safe-area-inset-bottom));
+  }
+  html.dynamic .act__inner,
+  html.dynamic .act__sticky--col .act__inner {
+    height: auto; padding: 0; display: grid; align-content: end; align-self: end;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  html.dynamic .act__inner > * { grid-column: 1; }
+  html.dynamic .act__inner > .label { grid-row: 1; margin-bottom: 0.8rem; }
+  html.dynamic .act__inner > .display { grid-row: 2; margin-bottom: 0.9rem; }
+  html.dynamic .act__inner > :is(.gloss, .prose, .quote) { grid-row: 3; align-self: start; margin: 0; max-width: 34rem; }
+  html.dynamic .act__inner > .cta { grid-row: 4; margin-top: 1.2rem; }
+  html.dynamic .prose p, html.dynamic .gloss, html.dynamic .quote { max-width: 34rem; }
+  .display--word { font-size: clamp(3.2rem, 15vw, 5rem); margin-bottom: 0.7rem; }
+
+  /* Act I: the cue shares the body cell's space; the copy arrives as it leaves */
+  .cue { left: var(--gutter); right: var(--gutter); bottom: max(1.2rem, env(safe-area-inset-bottom)); gap: 0.5rem; }
+  .scroll-cue { font-size: 0.8rem; gap: 1rem; margin: 0; }
+  .scroll-cue__line { height: 2rem; }
+  .cue__or { display: none; }
+  .shortcut { padding: 0.75rem 1rem 0.7rem; gap: 0.3rem; }
+  .shortcut__label { font-size: 0.7rem; letter-spacing: 0.1em; }
+  .shortcut__aside { font-size: 1.1rem; }
+  html.dynamic .act--monument .act__inner > .prose { min-height: 8.2rem; }
+
+  /* Act III: the Epicurus copy, then the swap list, both pinned in the zone */
+  html.dynamic .act__cols { display: block; }
+  html.dynamic .act__sticky--col { display: grid; padding: 0 0 max(1.6rem, env(safe-area-inset-bottom)); }
+  html.dynamic .act__flow {
+    position: sticky; top: 0; height: 100vh; height: 100svh; margin-top: -100vh; margin-top: -100svh;
+    padding: 0 0 max(1.4rem, env(safe-area-inset-bottom)); display: grid; align-content: end;
+  }
+  html.dynamic .swap-block .label { margin-bottom: 0.7rem; }
+  html.dynamic .swap { padding: 0.5rem 0; font-size: clamp(0.98rem, 1.6vw + 0.55rem, 1.35rem); line-height: 1.25; }
+  html.dynamic .swap-block__note { margin-top: 0.8rem; font-size: 0.92em; }
+
+  /* Act IV: the covers page through the same zone, as cards you can read */
+  html.dynamic .covers { align-self: end; justify-self: start; width: min(100%, 26rem); aspect-ratio: auto; height: 12.5rem; }
+  html.dynamic .cover { padding: 0.9rem 1rem; transform-origin: 50% 100%; }
+  html.dynamic .cover__no { font-size: 2rem; margin-bottom: auto; }
+  html.dynamic .cover__title { font-size: 1.25rem; margin-bottom: 0.35rem; }
+  html.dynamic .cover__title br { display: none; }
+  html.dynamic .cover__link { margin-top: 0.5rem; padding: 0.2rem 0; }
+  html.dynamic .cover__mark { display: none; }
+  html.dynamic .cover:not(.is-active) { --rot: 0deg; --sc: 0.97; --dy: 0.5rem; --fade: 0; }
+  html.dynamic .cover.is-active { --rot: 0deg; --dy: 0rem; }
+  html.dynamic .covers:has(.is-active) .cover:not(.is-active) { --fade: 0; pointer-events: none; }
+
+  /* Act V */
+  html.dynamic .cta { flex-wrap: nowrap; gap: 0.6rem; }
+  html.dynamic .btn { padding: 0.7em 1em; font-size: 0.9em; white-space: nowrap; }
+
+  /* the words crowd the figure, not the copy: the top of the screen only */
+  #jargon { bottom: auto; height: 46vh; }
+  #jargon span { font-size: 0.86rem; }
+  #jargon span:nth-child(n + 9) { display: none; }
+  #jargon span:nth-child(1)  { --x: 24% !important; --y: 24% !important; }
+  #jargon span:nth-child(2)  { --x: 84% !important; --y: 27% !important; }
+  #jargon span:nth-child(3)  { --x: 15% !important; --y: 41% !important; }
+  #jargon span:nth-child(4)  { --x: 82% !important; --y: 43% !important; --s: 0.95 !important; }
+  #jargon span:nth-child(5)  { --x: 88% !important; --y: 61% !important; }
+  #jargon span:nth-child(6)  { --x: 12% !important; --y: 58% !important; }
+  #jargon span:nth-child(7)  { --x: 82% !important; --y: 78% !important; }
+  #jargon span:nth-child(8)  { --x: 19% !important; --y: 74% !important; --s: 0.9 !important; }
+
+  html.dynamic #scrim {
+    display: block; height: 64vh; opacity: 0; transition: opacity 420ms ease;
+    background: linear-gradient(to top, var(--bg) 0%, var(--bg) 62%, color-mix(in srgb, var(--bg) 70%, transparent) 82%, transparent 100%);
+  }
+  html.dynamic.has-copy #scrim { opacity: 1; }
+
+  /* the ring fills a portrait screen's width: the note sits above it */
+  .marg__note--i { font-size: 1.45rem; }
+  .portal-note { left: calc(var(--px, 50vw) - 2.2rem); top: calc(var(--py, 50vh) - var(--pr, 120px) - 4.2rem); }
+}
+
+/* a tablet held upright has room to be read at arm's length */
+@media (min-width: 44rem) and (max-width: 64rem) and (orientation: portrait) {
+  body { font-size: 1.32rem; }
+  .display { font-size: 3.6rem; }
+  .display--word { font-size: 6rem; }
+  .masthead { font-size: 0.8rem; } .masthead__sub { font-size: 0.7rem; }
+  .label { font-size: 0.82rem; }
+  .marg__note--i { font-size: 2rem; }
+  html.dynamic .act__inner > :is(.gloss, .prose, .quote), html.dynamic .prose p, html.dynamic .gloss, html.dynamic .quote { max-width: 40rem; }
+  html.dynamic .covers { width: min(100%, 36rem); height: 17rem; }
+  html.dynamic .cover__title { font-size: 1.8rem; } html.dynamic .cover__no { font-size: 2.8rem; }
+  .cover__line, .cover__link { font-size: 1.05rem; }
+  html.dynamic .swap { padding: 0.75rem 0; font-size: 1.5rem; }
+  #jargon span { font-size: 1.15rem; }
+  html.dynamic .act--monument .act__inner > .prose { min-height: 11rem; }
+}
+
+/* a phone on its side: copy on the left, the figure beside it */
+@media (max-width: 64rem) and (orientation: landscape) and (max-height: 34rem) {
+  html.dynamic .act__inner, html.dynamic .covers, html.dynamic .swap-block { width: 47vw; }
+  html.dynamic .act__flow { justify-content: start; }
+  .masthead { padding-top: 0.8rem; }
+  .masthead__sub { order: 0; width: auto; }
+  .display { font-size: 1.6rem; }
+  .display--word { font-size: 2.6rem; }
+  html.dynamic .act__inner > .label { margin-bottom: 0.5rem; }
+  html.dynamic .act__inner > .display { margin-bottom: 0.6rem; }
+  html.dynamic .act--monument .act__inner > .prose { min-height: 6.6rem; }
+  html.dynamic .covers { height: 11rem; }
+  html.dynamic .swap { padding: 0.2rem 0; font-size: 0.9rem; }
+  html.dynamic .swap-block .label { margin-bottom: 0.4rem; }
+  html.dynamic .swap-block__note { display: none; }
+  .quote p { font-size: 0.95em; }
+  .cue { flex-direction: row; align-items: center; gap: 2rem; right: auto; }
+  #jargon { left: 54vw; height: 100%; }
+  #jargon span:nth-child(3), #jargon span:nth-child(6), #jargon span:nth-child(8) { display: none; }
+  html.dynamic .act--invite .label { display: none; }
+  html.dynamic .act--invite .prose { font-size: 0.92rem; line-height: 1.45; }
+  html.dynamic .act--invite .cta { margin-top: 0.8rem; }
+  html.dynamic #scrim {
+    top: 0; height: auto; right: 38vw;
+    background: linear-gradient(to right, var(--bg) 0%, var(--bg) 74%, transparent 100%);
+  }
+  .portal-note { left: calc(var(--px, 50vw) + var(--pr, 120px) * 0.72); top: calc(var(--py, 50vh) - var(--pr, 120px) * 0.92); }
+}
+/* the shortest phones */
+@media (max-width: 64rem) and (orientation: portrait) and (max-height: 37rem) {
+  .display { font-size: 1.75rem; }
+  .display--word { font-size: 2.9rem; }
+  html.dynamic .act__inner > .label { margin-bottom: 0.5rem; }
+  html.dynamic .act__inner > .display { margin-bottom: 0.6rem; }
+  html.dynamic .swap { padding: 0.35rem 0; font-size: 0.94rem; }
+  html.dynamic .swap-block__note { display: none; }
+  .scroll-cue { display: none; }
 }
 
 /* ---- the static page ------------------------------------------------------------- */
@@ -609,7 +720,33 @@ html.static .act__art { display: block; }
 .act__art { display: none; grid-area: stage; align-self: center; justify-self: center; max-width: 100%; max-height: 80vh; width: auto; height: auto; pointer-events: none; }
 .act__art--monument { grid-column: stage / right; }
 .act__art--bust { max-height: 52vh; margin: 0 auto 3rem; }
-@media (max-width: 64rem) { .act__art { grid-area: left; max-height: 40vh; margin: 0 auto 2rem; } }
+/* all three issues, in the open: there is no scroll here to page through them */
+html.static .covers { display: grid; gap: 1rem; aspect-ratio: auto; width: min(100%, 22rem); }
+html.static .cover { position: static; transform: none; opacity: 1 !important; min-height: 11rem; }
+html.static .cover__title { margin-top: 1rem; }
+html.static .portal-hold { display: none; }
+@media (max-width: 64rem) {
+  html.static .act__cols { display: block; }
+  html.static .act__sticky, html.static .act--lenses .act__sticky, html.static .act__sticky--col {
+    display: flex; flex-direction: column; justify-content: center; align-items: stretch; gap: 1.6rem;
+    min-height: 0; padding-top: 5.5rem; padding-bottom: 4rem;
+  }
+  html.static .act__sticky--col { padding: 4rem 0 0; }
+  html.static .act__sticky--col .act__inner { min-height: 0; padding: 0; display: block; }
+  html.static .act--fracture .act__sticky--col .act__inner { padding: 0; }
+  html.static .act__flow { padding: 3rem 0 4rem; }
+  html.static .act--fracture { background: linear-gradient(rgb(8, 8, 11) 0, rgb(244, 238, 227) 4rem); }
+  html.static .act--invite { background: linear-gradient(rgb(244, 238, 227) 0, rgb(8, 8, 11) 4rem); }
+  html.static .act__inner--top { padding-top: 0; }
+  html.static .act__art { max-height: 46vh; margin: 0 auto; }
+  html.static .act__art--bust { max-height: 38vh; margin: 0 auto 2rem; }
+  html.static .cta { margin-top: 2.2rem; }
+  html.static .swap { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
+  html.static .swap__from { color: var(--ink-soft); font-size: 0.92em; }
+  html.static .cue { position: static; align-items: flex-start; }
+  html.static .scroll-cue { display: none; }
+  html.static .covers { width: 100%; }
+}
 
 /* ---- no JavaScript -------------------------------------------------------------- */
 /* The argument still runs: black Didone first, paper grotesque after. */
@@ -627,6 +764,14 @@ html:not(.js) .swap { grid-template-columns: 1fr 1fr; gap: 1rem; }
 html:not(.js) .swap > span { grid-area: auto; }
 html:not(.js) .marg__note { opacity: 1; }
 html:not(.js) .masthead { position: static; }
+@media (max-width: 64rem) {
+  html:not(.js) .act__cols { display: block; }
+  html:not(.js) .act__sticky { display: block; }
+  html:not(.js) .cue { position: static; margin-top: 2rem; }
+  html:not(.js) .swap { grid-template-columns: minmax(0, 1fr); gap: 0.15rem; }
+  html:not(.js) .covers { display: grid; gap: 1rem; aspect-ratio: auto; width: 100%; margin-top: 2rem; }
+  html:not(.js) .cover { position: static; transform: none; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   html.js .reveal { transform: none; }

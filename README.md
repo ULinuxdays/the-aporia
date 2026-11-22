@@ -36,11 +36,13 @@ Useful URL flags on `index.html`:
 `js/main.js → decideMode()` runs before anything heavy loads. The **static
 page** (same words, same black-to-paper shift, stills of the figure, no
 three.js fetched at all) is used when any of these hold: `prefers-reduced-motion`,
-`Save-Data`, ≤ 2 CPU cores or ≤ 2 GB `deviceMemory`, a viewport under 340 px on
-its short side, or no WebGL context that runs without a major performance
+`Save-Data`, ≤ 2 CPU cores or ≤ 2 GB (only where the browser reports
+`deviceMemory` — Safari caps its core count, so alone it would condemn every
+iPhone), a viewport under 280 px on its short side, scans that cannot be
+fetched after retries, or no WebGL context that runs without a major performance
 caveat (software GL gets the static page on purpose). Otherwise the scene loads
 with a particle budget by tier: 90 000 (≥ 8 cores, ≥ 8 GB, ≥ 1100 px),
-60 000 (desktop), 30 000 (tablet), 18 000 (phone); ×0.6 on ≤ 4 cores or
+60 000 (desktop), 45 000 (tablet), 32 000 (phone); ×0.6 on ≤ 4 cores or
 ≤ 4 GB. Point size is compensated so density reads the same. `?count=N`
 overrides for testing. (Measured: 90k and 120k both hold 60 fps on an M4 at
 DPR 2; the GPU is not the limit, the normals' clarity is.)
@@ -137,16 +139,16 @@ One block of HTML, one shape name, one colour:
 
 ## The real links
 
-Every placeholder link carries `class="is-placeholder"`, a `data-placeholder`
-note and a visible "link pending" tag. Search for `TODO-`:
+Every link still waiting for a URL carries `data-todo="#TODO-…"`. The ones with
+nowhere to go yet are `<span class="is-placeholder">` with a "soon" tag (make
+them `<a href>` and drop the tag); Issue 01 points at the shelf meanwhile.
+Search for `TODO-`:
 
 - `#TODO-issue-01-url` — Read Issue 01 (Act IV cover, Act V button, shelf manifest `href`)
 - `#TODO-submission-url` — Send us a piece (Act V)
 - `#TODO-pitch-url` — Pitch a subject (Act IV cover, shelf manifest)
 - `#TODO-email` — the editorial address (had a home in the colophon, now removed)
 
-Remove the `is-placeholder` class and the `<span class="placeholder-tag">`
-when you set each one.
 
 **The colophon is gone** (the page now ends on the portal), and it took the
 editorial email, the copyright line and — importantly — the scan attribution

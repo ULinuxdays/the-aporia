@@ -26,6 +26,7 @@ import { STATE_DEFAULTS, PORTAL } from './state.js';
 import { createSmoothScroll } from './smooth-scroll.js';
 import { createCurtain, removeCurtains } from './curtain.js';
 import { createScrollProgress } from './progress.js';
+import { COMPACT, isCompact, measureActs, trackActs } from './acts.js';
 // three.js, the shapes and the scene are imported lazily, and only on the
 // dynamic path — the static page never fetches them.
 
@@ -93,6 +94,12 @@ export function decideMode() {
   const w = innerWidth, h = innerHeight;
   const cores = navigator.hardwareConcurrency || 8;
   const mem = navigator.deviceMemory || 8;            // GB; Safari and Firefox don't expose it — unknown is not weak
+  // Safari caps the core count it reports (2 on some iOS versions, 4 on others)
+  // whatever the hardware, so on its own it says nothing about an iPhone. It
+  // used to send those phones to the static page. Only believe it from engines
+  // that also report memory, which is the pair a genuinely weak device trips.
+  // KEEP IN STEP with the preload check in index.html's head.
+  const honest = navigator.deviceMemory !== undefined;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saveData = !!navigator.connection?.saveData;
   const narrow = w < 720;
@@ -102,8 +109,8 @@ export function decideMode() {
   if (forced === 'static') reason = 'forced';
   else if (!forced && reduced) reason = 'prefers-reduced-motion';
   else if (!forced && saveData) reason = 'save-data';
-  else if (!forced && (cores <= 2 || mem <= 2)) reason = `low capability (${cores} cores, ${mem} GB)`;
-  else if (!forced && Math.min(w, h) < 340) reason = 'tiny viewport';
+  else if (!forced && honest && (cores <= 2 || mem <= 2)) reason = `low capability (${cores} cores, ${mem} GB)`;
+  else if (!forced && Math.min(w, h) < 280) reason = 'tiny viewport';
   else if (forced !== 'webgl' && !probeWebGL()) reason = 'no WebGL context';   // ?webgl skips the probe; createScene() still falls back if the context really fails
   if (reason) return { static: true, reason, count: 0, tier: 'static', narrow };
 
@@ -112,11 +119,11 @@ export function decideMode() {
   // Measured on an Apple M4 at DPR 2: 90k and 120k both scrub at a steady
   // 60 fps (p95 18 ms); the GPU is not the limit at these counts. 90k is the
   // approved look; below it the figures lose the detail the normals need.
-  if (narrow) { tier = 'phone'; count = 18000; }
-  else if (w < 1100) { tier = 'tablet'; count = 30000; }
+  if (narrow) { tier = 'phone'; count = 32000; }
+  else if (w < 1100) { tier = 'tablet'; count = 45000; }
   else if (cores >= 8 && mem >= 8) { tier = 'desktop-strong'; count = 90000; }
   else { tier = 'desktop'; count = 60000; }
-  if (cores <= 4 || mem <= 4) { count = Math.round(count * 0.6); tier += '-weak'; }
+  if (honest && (cores <= 4 || mem <= 4)) { count = Math.round(count * 0.6); tier += '-weak'; }
   if (PARAMS.has('count')) { count = Math.max(1000, Number(PARAMS.get('count')) || count); tier += '-forced'; }   // testing
   return { static: false, reason: forced === 'webgl' ? 'forced' : 'capable', count, tier, narrow };
 }
@@ -190,7 +197,10 @@ async function main() {
   const pool = spawnNormalWorkers();
   const debug = DEBUG ? makeDebugReadout() : null;
   const scroll = createScrollChoreography(state, { debug });
-  createReveals();
+  if (isCompact()) createSteps(); else createReveals();
+  // The two layouts are wired differently from the first frame; crossing between
+  // them (a tablet turned on its side) starts again at the same scroll position.
+  matchMedia(COMPACT).addEventListener('change', () => location.reload());
   let themeRaf = requestAnimationFrame(function tick() { applyTheme(state); if (debug) debug.update(state, scroll); themeRaf = requestAnimationFrame(tick); });
   if (DEBUG || PARAMS.has('expose')) window.__aporia = { state, scroll, scene: null, measureActs, mode, timing: TIMING };
 
@@ -226,7 +236,7 @@ async function main() {
     Object.assign(scene.state, state);               // hand the live values over; the timeline keeps animating this object
     scroll.retarget(scene.state);
     cancelAnimationFrame(themeRaf);
-    if (mode.narrow) scene.setViewOffset(-0.55);     // lift the figure above the copy on phones
+    if (isCompact()) scene.setFraming(compactFraming);   // the figure in its own zone, clear of the copy
     scene.start();
     if (window.__aporia) { window.__aporia.scene = scene; window.__aporia.state = scene.state; }
 
@@ -386,30 +396,7 @@ function rebuildTextShapesWhenFontsLoad(scene, count, clouds, buildShape, lenses
 
 // --------------------------------------------------------------------------- measurement
 
-/**
- * Measure the acts. An act is "active" while the viewport's focus line (its
- * vertical centre) is inside the section, which is also the midpoint of the
- * hand-over between one sticky block and the next. Spans are in px of scroll.
- */
-export function measureActs() {
-  const vh = innerHeight;
-  const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
-  const focus = vh * 0.5;
-  const sections = [...document.querySelectorAll('section.act')];
-  const acts = sections.map((el) => {
-    const r = el.getBoundingClientRect();
-    const top = r.top + scrollY;
-    return { el, id: el.dataset.act || el.className, top, height: r.height, start: 0, end: 0, len: 0 };
-  });
-  acts.forEach((a, i) => {
-    a.start = i === 0 ? 0 : clamp(a.top - focus, 0, maxScroll);
-    // The last act ends at its own bottom, which is now the end of the
-    // document: the portal is the last thing on the page.
-    a.end = clamp(a.top + a.height - focus, 0, maxScroll);
-    a.len = Math.max(1, a.end - a.start);
-  });
-  return { acts, maxScroll, vh };
-}
+export { measureActs };
 
 /**
  * Where to notch the progress rule: one at the head of every act after the
@@ -645,6 +632,69 @@ function createReveals() {
   }
 }
 
+/**
+ * The compact layout's copy. Every block carries data-step="from-to", fractions
+ * of its act; it is shown between them and nothing else is. Plain classes and a
+ * CSS transition: no per-element observers, nothing to fall out of step.
+ */
+function createSteps() {
+  const html = document.documentElement;
+  const groups = [...document.querySelectorAll('section.act')].map((section) =>
+    [...section.querySelectorAll('[data-step]')].map((el) => {
+      const [from, to] = el.dataset.step.split('-').map(Number);
+      return { el, from, to, on: null };
+    }));
+  trackActs((f) => {
+    let any = false;
+    groups.forEach((items, k) => {
+      for (const it of items) {
+        const on = (f[k] >= it.from || (k === 0 && it.from === 0)) && f[k] < it.to;
+        any ||= on;
+        if (on !== it.on) { it.on = on; it.el.classList.toggle('is-on', on); }
+      }
+    });
+    html.classList.toggle('has-copy', any);    // the scrim is only there while there is something to read
+  });
+}
+
+/**
+ * Compact framing. The desktop camera is composed for a landscape frame with
+ * the figure between two columns; in portrait that crops everything wide (the
+ * wordmark, the crowd) and puts the figure under the text. Here each shape
+ * declares the box it needs and the camera backs off until that box fits its
+ * zone. The storyboard's own camera moves still play, at reduced strength.
+ *   w, h  world units that must be visible   cy  the box's centre
+ *   ref   camZ when the shape is resolved    full  no copy on screen: centre it
+ */
+const FRAME = {
+  monument: { w: 1.5, h: 1.3, cy: 1.72, ref: 5.0 },
+  epicurus: { w: 1.4, h: 1.75, cy: 1.14, ref: 4.5 },
+  lens:     { w: 2.6, h: 1.9, cy: 1.0, ref: 5.3 },
+  crowd:    { w: 4.1, h: 1.5, cy: 0.8, ref: 5.3 },
+  page:     { w: 1.7, h: 2.0, cy: 1.14, ref: 6.0 },
+  wordmark: { w: 3.75, h: 0.9, cy: 1.03, ref: 6.6, full: 1 },
+  portal:   { w: 1.9, h: 1.9, cy: 1.06, ref: 6.6, full: 1 },
+};
+function compactFraming(state, aspect, fov) {
+  const of = (i) => FRAME[i === 0 ? 'monument' : i === 1 ? 'epicurus' : i < SHAPE_PAGE ? (LENSES[i - 2].shape === 'crowd' ? 'crowd' : 'lens') : i === SHAPE_PAGE ? 'page' : i === SHAPE_WORDMARK ? 'wordmark' : 'portal'];
+  const m = clamp(state.morph, 0, SHAPE_PORTAL), i = Math.min(SHAPE_PORTAL - 1, Math.floor(m));
+  const t = m - i, e = t * t * (3 - 2 * t), A = of(i), B = of(i + 1);
+  const mix = (k) => (A[k] || 0) + ((B[k] || 0) - (A[k] || 0)) * e;
+  const side = aspect > 1.15;                         // landscape phone: copy left, figure right
+  const full = mix('full');
+  // the zone the figure may use, as fractions of the screen
+  const zoneH = side ? 0.8 : 0.36 + 0.14 * full;
+  const zoneW = side ? 0.44 + 0.46 * full : 0.94;
+  const tan = 2 * Math.tan((fov * Math.PI) / 360);
+  const fit = Math.max(mix('h') / (tan * zoneH), mix('w') / (tan * aspect * zoneW));
+  return {
+    z: fit * Math.pow(state.camZ / mix('ref'), 0.6),
+    cy: mix('cy'),
+    x: side ? 0.24 * (1 - full) : 0,
+    y: side ? -0.02 : 0.215 - 0.18 * full,
+  };
+}
+
 // --------------------------------------------------------------------------- the scroll cue
 
 /**
@@ -659,7 +709,7 @@ function createScrollCue(smooth) {
   const onScroll = () => { if (scrollY > 40) hide(); };
   addEventListener('scroll', onScroll, { passive: true });
   // only the "Scroll" half eases the page down; the shelf link is an ordinary link
-  cue.querySelector('.cue__scroll')?.addEventListener('click', (e) => {
+  cue.querySelector('.scroll-cue')?.addEventListener('click', (e) => {
     e.preventDefault();
     const to = innerHeight * 0.9;
     if (smooth.enabled) smooth.scrollTo(to); else scrollTo({ top: to, behavior: 'smooth' });
@@ -760,7 +810,7 @@ function createPortal(scroll) {
       // project the ring centre and a point on its rim
       const c = v.set(PORTAL.x, PORTAL.y, PORTAL.z).applyObject(scene.three.points).project(cam);
       const e = u.set(PORTAL.x + PORTAL.r, PORTAL.y, PORTAL.z).applyObject(scene.three.points).project(cam);
-      const w = innerWidth, h = innerHeight;
+      const w = scene.three.renderer.domElement.clientWidth, h = scene.three.renderer.domElement.clientHeight;   // the canvas, not the window: a phone's toolbar makes them differ
       const cx = (c.x + 1) / 2 * w, cy = (1 - c.y) / 2 * h;
       const ex = (e.x + 1) / 2 * w, ey = (1 - e.y) / 2 * h;
       const r = Math.hypot(ex - cx, ey - cy) * 0.98;        // just inside the ring

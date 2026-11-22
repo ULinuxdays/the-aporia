@@ -49,11 +49,12 @@ export function createUI(manifest, { onMarker, onPrev, onNext, onOpen, onClose }
     const link = $('#panel-link');
     if (b.href) {
       link.hidden = false;
-      link.href = b.href;
+      if (b.href.startsWith('#TODO')) link.removeAttribute('href'); else link.href = b.href;   // no URL yet: not a link
+      const pending = b.href.startsWith('#TODO');
       link.textContent = b.status === 'open' ? 'Pitch a subject' : 'Read it';
-      link.classList.toggle('is-placeholder', b.href.startsWith('#TODO'));
+      link.classList.toggle('is-placeholder', pending);
       link.querySelector?.('.placeholder-tag')?.remove();
-      if (b.href.startsWith('#TODO')) link.insertAdjacentHTML('beforeend', ' <span class="placeholder-tag">link pending</span>');
+      if (pending) link.insertAdjacentHTML('beforeend', ' <span class="placeholder-tag">soon</span>');
     } else link.hidden = true;
     document.body.classList.add('is-inspecting');
     panel.hidden = false;

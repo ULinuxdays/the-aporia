@@ -18,6 +18,11 @@ import { createCurtain, removeCurtains } from '../curtain.js';
 const MANIFEST_URL = 'assets/shelf/manifest.json';
 const BROWSE = { y: 0.34, z: 1.2, lookY: 0.1 };
 
+const touch = matchMedia('(hover: none) and (pointer: coarse)').matches;
+const HINT = touch
+  ? { browse: 'swipe along the shelf · tap the centred book', inspect: 'drag to turn it · pinch to zoom' }
+  : { browse: 'drag, scroll or use ← → · click the centred book to take it down', inspect: 'drag to turn it · scroll to zoom · right-drag to pan · Esc to put it back' };
+
 main().catch((err) => {
   console.error('[shelf] failed to start', err);
   removeCurtains();                                  // whatever went wrong, do not leave the page covered
@@ -97,10 +102,10 @@ async function main() {
   inspector = createInspector({
     camera, renderer, books,
     getBrowseCamera: () => browseCam,
-    onOpen: (i) => { browser.setEnabled(false); ui.showPanel(i); ui.setHint('drag to turn it · scroll to zoom · right-drag to pan · Esc to put it back'); },
-    onClose: () => { browser.setEnabled(true); ui.hidePanel(); ui.setHint('drag, scroll or use ← → · click the centred book to take it down'); },
+    onOpen: (i) => { browser.setEnabled(false); ui.showPanel(i); ui.setHint(HINT.inspect); },
+    onClose: () => { browser.setEnabled(true); ui.hidePanel(); ui.setHint(HINT.browse); },
   });
-  ui.setHint('drag, scroll or use ← → · click the centred book to take it down');
+  ui.setHint(HINT.browse);
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && inspector.isOpen) inspector.close(); });
 
   // lift the centred book a little
@@ -120,6 +125,7 @@ async function main() {
 
   // ---- frame loop
   let arrival = null;
+  const shift = [0, 0];
   let last = performance.now();
   function frame(now) {
     requestAnimationFrame(frame);
@@ -148,6 +154,16 @@ async function main() {
       b.position.y = ny;
     });
     inspector.update();
+    // Keep what matters clear of the card and the controls: on a phone the card
+    // covers the bottom of the screen (its left side when the phone is on its
+    // side), so the picture moves over while a book is down.
+    const w = canvas.clientWidth, h = canvas.clientHeight, short = h < 500;
+    const down = inspector.isOpen ? 1 : 0;
+    const want = w > 768 && !short ? [0, 0] : short ? [0.12 * down, 0.07 * (1 - down)] : [0, 0.17 * down];
+    const ease = Math.min(1, dt * 5);
+    shift[0] += (want[0] - shift[0]) * ease; shift[1] += (want[1] - shift[1]) * ease;
+    if (Math.abs(shift[0]) + Math.abs(shift[1]) > 0.0005) camera.setViewOffset(w, h, shift[0] * w, shift[1] * h, w, h);
+    else if (camera.view?.enabled) camera.clearViewOffset();
     renderer.render(scene, camera);
   }
   ui.setLoading(false);

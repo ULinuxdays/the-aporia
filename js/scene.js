@@ -31,16 +31,6 @@ const SWEEP_DIR = /* @__PURE__ */ (() => new THREE.Vector3(0.78, 0.62, 0.1).norm
 const REF_DISTANCE = 5;
 const REF_HEIGHT = 900;
 const MAX_DPR = 2;
-/* Phones are fill-rate bound, not vertex bound. The field is alpha-blended
-   points with depthTest off, so every grain pays fragments wherever it lands and
-   the cost scales with device pixels, not with the particle count. Dropping the
-   ceiling from 2 to 1.5 on a narrow viewport cuts fragment work to 56 % of what
-   it was. Nothing moves on screen: uPointScale multiplies by dpr, so a grain
-   keeps the same size in CSS pixels and is only rendered a little softer.
-   Read inside resize(), so rotating into a narrow orientation re-picks it. */
-const MAX_DPR_NARROW = 1.5;
-const NARROW_PX = 720;            // the `narrow` threshold in decideMode()
-
 const VERT = /* glsl */ `
   attribute vec3 aPosA;
   attribute vec3 aPosB;
@@ -350,11 +340,11 @@ export function createScene(canvas, { count, shapes, onFrame, seed = 1, coldColo
 
   // ------------------------------------------------------------- sizing
   let width = 1, height = 1, dpr = 1;
-  const view = { dy: 0 };   // frame offset for narrow screens (setViewOffset)
+  let ceiling = MAX_DPR;    // lowered by govern() on a device that can't keep up
+  let framing = null;       // compact layouts: (state, aspect, fov) → where the figure sits (setFraming)
   function resize() {
     const w = canvas.clientWidth || canvas.width || 1;
     const h = canvas.clientHeight || canvas.height || 1;
-    const ceiling = innerWidth < NARROW_PX ? MAX_DPR_NARROW : MAX_DPR;
     dpr = Math.min(ceiling, (typeof devicePixelRatio === 'number' && devicePixelRatio) || 1);
     if (w === width && h === height && renderer.getPixelRatio() === dpr) return;
     width = w; height = h;
@@ -389,7 +379,20 @@ export function createScene(canvas, { count, shapes, onFrame, seed = 1, coldColo
     last = now;
     time += dt;
     if (onFrame) onFrame(state, dt);
+    govern(dt);
     render(dt);
+  }
+
+  // Step the pixel ratio down on a device that cannot hold 25 fps. The threshold
+  // sits below 30 on purpose: iOS Low Power Mode caps rAF at 30 and is not slow.
+  let slowFrames = 0, seenFrames = 0;
+  function govern(dt) {
+    if (ceiling <= 1 || ++seenFrames < 60) return;          // ignore start-up, when everything is being built
+    if (dt > 0.04) slowFrames++;
+    if (seenFrames % 60 === 0) {
+      if (slowFrames > 36) { ceiling = Math.max(1, Math.min(ceiling, dpr) - 0.5); seenFrames = 0; }
+      slowFrames = 0;
+    }
   }
 
   function render(dt) {
@@ -430,9 +433,15 @@ export function createScene(canvas, { count, shapes, onFrame, seed = 1, coldColo
     const sway = parallaxStrength * 0.045;
     const px = pointer.x * 0.16 * parallaxStrength + Math.sin(time * 0.23) * sway;
     const py = -pointer.y * 0.08 * parallaxStrength + Math.sin(time * 0.17 + 1.3) * sway * 0.5;
-    camera.position.set(px, state.camY + py + view.dy, state.camZ);
-    camera.lookAt(px * 0.35, state.lookY + py * 0.35 + view.dy, 0);
-    uniforms.uCamDist.value = Math.hypot(camera.position.x - px * 0.35, camera.position.y - (state.lookY + py * 0.35 + view.dy), camera.position.z);
+    let camZ = state.camZ, camY = state.camY, lookY = state.lookY;
+    if (framing) {
+      const f = framing(state, width / height, fov);
+      camZ = f.z; camY = f.cy + (state.camY - state.lookY); lookY = f.cy;
+      camera.setViewOffset(width, height, -f.x * width, f.y * height, width, height);
+    }
+    camera.position.set(px, camY + py, camZ);
+    camera.lookAt(px * 0.35, lookY + py * 0.35, 0);
+    uniforms.uCamDist.value = Math.hypot(camera.position.x - px * 0.35, camera.position.y - (lookY + py * 0.35), camera.position.z);
 
     points.rotation.set(state.tiltX, state.rotY, 0);
     renderer.render(scene, camera);
@@ -496,8 +505,8 @@ export function createScene(canvas, { count, shapes, onFrame, seed = 1, coldColo
     dispose,
     setShape,
     setNormals,
-    /** Shift the whole frame up/down (world units) without touching state — used to lift the figure above the copy on narrow screens. */
-    setViewOffset: (dy) => { view.dy = dy; },
+    /** Let a layout place the figure: fn(state, aspect, fov) → { z, cy, x, y }, x/y as fractions of the screen. Never touches state. */
+    setFraming: (fn) => { framing = fn; if (!fn) camera.clearViewOffset(); },
     /** The shapes the scene is currently holding (for normal estimation). */
     getShape: (i) => shapes[i],
     /** Render one frame immediately without the loop (tests, screenshots). */

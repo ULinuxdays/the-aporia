@@ -15,11 +15,13 @@
  * touches the scene state. CONTRACTS.md §14.
  */
 
+import { isCompact, trackActs } from './acts.js';
 import { animate, createTimeline, onScroll, stagger, svg, scrambleText } from '../vendor/animejs/anime.esm.js';
 
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DAMPING = 0.35;
+const compact = isCompact();
 
 /**
  * The static page (reduced motion, weak device, no WebGL) gets none of the
@@ -82,7 +84,7 @@ function jargonField() {
     autoplay: onScroll({
       target: monument,
       enter: { target: 'start', container: 'start' },
-      leave: { target: '75%', container: 'center' },
+      leave: compact ? { target: '20%', container: 'start' } : { target: '75%', container: 'center' },
       sync: DAMPING,
       debug: DEBUG,
     }),
@@ -106,8 +108,8 @@ function jargonField() {
     ease: 'inQuad',
     autoplay: onScroll({
       target: fracture,
-      enter: { target: 'start', container: '85%' },
-      leave: { target: '40%', container: 'center' },
+      enter: compact ? { target: 'start', container: '20%' } : { target: 'start', container: '85%' },
+      leave: compact ? { target: '22%', container: 'start' } : { target: '40%', container: 'center' },
       sync: DAMPING,
       debug: DEBUG,
     }),
@@ -159,7 +161,8 @@ function swapList() {
       const t = self.currentTime;
       lives.forEach((el, i) => el.classList.toggle('is-academic', t < i * ROW_STAGGER + ROW_DURATION * 0.45));
     },
-    autoplay: onScroll({
+    // compact: the list is pinned, so it has no travel of its own to scrub by
+    autoplay: compact ? false : onScroll({
       target: list,
       enter: { target: 'start', container: '82%' },
       leave: { target: 'end', container: '34%' },
@@ -167,6 +170,11 @@ function swapList() {
       debug: DEBUG,
     }),
   });
+  if (compact) {
+    let p = 0, goal = 0, raf = 0;
+    const tick = () => { p += (goal - p) * 0.18; if (Math.abs(goal - p) < 0.002) p = goal; anim.seek(anim.duration * p); raf = p === goal ? 0 : requestAnimationFrame(tick); };
+    trackActs((f) => { goal = Math.min(1, Math.max(0, (f[2] - 0.79) / 0.12)); if (goal !== p && !raf) raf = requestAnimationFrame(tick); });
+  }
   return anim;
 }
 
@@ -206,6 +214,13 @@ function issueCards() {
   if (!section) return;
   const cards = [...section.querySelectorAll('.cover[data-lens], .issue[data-lens]')];
   fanCovers(cards);
+  if (compact) {
+    trackActs((f) => {
+      const k = Math.min(cards.length - 1, Math.max(0, Math.floor(f[3] * cards.length - 0.28)));
+      cards.forEach((c, i) => c.classList.toggle('is-active', i === k));
+    });
+    return;
+  }
   cards.forEach((card, k) => {
     const a = (k / cards.length) * 100, b = ((k + 1) / cards.length) * 100;
     onScroll({

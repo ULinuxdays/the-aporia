@@ -144,8 +144,21 @@ html.no-webgl .open, html.no-webgl .controls, html.no-webgl .hint, html.no-webgl
   .masthead__count { display: none; }
   .marker__label { display: none; }
   .hint { white-space: normal; text-align: center; width: calc(100vw - 2rem); }
+  .arrow { width: 2.75rem; height: 2.75rem; }
+  .marker { pointer-events: none; }   /* 19 ticks on a phone are 12px each: a gauge, not buttons — swipe or use the arrows */
+  .panel__close { padding: 0.6rem 0.4rem 0.2rem 0; }
   .panel { right: 1rem; left: 1rem; width: auto; top: auto; bottom: 1rem; transform: translateY(1rem) rotate(0); }
   .panel.is-open { transform: rotate(0); }
+}
+/* a phone on its side */
+@media (orientation: landscape) and (max-height: 31rem) {
+  .hint { display: none; }
+  .controls { bottom: 0.9rem; width: min(34rem, 58vw); left: var(--gutter); transform: none; }
+  .open { left: auto; right: var(--gutter); bottom: 1rem; transform: none; }
+  .panel { right: var(--gutter); left: auto; width: min(19rem, 42vw); top: 54%; bottom: auto; padding: 0.8rem 1.1rem 0.9rem; }
+  .panel__title { font-size: 1.3rem; margin-bottom: 0.5rem; }
+  .panel__line, .panel__status { margin-bottom: 0.5rem; }
+  .panel__no { margin-bottom: 0.4rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .open, .panel, .controls, .hint, .marker__tick { transition: none; }
