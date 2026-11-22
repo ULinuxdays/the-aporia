@@ -124,8 +124,16 @@
 <header class="masthead">
   <a class="masthead__mark" href="#top">The Aporia</a>
   <p class="masthead__sub">a student philosophy magazine</p>
+  <a class="masthead__about" href="#about">About</a>
   <a class="masthead__issue" href="shelf.html"><span class="masthead__dot"></span>Issue 01 · out now</a>
 </header>
+
+<!-- Always on screen until there is nothing left to scroll to: takes over from
+     Act I's cue, and bows out to the portal. js/main.js createScroller. -->
+<a class="scroller" id="scroller" href="#act-2" data-state="start" aria-label="Scroll to the next part">
+  <span class="scroller__label">Scroll</span>
+  <span class="scroll-cue__line" aria-hidden="true"></span>
+</a>
 
 <!--
   The five <section class="act"> elements are what js/main.js measures. Their
@@ -193,43 +201,26 @@
   </section>
 
   <!-- ================================================================ -->
-  <!-- ACT III — THE FRACTURE                                           -->
-  <!-- Left column pins; the swap list in the right column flows through -->
-  <!-- the viewport, so the reader scrubs each translation by scrolling. -->
+  <!-- ACT III — ABOUT. The Thinker comes down and Epicurus forms beside -->
+  <!-- the story of the magazine. (.act--fracture is the choreography's  -->
+  <!-- name for it: js/main.js, "Act III — THE FRACTURE".)               -->
   <!-- ================================================================ -->
-  <section class="act act--fracture" data-act="3">
-    <div class="act__cols">
-      <div class="act__sticky act__sticky--col">
-        <div class="act__inner act__inner--left">
-          <p class="label reveal" data-at="0.37" data-step="0.04-0.74">003 / the fracture</p>
-          <h2 class="display reveal" data-at="0.39" data-step="0.04-0.74">So we took<br>him down.</h2>
-          <div class="prose reveal" data-at="0.48" data-step="0.22-0.41">
-            <p>Epicurus taught in a garden behind his house. Anyone could come. Women did, which scandalised Athens. So did a slave called Mys.</p>
-          </div>
-          <div class="prose reveal" data-at="0.48" data-step="0.41-0.58">
-            <p>He thought philosophy had one job: to make an ordinary life go better. Pain, fear, what to want, who to have dinner with. If an argument didn't help with any of that, he wasn't interested.</p>
-          </div>
-          <blockquote class="quote reveal" data-at="0.57" data-step="0.58-0.74">
-            <p>“Let no one delay the study of philosophy while young, nor weary of it when old.”</p>
-            <footer>Epicurus, <cite>Letter to Menoeceus</cite>. He meant everyone, and he meant now.</footer>
-          </blockquote>
+  <section class="act act--fracture" id="about" data-act="3">
+    <div class="act__sticky">
+      <img class="act__art act__art--bust" src="assets/static/epicurus.webp" width="1400" height="1000" alt="" loading="lazy" decoding="async">
+      <div class="act__inner act__inner--left">
+        <p class="label reveal" data-at="0.34" data-step="0.04-0.97">003 / about</p>
+        <h2 class="display reveal" data-at="0.36" data-step="0.04-0.97">Why we started<br>The Aporia.</h2>
+        <div class="prose reveal" data-at="0.4" data-step="0.16-0.42">
+          <p>Most students meet philosophy as something intimidating: hard words, famous names, a feeling that everything you say has to be perfect. So they leave before finding out whether they like it.</p>
         </div>
-      </div>
-
-      <div class="act__flow" data-step="0.76-1">
-        <img class="act__art act__art--bust" src="assets/static/epicurus.webp" width="1400" height="1000" alt="" loading="lazy" decoding="async">
-        <div class="swap-block">
-          <p class="label">the same ideas, undressed</p>
-          <ul class="swap-list" id="swap-list">
-            <li class="swap" data-from="epistemic humility" data-to="you might be wrong about this"><span class="swap__from" aria-hidden="true">epistemic humility</span><span class="swap__to">you might be wrong about this</span></li>
-            <li class="swap" data-from="the hard problem of consciousness" data-to="why does any of this feel like anything?"><span class="swap__from" aria-hidden="true">the hard problem of consciousness</span><span class="swap__to">why does any of this feel like anything?</span></li>
-            <li class="swap" data-from="the categorical imperative" data-to="would it still be fine if everyone did it?"><span class="swap__from" aria-hidden="true">the categorical imperative</span><span class="swap__to">would it still be fine if everyone did it?</span></li>
-            <li class="swap marg-anchor" data-from="akrasia" data-to="knowing better and doing it anyway"><span class="swap__from" aria-hidden="true">akrasia</span><span class="swap__to">knowing better and doing it anyway</span><span class="marg marg--note-only marg--iii" aria-hidden="true"><svg class="marg__svg marg--arrow" data-marg="3" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 50 C 22 18, 60 8, 104 22" /><path d="M92 10 L 105 22 L 90 30" /></svg><span class="marg__note marg__note--iii" data-marg-note="3">every deadline<br>I have ever had</span></span></li>
-            <li class="swap" data-from="reification" data-to="treating an idea like a thing you can hold"><span class="swap__from" aria-hidden="true">reification</span><span class="swap__to">treating an idea like a thing you can hold</span></li>
-            <li class="swap" data-from="the is–ought gap" data-to="how things are won't tell you how they should be"><span class="swap__from" aria-hidden="true">the is–ought gap</span><span class="swap__to">how things are won't tell you how they should be</span></li>
-          </ul>
-          <p class="swap-block__note">Nothing was lost in that translation. The hard part was never the words.</p>
+        <div class="prose reveal" data-at="0.45" data-step="0.42-0.67">
+          <p>Those who stay hit a second problem. There are places to send an academic essay. There is almost nowhere to send an opinion, a hunch, or an idea you tried out on your own life.</p>
         </div>
+        <div class="prose reveal" data-at="0.5" data-step="0.67-0.97">
+          <p>So we made somewhere. The Aporia is run by students, for takes on philosophy that are honest, readable and sometimes wrong. It was never supposed to be a battleground.</p>
+        </div>
+        <p class="caption reveal" data-at="0.54" data-step="0.67-0.97">The bust is Epicurus. He taught philosophy in a garden, to anyone who came.</p>
       </div>
     </div>
   </section>

@@ -173,19 +173,21 @@ async function main() {
   const mode = decideMode();
   const html = document.documentElement;
   const smooth = createSmoothScroll({ lerp: 0.055 });     // eased wheel scrolling; off under reduced motion / touch
-  createScrollCue(smooth);
+  createScroller(smooth);
   // Before the static bail-out: the static page scrolls too. The marks are a
   // callback because the rule re-reads them whenever the document changes
   // height, which is exactly when the act spans move.
   createScrollProgress({ marks: progressMarks });
   if (mode.static) {
     goStatic(mode.reason);
+    createAboutLink(smooth);
     if (DEBUG) window.__aporia = { mode };
     return;                 // nothing else: no three.js, no clouds, no timeline
   }
   html.classList.remove('static');                  // the head's watchdog may have fired first; we are here, so we run
   html.classList.add('dynamic');
   publishMode('dynamic');
+  createAboutLink(smooth);
 
   // 1. Everything that doesn't need the renderer starts now, so the page is
   //    reading-ready and colour-correct before a single cloud byte arrives.
@@ -697,24 +699,94 @@ function compactFraming(state, aspect, fov) {
 
 // --------------------------------------------------------------------------- the scroll cue
 
+/** Ease to a scroll position with whichever scrolling this visitor has. */
+function easeTo(y, smooth) {
+  if (smooth.enabled) smooth.scrollTo(y);
+  else scrollTo({ top: y, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+
+/** Where an act's copy is fully up: the place a link to it should land. */
+const REST = [0, 0.62, 0.6, 0.2, 0.36];
+function restOf(k, acts) {
+  const a = acts[k];
+  if (!document.documentElement.classList.contains('dynamic')) return a.top;
+  return a.start + a.len * (isCompact() ? [0, 0.14, 0.2, 0.08, 0.2][k] : REST[k]);
+}
+
+/** Every place worth stopping, in order: what one press of the scroll indicator moves to. */
+function stops() {
+  const { acts, maxScroll } = measureActs();
+  const dynamic = document.documentElement.classList.contains('dynamic');
+  let list = acts.map((_, k) => restOf(k, acts));
+  if (dynamic && isCompact()) {
+    list = acts.flatMap((a) => [...new Set([...a.el.querySelectorAll('[data-step]')].map((el) => Number(el.dataset.step.split('-')[0])))]
+      .map((f) => a.start + a.len * (f + 0.03)));
+  } else if (dynamic) {
+    const [, , , IV] = acts;
+    list.push(IV.start + IV.len * 0.53, IV.start + IV.len * 0.86);
+  }
+  if (dynamic) { const V = acts[acts.length - 1]; list.push(V.start + V.len * 0.82); }   // the wordmark
+  return [...list, maxScroll].sort((x, y) => x - y);
+}
+
 /**
- * The cue at the foot of the first screen: "Scroll", and under it the one
- * shortcut straight to the shelf. Both go once the reader has scrolled.
+ * The cue at the foot of the first screen — "Scroll", and under it the one
+ * shortcut straight to the shelf — and the indicator that takes over when it
+ * goes. There is always exactly one "Scroll" on screen, until the portal.
  */
-function createScrollCue(smooth) {
-  const cue = document.getElementById('scroll-cue');
-  if (!cue) return;
+function createScroller(smooth) {
   if (smooth.enabled) document.documentElement.classList.add('smooth');
-  const hide = () => { cue.classList.add('is-gone'); removeEventListener('scroll', onScroll); };
-  const onScroll = () => { if (scrollY > 40) hide(); };
-  addEventListener('scroll', onScroll, { passive: true });
-  // only the "Scroll" half eases the page down; the shelf link is an ordinary link
-  cue.querySelector('.scroll-cue')?.addEventListener('click', (e) => {
+  const cue = document.getElementById('scroll-cue');
+  const el = document.getElementById('scroller');
+  const next = (e) => {
     e.preventDefault();
-    const to = innerHeight * 0.9;
-    if (smooth.enabled) smooth.scrollTo(to); else scrollTo({ top: to, behavior: 'smooth' });
-  });
-  onScroll();
+    easeTo(stops().find((y) => y > scrollY + 24) ?? document.documentElement.scrollHeight, smooth);
+  };
+  el?.addEventListener('click', next);
+  cue?.querySelector('.scroll-cue')?.addEventListener('click', next);
+
+  let key = '', end = Infinity;
+  const update = () => {
+    const y = scrollY;
+    cue?.classList.toggle('is-gone', y > 40);
+    if (!el) return;
+    const k = `${innerWidth}x${document.documentElement.scrollHeight}`;
+    if (k !== key) {
+      key = k;
+      const { acts, maxScroll } = measureActs();
+      const V = acts[acts.length - 1];
+      end = document.documentElement.classList.contains('dynamic') && V ? V.start + V.len * 0.93 : maxScroll - 12;   // the ring is gathering: its own note takes over
+    }
+    el.dataset.state = y >= end ? 'end' : y > 40 ? 'mid' : 'start';
+  };
+  addEventListener('scroll', update, { passive: true });
+  addEventListener('resize', update);
+  addEventListener('aporia:mode', () => { key = ''; update(); });
+  update();
+}
+
+/** Links to #about land where its copy is up, not where its section begins (still mid-collapse). */
+function createAboutLink(smooth) {
+  const go = (ease) => {
+    const { acts } = measureActs();
+    const k = acts.findIndex((a) => a.el.id === 'about');
+    if (k < 0) return;
+    if (ease) easeTo(restOf(k, acts), smooth); else scrollTo(0, restOf(k, acts));
+  };
+  for (const a of document.querySelectorAll('a[href="#about"]')) {
+    a.addEventListener('click', (e) => { e.preventDefault(); history.replaceState(null, '', '#about'); go(true); });
+  }
+  if (location.hash === '#about') {
+    // The browser makes its own jump to the section's top, some engines after
+    // load, so land again behind it — unless the reader has taken over by then.
+    let taken = false;
+    for (const ev of ['wheel', 'touchstart', 'keydown', 'pointerdown']) addEventListener(ev, () => { taken = true; }, { once: true, passive: true });
+    const land = () => { if (!taken) go(false); };
+    requestAnimationFrame(land);
+    if (document.readyState !== 'complete') addEventListener('load', () => { land(); setTimeout(land, 120); }, { once: true });
+    else setTimeout(land, 120);
+    setTimeout(land, 900);
+  }
 }
 
 // --------------------------------------------------------------------------- the portal

@@ -39,7 +39,7 @@ and reassembles as something else. That is also what "aporia" (ἀπορία,
 |-----|---------------|--------------|
 | I   | THE MONUMENT  | The Thinker on a plinth. Black ground, cold marble particles, academic jargon orbiting him. Deliberately unwelcoming. |
 | II  | THE IMPASSE   | The scroll stalls. Nothing resolves. The word "aporia" is defined. This beat is the magazine's name, made literal. |
-| III | THE FRACTURE  | The plinth collapses. The Thinker dissolves and reforms as the **bust of Epicurus**. Background flips from black to warm paper; particles from marble to ink. Epicurus argued philosophy exists to improve ordinary life, and taught anyone who showed up. |
+| III | ABOUT (the fracture) | **The magazine's own story** (`#about`, linked from the masthead): philosophy intimidates, the interested have nowhere to publish opinions, so students made this. Meanwhile the plinth collapses. The Thinker dissolves and reforms as the **bust of Epicurus**. Background flips from black to warm paper; particles from marble to ink. One caption says who the bust is. (Until 2026-11-23 this act was about Epicurus, with a jargon-to-plain swap list on the right; both removed at the owner's request.) |
 | IV  | THE LENSES    | Epicurus dissolves through one shape per issue: a **crowd wired into a network** (sociology), a **device with circuit traces** (technology), an **unformed drifting cloud** (undecided). Each has its own accent colour. |
 | V   | YOUR TURN     | The ground returns to black. A blank page with a cursor, lit in the dark, then the wordmark THE APORIA, which never fully settles — and finally falls into the portal to the shelf. |
 

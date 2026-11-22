@@ -22,7 +22,7 @@ The Aporia Web/
 │   ├── shapes.js            the seven morph targets  (part 2, stable)
 │   ├── scene.js             THREE.Points + shader    (part 2, stable)
 │   ├── main.js              scroll choreography      (part 3)
-│   ├── page.js              DOM mechanics: jargon field, swap, marginalia, covers (part 4)
+│   ├── page.js              DOM mechanics: jargon field, marginalia, covers (part 4)
 │   ├── normals.js           per-point normal estimation (local PCA)
 │   ├── normals-worker.js    runs normals.js off the main thread
 │   ├── curtain.js           the grain curtain both pages draw (§15)
@@ -453,7 +453,7 @@ segment stops under `prefers-reduced-motion`.
 |---|---|---|
 | I   | `.act--monument` 220vh | morph 0. camZ 6.6→6.0 `inCubic` over 0–55 % (the heavy first screenful), →5.2 over 55–100 %; camY 0.95→1.15, lookY 1.3→1.5 (looking up at him). |
 | II  | `.act--impasse` 300vh | morph 0. Camera all but stops: camZ 5.2→5.1, lookY 1.5→1.48 over 0–86 %. Last slice: morph 0→0.05 `inExpo` (86–100 %) and spread 0.45→1.6 `inExpo` (84–100 %) — the plinth begins to give. Only the base group moves at morph ≤ 0.05 (§10 seeds). |
-| III | `.act--fracture` 340vh | morph 0.05→1 `inOutQuad` over 0–62 % (the bust is formed before the swap list crosses the viewport at ~55–80 %); spread →1.15 (0–28 %) then →0.45 (28–66 %); **tone 0→1 over 16–48 %** — `--bg` flips with it; camZ →4.8 over 0–80 %; camY/lookY →1.15/1.12 over 8–62 % (coming down to eye level). |
+| III | `.act--fracture` 300vh (`#about`) | morph 0.05→1 `inOutQuad` over 0–62 %; spread →1.15 (0–28 %) then →0.45 (28–66 %); **tone 0→1 over 16–48 %** — `--bg` flips with it; camZ →4.8 over 0–80 %; camY/lookY →1.15/1.12 over 8–62 % (coming down to eye level). |
 | IV  | `.act--lenses` 480vh | thirds. In each third the morph runs over the first 62 % then holds: 1→2 crowd (accentMix 0→0.85; camera camY 1.1, lookY 1.35, camZ 5.8, rotY −0.12 — the crowd becomes a horizon along the bottom, clear of the copy); 2→3 device (accent → technology, camY/lookY 1.15, camZ 4.9, rotY 0.1); 3→4 unformed (accent → undecided, camZ 5.4, rotY 0, drift →0.012). |
 | V   | `.act--invite` 380vh | **back to black**: `tone` → 0 over 2–26 % (the ground returns to the cold ink of Act I and the grains to marble), `size` ×1.3 so the sheet reads as a lit page, `tiltX` → 0. |
 | V (cont.) | | morph 4→5 over 0–40 % (accent → invitation, camZ 4.3 push-in on the sheet); hold; 5→6 over 55–78 % (accentMix →0.7, the underline takes the red); camZ →6.6 over 55–86 %; hold 78–86 %; **6→7 over 86–98 %: the fall and the portal** (§15), drift left raised. |
@@ -538,8 +538,7 @@ Runs alongside main.js, reads the same sections, never touches `state`.
 | mechanic | markup it needs | how it is driven |
 |---|---|---|
 | Jargon field (Act I) | `#jargon > span[style="--x --y --s --r"]` — a fixed layer; words are positioned in the centre band so they crowd the monument, not the copy | fade-in scrubbed over `.act--monument` (start → 75 % past centre); scatter scrubbed over `.act--fracture` (top at 85 % of the viewport → 40 % past centre), each word flying away from the screen centre. `.is-floating` adds a CSS idle drift (off under reduced motion). |
-| The swap (Act III) | `#swap-list > li.swap[data-from][data-to]` containing `.swap__from` (aria-hidden) and `.swap__to` (the accessible text). page.js adds `.swap__live`. All three share one grid cell, so the row is sized by the longer phrasing and never reflows. | one `animate(lives, { textContent: scrambleText({ text: to, from: 'left', override: false, delay: stagger(260), duration: 1500 }) })`, scrubbed with `sync: 0.35` while the list travels from 82 % to 34 % of the viewport. Rows switch from Didone to Inter as their wave passes 45 %. **The stagger must be passed inside `scrambleText`** — it returns its own per-tween delay. |
-| Marginalia | `svg[data-marg="n"]` (paths only) + `[data-marg-note="n"]` (Caveat note), positioned relative to a `.marg-anchor`. Four on the page: I underline + "says who?", II arrow + "wait, is this actually true?", III arrow + "every deadline I have ever had" (on the akrasia row), V loop + "this one". | `svg.createDrawable(paths)` drawn `'0 0' → '0 1'` in a small timeline scrubbed (`sync: 0.5`) against the host (`section.act` at fractions past centre, or the row's own position for III). Thresholds are the `specs` table at the top of `marginalia()`. Keep it to three or four; sparse reads as wit. |
+| Marginalia | `svg[data-marg="n"]` (paths only) + `[data-marg-note="n"]` (Caveat note), positioned relative to a `.marg-anchor`. Three on the page: I underline + "says who?", II arrow + "wait, is this actually true?", V loop + "this one". | `svg.createDrawable(paths)` drawn `'0 0' → '0 1'` in a small timeline scrubbed (`sync: 0.5`) against the host (`section.act` at fractions past centre, or the row's own position for III). Thresholds are the `specs` table at the top of `marginalia()`. Keep it to three or four; sparse reads as wit. |
 | Issue covers (Act IV) | `.covers.reveal > article.cover[data-lens="0|1|2"][style="--tint: r, g, b"]` — three magazine covers fanned in a stack (CSS vars `--rot/--dy/--sc/--fade` per lens). The reveal lives on the container, never on a cover: the reveal tween writes inline transforms. | three standalone `onScroll` observers over the thirds of `.act--lenses` toggle `.is-active`; the active cover comes to the front and straightens. |
 
 To add a marginalia: drop an `<svg class="marg … " data-marg="5">` with one or
@@ -716,3 +715,22 @@ and the manifest's cloth / foil / size for that book.
   tags, and the scan attribution strings (`#attribution` in the colophon).
 - Mint: the OAuth login and the first generated book; a `mintProject` entry in
   `mint-assets.json` (the pack wants one Mint Project per codebase).
+
+## 17. Compact layout, the scroll indicator, and model loading (2026-11-23)
+
+- **`js/acts.js`** owns act measurement for both layouts. At `(max-width: 64rem)`
+  on the dynamic page, sections overlap by `-100vh`, an act runs from its own top
+  to the next one's, and its reading length is its height minus `100vh`.
+- **`data-step="from-to"`** (fractions of the act) is the compact layout's copy:
+  shown between them, all in one grid cell. `createSteps()` in `main.js`. The wide
+  layout ignores it and uses `data-at` / `data-leave`. A block needs both.
+- **`compactFraming()`** places the figure: each shape declares the box it needs.
+  Desktop never calls it.
+- **`#scroller`** is always on screen: `data-state` is `start` (Act I's own cue is
+  showing; upright phones show the indicator instead), `mid`, or `end` (the portal's
+  note takes over, 93 % of Act V). Clicking goes to the next entry in `stops()`.
+- **`#about`** links land at `restOf()`, where the copy is up, not the section top.
+- **Clouds**: `.bin`, again past the cache, then the same bytes as a module
+  (`assets/clouds/<name>.js` — regenerate it whenever the `.bin` is re-baked).
+  Every attempt is length-checked. Visitors never see the procedural stand-ins;
+  if a scan cannot be had, the static page shows its still.

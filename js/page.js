@@ -3,20 +3,16 @@
  *
  *   1. The jargon field (Act I): words crowd the monument, then scatter when
  *      the plinth goes. Scroll-scrubbed.
- *   2. The jargon → plain swap (Act III): six rows that character-shuffle
- *      from academic to plain English as the reader scrolls them through
- *      the viewport. anime.js scrambleText + stagger, scrubbed with damping,
- *      so the reader performs the translation.
- *   3. Marginalia: hand-drawn strokes (svg.createDrawable) and notes that
- *      stroke themselves on as you scroll. Four on the whole page.
- *   4. Act IV issue cards: the card for the current lens is highlighted.
+ *   2. Marginalia: hand-drawn strokes (svg.createDrawable) and notes that
+ *      stroke themselves on as you scroll. Three on the whole page.
+ *   3. Act IV issue cards: the card for the current lens is highlighted.
  *
  * Everything here reads the same sections js/main.js measures and never
  * touches the scene state. CONTRACTS.md §14.
  */
 
 import { isCompact, trackActs } from './acts.js';
-import { animate, createTimeline, onScroll, stagger, svg, scrambleText } from '../vendor/animejs/anime.esm.js';
+import { animate, createTimeline, onScroll, stagger, svg } from '../vendor/animejs/anime.esm.js';
 
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -40,7 +36,6 @@ whenMode((mode) => {
     document.querySelector('.cover[data-lens="0"]')?.classList.add('is-active');
   } else {
     jargonField();
-    swapList();
     marginalia();
     issueCards();
   }
@@ -118,76 +113,14 @@ function jargonField() {
   if (!reduced) field.classList.add('is-floating');
 }
 
-// --------------------------------------------------------------------------- 2. the swap
-
-function swapList() {
-  const list = document.getElementById('swap-list');
-  if (!list) return;
-  const rows = [...list.querySelectorAll('.swap')];
-  const lives = rows.map((row) => {
-    const from = row.dataset.from, to = row.dataset.to;
-    const mk = (cls, text, hidden) => {
-      const s = document.createElement('span');
-      s.className = cls;
-      s.textContent = text;
-      if (hidden) s.setAttribute('aria-hidden', 'true');
-      return s;
-    };
-    // Both phrasings are already in the HTML (so the list reads without JS) and
-    // are laid out in the same grid cell (CSS), so the row is sized by the
-    // longer one and never reflows while the live text shuffles over them.
-    if (!row.querySelector('.swap__from')) row.prepend(mk('swap__from', from, true), mk('swap__to', to, false));
-    const live = mk('swap__live is-academic', from, true);
-    live.dataset.to = to;
-    row.insertBefore(live, row.querySelector('.swap__to').nextSibling);
-    return live;
-  });
-
-  const ROW_STAGGER = 260, ROW_DURATION = 1500;
-  const anim = animate(lives, {
-    textContent: scrambleText({
-      text: (el) => el.dataset.to,
-      chars: 'lowercase',
-      from: 'left',
-      duration: ROW_DURATION,
-      settleDuration: 260,
-      seed: 17,
-      override: false,               // untouched rows keep reading as the academic phrase until the wave reaches them
-      delay: stagger(ROW_STAGGER),   // inside: scrambleText returns its own per-tween delay, which would override an outer one
-    }),
-    ease: 'linear',
-    onUpdate: (self) => {
-      // switch each row from the Didone to the grotesque as its wave passes the middle
-      const t = self.currentTime;
-      lives.forEach((el, i) => el.classList.toggle('is-academic', t < i * ROW_STAGGER + ROW_DURATION * 0.45));
-    },
-    // compact: the list is pinned, so it has no travel of its own to scrub by
-    autoplay: compact ? false : onScroll({
-      target: list,
-      enter: { target: 'start', container: '82%' },
-      leave: { target: 'end', container: '34%' },
-      sync: DAMPING,
-      debug: DEBUG,
-    }),
-  });
-  if (compact) {
-    let p = 0, goal = 0, raf = 0;
-    const tick = () => { p += (goal - p) * 0.18; if (Math.abs(goal - p) < 0.002) p = goal; anim.seek(anim.duration * p); raf = p === goal ? 0 : requestAnimationFrame(tick); };
-    trackActs((f) => { goal = Math.min(1, Math.max(0, (f[2] - 0.79) / 0.12)); if (goal !== p && !raf) raf = requestAnimationFrame(tick); });
-  }
-  return anim;
-}
-
-// --------------------------------------------------------------------------- 3. marginalia
+// --------------------------------------------------------------------------- 2. marginalia
 
 function marginalia() {
   const specs = [
     // [svg data-marg, host selector relative to the svg, enter, leave] — thresholds are
-    // fractions of the host that have passed the viewport centre (or, for the
-    // flowing row, positions of the row in the viewport).
+    // fractions of the host that have passed the viewport centre.
     { id: '1', host: 'section.act', enter: { target: '8%', container: 'center' }, leave: { target: '26%', container: 'center' } },
     { id: '2', host: 'section.act', enter: { target: '42%', container: 'center' }, leave: { target: '60%', container: 'center' } },
-    { id: '3', host: '.swap', enter: { target: 'start', container: '58%' }, leave: { target: 'start', container: '34%' } },
     { id: '4', host: 'section.act', enter: { target: '27%', container: 'center' }, leave: { target: '44%', container: 'center' } },
   ];
   for (const spec of specs) {
@@ -207,7 +140,7 @@ function marginalia() {
   }
 }
 
-// --------------------------------------------------------------------------- 4. issue cards
+// --------------------------------------------------------------------------- 3. issue cards
 
 function issueCards() {
   const section = document.querySelector('.act--lenses');

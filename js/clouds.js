@@ -18,40 +18,25 @@ export const CLOUD_URLS = Object.freeze({
 
 export const MANIFEST_URL = 'assets/clouds/manifest.json';
 
+/** What the bake ships, for when the manifest itself cannot be read. */
+const SHIPPED = Object.freeze({ dtype: 'int16', pointCount: 60000, scale: 1 / 32767 });
+
 /**
  * Fetch one baked cloud.
  * @param {string} url
- * @param {{ dtype?: 'int16'|'float32', scale?: number }} [format]  from the manifest; defaults to float32.
+ * @param {{ dtype?: 'int16'|'float32', scale?: number, pointCount?: number }} [format]  from the manifest.
  *   int16 files (the bake's default) are dequantised to Float32 here: value × scale.
  * @returns {Promise<Float32Array|null>} XYZ triples, or null on any failure.
  */
 export async function loadCloud(url, format = {}) {
+  const points = format.pointCount || SHIPPED.pointCount;
   try {
-    const buf = await fetchCloud(url);
-    // Decide the dtype from the bytes themselves, checked against the manifest's
-    // point count when we have one: a cached Float32 file read as Int16 (or the
-    // reverse) is garbage, and caches are exactly where that happens.
-    let dtype = null;
-    if (format.pointCount) {
-      if (buf.byteLength === format.pointCount * 6) dtype = 'int16';
-      else if (buf.byteLength === format.pointCount * 12) dtype = 'float32';
-      else { console.warn(`[clouds] ${url}: ${buf.byteLength} bytes does not match ${format.pointCount} points — cloud unavailable`); return null; }
-    } else {
-      // no manifest: a 60k int16 file is also a whole number of float32 triples,
-      // so look at the values — normalised clouds live within ±1.5.
-      dtype = buf.byteLength % 12 === 0 && plausibleFloat32(buf) ? 'float32' : 'int16';
-    }
-    const bytesPerPoint = dtype === 'int16' ? 6 : 12;
-    if (buf.byteLength === 0 || buf.byteLength % bytesPerPoint !== 0) {
-      console.warn(`[clouds] ${url}: ${buf.byteLength} bytes is not a whole number of ${dtype} XYZ triples`);
-      return null;
-    }
-    // The bake writes little-endian; every platform the page runs on is
-    // little-endian, so a straight view is correct and copy-free.
-    if (dtype === 'float32') return new Float32Array(buf);
+    const buf = await fetchCloud(url, points);
+    // The dtype comes from the bytes, not the manifest: a cached Float32 file
+    // read as Int16 (or the reverse) is garbage, and caches are where that happens.
+    if (buf.byteLength === points * 12) return new Float32Array(buf);
     const q = new Int16Array(buf);
-    // trust the manifest's scale only if it was describing an int16 file
-    const scale = format.dtype === 'int16' && format.scale ? format.scale : 1 / 32767;
+    const scale = format.dtype === 'int16' && format.scale ? format.scale : SHIPPED.scale;
     const out = new Float32Array(q.length);
     for (let i = 0; i < q.length; i++) out[i] = q[i] * scale;
     return out;
@@ -63,37 +48,42 @@ export async function loadCloud(url, format = {}) {
 
 /**
  * The bytes of one cloud, trying hard. These two files ARE the page: losing one
- * to a dropped packet used to replace the sculpture with a stand-in made of
- * tubes for the rest of the visit. So: the .bin, again, then the same bytes as
- * base64 JSON (some school and office networks block .bin downloads outright),
- * then both once more.
+ * used to replace the sculpture with a stand-in made of tubes.
+ *
+ * Every attempt is checked for length, because a failure does not always look
+ * like one: a filtering network answers a blocked .bin with 200 and an HTML
+ * page, and that page can then sit in the cache. So the second try bypasses
+ * the cache, and the last resort is the same bytes as a JavaScript module —
+ * anything that let this file through will let that through too.
  */
-async function fetchCloud(url) {
-  const bin = async () => { const r = await fetch(url); if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); };
-  const json = async () => {
-    const r = await fetch(url.replace('.bin', '.json')); if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const raw = atob((await r.json()).b64), out = new Uint8Array(raw.length);
+async function fetchCloud(url, points) {
+  const sound = (buf) => {
+    if (buf.byteLength !== points * 6 && buf.byteLength !== points * 12) throw new Error(`${buf.byteLength} bytes is not ${points} points`);
+    return buf;
+  };
+  const bin = async (cache) => {
+    const r = await fetch(url, { cache });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return sound(await r.arrayBuffer());
+  };
+  const module = async () => {
+    const file = url.split('?')[0].replace(/\.bin$/, '.js');
+    const raw = atob((await import(new URL(file, document.baseURI).href)).default);
+    const out = new Uint8Array(raw.length);
     for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-    return out.buffer;
+    return sound(out.buffer);
   };
   let last;
-  for (const [attempt, wait] of [[bin, 0], [bin, 300], [json, 0], [bin, 1200], [json, 600]]) {
+  for (const [attempt, wait] of [[() => bin('default'), 0], [() => bin('reload'), 250], [module, 0], [() => bin('reload'), 1500]]) {
     if (wait) await new Promise((r) => setTimeout(r, wait));
     try { return await attempt(); } catch (err) { last = err; }
   }
   throw last;
 }
 
-/** True if the first few hundred values read as a normalised float32 cloud. */
-function plausibleFloat32(buf) {
-  const f = new Float32Array(buf, 0, Math.min(600, buf.byteLength >> 2));
-  for (let i = 0; i < f.length; i++) if (!Number.isFinite(f[i]) || Math.abs(f[i]) > 1.5) return false;
-  return true;
-}
-
 /**
  * Fetch both clouds in parallel, reading the manifest first for each file's
- * dtype/scale (a missing manifest falls back to sniffing the byte length).
+ * dtype/scale (a missing manifest falls back to what the bake ships, SHIPPED).
  * @param {string} [base=''] optional prefix, e.g. '/' or '../'. Must end in '/' if non-empty.
  * @returns {Promise<{ thinker: Float32Array|null, epicurus: Float32Array|null }>}
  */
