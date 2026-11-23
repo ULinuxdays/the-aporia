@@ -43,6 +43,9 @@
 
 <script>
   document.documentElement.classList.add('js');
+  // Came from another page of the site, which faded itself out (js/loader.js):
+  // bring the loading knot straight up, so the two pages read as one movement.
+  try { if (sessionStorage.getItem('aporia:nav') === '1') { sessionStorage.removeItem('aporia:nav'); document.documentElement.classList.add('arrive'); } } catch (e) {}
 
   // A safety net, because this page hides its own text until JavaScript says
   // otherwise (.reveal starts at opacity 0). If the scripts never run — an old

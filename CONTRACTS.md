@@ -850,15 +850,24 @@ ground (`--loader-bg`), with "Loading" in mono caps under it.
 - **No JavaScript**: not shown (`html:not(.js)`). Reduced motion: it does not
   turn or tug; it still fades.
 - **Between pages** (`js/loader.js`, second half): a click on a link to another
-  page of the site fades the page out first (`html.leaving`, 340 ms; on the
-  front page the knot shrinks to the middle as it goes), sets
-  `sessionStorage['aporia:nav']`, and then navigates. The next page sees the
-  flag (inline in About's and the shelf's heads; loader.js on the front page)
-  and adds `html.arrive`, which brings its loading knot straight up in the
-  middle instead of after a beat: the old knot draws in, the new one rises in
-  the same place. Not for new tabs, modified clicks, other sites, same-page
-  anchors, or `#portal` (its own curtain). `pageshow` clears `leaving`, so the
-  back button never returns to a faded-out page. Off under reduced motion.
+  page of the site draws a veil up over this page (`.veil`, 600 ms): the next
+  page's own ground (`GROUND` in loader.js: the shelf's brown, otherwise
+  #08080b) rising from the bottom with a soft gradient for a leading edge,
+  while the front page's knot lifts a little ahead of it. Then it sets
+  `sessionStorage['aporia:nav']` and navigates. The next page sees the flag
+  (inline in About's and the shelf's heads; loader.js on the front page) and
+  adds `html.arrive`, which brings its loading knot straight up in the middle
+  instead of after a beat. Not for new tabs, modified clicks, other sites,
+  same-page anchors, or `#portal` (its own curtain). `pageshow` takes the veil
+  and `leaving` off, so the back button never returns to a covered page. Off
+  under reduced motion.
+- **The lift**: when the page is ready the loading screen is drawn up and away
+  (`translateY`, 900 ms) carrying a 45vh gradient as its lower edge
+  (`.loader::after`), so the page is uncovered from the bottom up, continuing
+  the veil's movement; the knot pulls apart and rides up with it. Its exit
+  steps are CSS animations, not transitions: a transition cannot start from
+  where a running animation has got to, and the knot blinked out. Under
+  reduced motion the screen simply fades.
 - **Not a view transition.** Cross-document view transitions were tried: the
   browser captured the front page's WebGL knot as a white rectangle. Don't name
   `#rope` in a view transition.
