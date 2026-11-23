@@ -222,8 +222,9 @@ How it behaves, so it can be checked after a change:
   can be clicked too. The two round grips show where to take hold. Every few
   seconds, until someone takes hold, two fingertips land on the grips and draw
   the lobes apart (the rope really stretches), then let go. Over the knot the
-  pointer becomes a small mark, a dot between two hairline arcs with "pull" in
-  italic under it, and the arcs part as you pull (a finger gets the same mark).
+  pointer becomes the word "pull" with one rounded arrow beside it, pointing
+  the way to pull (out from the middle); the arrow eases further out as you
+  pull. A finger gets a dot between two hairline arcs, which part as you pull.
 - Hovering, tied or pulled: the knot turns a few degrees towards the pointer, a
   faint light follows it across the ribbon (which swells a little under it), the
   strands lean towards it, and where the pointer comes onto a strand a glint

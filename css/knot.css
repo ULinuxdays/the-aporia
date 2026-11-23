@@ -198,11 +198,22 @@ html:not(.live) .ghost, html:not(.live) .trail, html:not(.live) .cursor { displa
 }
 .trail { height: 1px; margin-top: -0.5px; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(244, 241, 234, 0), rgba(244, 241, 234, 0.55)); }
 
-/* the pointer over the knot: the mark, and the word in Bodoni italic under it */
-.cursor { position: absolute; left: 0; top: 0; z-index: 4; width: 60px; height: 60px; margin: -30px 0 0 -30px; pointer-events: none; opacity: 0; transition: opacity 200ms ease; --s: 0; }
-.cursor__label { position: absolute; left: 50%; top: 100%; margin-top: 0.15rem; transform: translateX(-50%); font: italic 400 0.86rem/1 var(--didone); letter-spacing: 0.02em; color: var(--ink-soft); white-space: nowrap; transition: opacity 220ms ease; }
+/* the pointer over the knot: the word "pull" on it, and one arrow beside it
+   pointing the way to pull (--a), which eases further out as you pull (--push) */
+.cursor { position: absolute; left: 0; top: 0; z-index: 4; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity 200ms ease; --a: 0deg; --push: 0px; --off: 24px; }
 .cursor.on { opacity: 1; }
-.cursor.held .cursor__label { opacity: 0; }
+.cursor__label {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -54%);
+  font: italic 400 1.02rem/1 var(--didone); letter-spacing: 0.02em; color: var(--ink); white-space: nowrap;
+  text-shadow: 0 0 2px rgba(8, 8, 11, 0.65), 0 0 10px rgba(8, 8, 11, 0.4);
+}
+.cursor__way { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotate(var(--a)); transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1); }
+.cursor__arrow {
+  position: absolute; left: 0; top: -7px; width: 26px; height: 14px; overflow: visible;
+  transform: translateX(calc(var(--off) + var(--push))); transition: transform 160ms ease-out;
+  filter: drop-shadow(0 0 1px rgba(8, 8, 11, 0.7)) drop-shadow(0 0 4px rgba(8, 8, 11, 0.35));
+}
+.cursor__arrow path { fill: none; stroke: var(--ink); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 html.live .stage.pointer-pull, html.live .stage.pointer-pull * { cursor: none !important; }
 
 /* ---- the menu, live: only once the knot is out ---------------------------- */
@@ -214,6 +225,6 @@ html.live .lobe__in { display: inline-block; will-change: transform; }
   html.live .stage { animation: none; }
   .lobe.is-soon.said, .shiny, .hint.swap .hint__text, .grip__run { animation: none; }
   .grip__run { opacity: 0; }
-  .cursor, .arcs__l, .arcs__r { transition: none; }
+  .cursor, .cursor__way, .cursor__arrow, .arcs__l, .arcs__r { transition: none; }
   .shiny { background-position: 100% 0; }
 }

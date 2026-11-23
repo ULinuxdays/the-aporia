@@ -526,7 +526,11 @@ function start() {
     const p = grab && !grab.touch ? grab.p : pointerAt.p;
     cursor.style.transform = `translate(${p[0].toFixed(1)}px, ${p[1].toFixed(1)}px)`;
     cursor.classList.toggle('held', !!grab);
-    cursor.style.setProperty('--s', grab ? clamp(grab.tension, 0, 1).toFixed(3) : '0');
+    // the way to pull: out from the middle of the knot, sideways (upright: up or down)
+    const from = grab && !grab.touch ? grab.p0 : p, out = tall ? from[1] > rope.cy : from[0] > rope.cx;
+    cursor.style.setProperty('--a', tall ? (out ? '90deg' : '-90deg') : (out ? '0deg' : '180deg'));
+    cursor.style.setProperty('--off', tall ? '17px' : '25px');
+    cursor.style.setProperty('--push', grab ? `${(clamp(grab.tension, 0, 1) * 16).toFixed(1)}px` : '0px');
   }
 
   // The hand over the knot. A soft light follows it across the ribbon (a satin

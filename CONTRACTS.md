@@ -791,9 +791,11 @@ now means `about.html`.
   ~7 s until someone has hold of the knot (and not while a pointer is moving
   over it) two fingertips (`.ghost`) land on the grips, press, and draw the two
   lobes apart; the rope is really tugged after them and k stretches as in a real
-  pull, then they let go. Over the knot a fine pointer becomes `.cursor` and a finger gets `.meter`:
-  the same mark, `.arcs` (a dot between two hairline arcs), whose arcs part with
-  the tension (`--s`, 0…1). The grips are a dot in a hairline ring with a
+  pull, then they let go. Over the knot a fine pointer becomes `.cursor`: "pull" on the pointer and
+  one arrow (`.cursor__way`, rotated by `--a`) pointing out from the knot's
+  middle, sideways (up or down when upright), pushed out by the tension
+  (`--push`). A finger gets `.meter`, `.arcs` (a dot between two hairline arcs),
+  whose arcs part with the tension (`--s`, 0…1). The grips are a dot in a hairline ring with a
   dimension line pointing the way to pull.
   The button reads "Drag to pull it apart" (fine pointer) or "Swipe to pull it
   apart". Reduced motion: no demo.
@@ -847,4 +849,17 @@ ground (`--loader-bg`), with "Loading" in mono caps under it.
   at once (`html.arriving`). Restored from the back/forward cache: at once.
 - **No JavaScript**: not shown (`html:not(.js)`). Reduced motion: it does not
   turn or tug; it still fades.
+- **Between pages** (`js/loader.js`, second half): a click on a link to another
+  page of the site fades the page out first (`html.leaving`, 340 ms; on the
+  front page the knot shrinks to the middle as it goes), sets
+  `sessionStorage['aporia:nav']`, and then navigates. The next page sees the
+  flag (inline in About's and the shelf's heads; loader.js on the front page)
+  and adds `html.arrive`, which brings its loading knot straight up in the
+  middle instead of after a beat: the old knot draws in, the new one rises in
+  the same place. Not for new tabs, modified clicks, other sites, same-page
+  anchors, or `#portal` (its own curtain). `pageshow` clears `leaving`, so the
+  back button never returns to a faded-out page. Off under reduced motion.
+- **Not a view transition.** Cross-document view transitions were tried: the
+  browser captured the front page's WebGL knot as a white rectangle. Don't name
+  `#rope` in a view transition.
 
