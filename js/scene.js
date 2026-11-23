@@ -30,7 +30,8 @@ const SWEEP_DIR = /* @__PURE__ */ (() => new THREE.Vector3(0.78, 0.62, 0.1).norm
 
 const REF_DISTANCE = 5;
 const REF_HEIGHT = 900;
-const MAX_DPR = 2;
+const MAX_DPR = 2;          // a large screen
+const MAX_DPR_SMALL = 3;    // a phone's: its canvas is small, and at 2 on a 3× screen the grains go soft
 const VERT = /* glsl */ `
   attribute vec3 aPosA;
   attribute vec3 aPosB;
@@ -340,12 +341,13 @@ export function createScene(canvas, { count, shapes, onFrame, seed = 1, coldColo
 
   // ------------------------------------------------------------- sizing
   let width = 1, height = 1, dpr = 1;
-  let ceiling = MAX_DPR;    // lowered by govern() on a device that can't keep up
+  let ceiling = MAX_DPR_SMALL;   // lowered by govern() on a device that can't keep up, and raised again when it can
   let framing = null;       // compact layouts: (state, aspect, fov) → where the figure sits (setFraming)
   function resize() {
     const w = canvas.clientWidth || canvas.width || 1;
     const h = canvas.clientHeight || canvas.height || 1;
-    dpr = Math.min(ceiling, (typeof devicePixelRatio === 'number' && devicePixelRatio) || 1);
+    const top = w * h <= 600000 ? MAX_DPR_SMALL : MAX_DPR;
+    dpr = Math.min(ceiling, top, (typeof devicePixelRatio === 'number' && devicePixelRatio) || 1);
     if (w === width && h === height && renderer.getPixelRatio() === dpr) return;
     width = w; height = h;
     renderer.setPixelRatio(dpr);
@@ -385,13 +387,27 @@ export function createScene(canvas, { count, shapes, onFrame, seed = 1, coldColo
 
   // Step the pixel ratio down on a device that cannot hold 25 fps. The threshold
   // sits below 30 on purpose: iOS Low Power Mode caps rAF at 30 and is not slow.
-  let slowFrames = 0, seenFrames = 0;
+  // Never below 2 on a sharp screen (at 1 the grains turn to blocks), and back
+  // up again after a few seconds of easy frames: one slow start, while the
+  // scans are being built, used to leave a phone at 1 for good.
+  // A raise that has to be taken back doubles the wait before the next one, so a
+  // borderline phone settles instead of see-sawing.
+  let slowFrames = 0, seenFrames = 0, easyFrames = 0, easyNeed = 240, lastWasRaise = false;
   function govern(dt) {
-    if (ceiling <= 1 || ++seenFrames < 60) return;          // ignore start-up, when everything is being built
+    if (++seenFrames < 60) return;                          // ignore start-up, when everything is being built
+    const floor = Math.min(2, (typeof devicePixelRatio === 'number' && devicePixelRatio) || 1);
     if (dt > 0.04) slowFrames++;
+    easyFrames = dt < 0.022 ? easyFrames + 1 : 0;
     if (seenFrames % 60 === 0) {
-      if (slowFrames > 36) { ceiling = Math.max(1, Math.min(ceiling, dpr) - 0.5); seenFrames = 0; }
+      if (slowFrames > 36 && dpr > floor) {
+        ceiling = Math.max(floor, Math.min(ceiling, dpr) - 0.5); seenFrames = 0;
+        if (lastWasRaise) easyNeed = Math.min(easyNeed * 2, 7680);
+        lastWasRaise = false;
+      }
       slowFrames = 0;
+    }
+    if (easyFrames > easyNeed && ceiling < MAX_DPR_SMALL && dpr < Math.min(MAX_DPR_SMALL, devicePixelRatio || 1)) {
+      ceiling = Math.min(MAX_DPR_SMALL, Math.max(ceiling, dpr) + 0.5); easyFrames = 0; lastWasRaise = true;
     }
   }
 

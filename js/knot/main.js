@@ -23,9 +23,11 @@ const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const stage = $('stage'), ui = $('ui'), cv = $('rope'), hint = $('hint'), hintText = $('hint-text');
-const title = $('title'), masthead = $('masthead'), note = $('note'), meter = $('meter'), menu = $('menu');
-const leader = $('leader'), leaderLine = leader.querySelector('polyline'), leaderDot = leader.querySelector('circle');
+const title = $('title'), masthead = $('masthead'), meter = $('meter'), menu = $('menu');
 const grips = [$('grip-0'), $('grip-1')];
+const ghosts = [$('ghost-0'), $('ghost-1')], trails = [$('trail-0'), $('trail-1')], cursor = $('cursor');
+const cursorFill = cursor.querySelector('.cursor__fill');
+const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const lobes = {};
 for (const el of document.querySelectorAll('.lobe')) lobes[el.dataset.lobe] = el;
 
@@ -86,13 +88,20 @@ function start() {
     if (first) apply(); else rope.carry(apply);
     if (wasTall !== tall && !first) for (const el of Object.values(lobes)) el.style.transform = '';
     run = H * 0.8 * 0.97;
-    const ratio = Math.min(2, window.devicePixelRatio || 1, Math.sqrt(6e6 / Math.max(1, W * CH)));
-    dpr = Math.min(ratio, dprCap);
+    // The screen's own sharpness, up to 3 (a phone's canvas is small), within
+    // about 6 million pixels. A slow device may step down from there, but never
+    // below 2 on a sharp screen: at 1 the ribbon's edges step and its grain
+    // goes to blocks.
+    const ratio = Math.min(3, window.devicePixelRatio || 1, Math.sqrt(6e6 / Math.max(1, W * CH)));
+    dprFloor = Math.min(ratio, 2); dprTop = ratio;
+    dpr = Math.max(dprFloor, Math.min(ratio, dprCap));
     painter.resize(W, CH, dpr);
+    // the grain keeps its size against the knot, not against the screen
+    painter.look.grain = clamp(1.5 * sc / 0.68, 0.75, 1.5);
     measured = false;
     dirty = true;
   }
-  let dprCap = 2, measured = false;
+  let dprCap = 3, dprFloor = 1, dprTop = 1, measured = false;
 
   function centre() {
     const e = smooth(0, 1, clamp(k, 0, 1));
@@ -236,26 +245,30 @@ function start() {
     if (e.pointerType === 'touch') return;
     const p = local(e);
     if (grab && !grab.touch) { pull(p); return; }
+    pointerAt = { p, over: false };
+    handMoved = performance.now();
     if (!still) aim = [-0.42 + 0.36 * clamp(p[0] / W - 0.5, -0.5, 0.5) * 2, -0.62 + 0.3 * clamp(p[1] / H - 0.5, -0.5, 0.5) * 2, 0.66];
     if (e.target === cv || e.target === stage) {
       const j = onGrip(p) >= 0 ? onGrip(p) : hit(p);
       const key = j === null ? null : LOBE_OF_END()[rope.endOf(j)];
       hot = menuOn && key && live(key) ? rope.endOf(j) : -1;
       stage.classList.toggle('can', j !== null);
+      pointerAt.over = j !== null;
+      if (j !== null) glintAt(j);
     }
     dirty = true;
   });
   const up = (e) => { if (e.pointerType !== 'touch' && grab && !grab.touch) drop(); };
   stage.addEventListener('pointerup', up);
   stage.addEventListener('pointercancel', up);
-  stage.addEventListener('pointerleave', () => { if (!grab) { hot = -1; stage.classList.remove('can'); } });
+  stage.addEventListener('pointerleave', () => { if (!grab) { hot = -1; pointerAt = null; stage.classList.remove('can'); } });
 
   // touch: the first swipe on the knot pulls it; once it is out, swipes scroll
   stage.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1 || grab) return;
     if (e.target.closest('a, button, .lobe')) return;
     if (!tiedNow() || k > 0.4) return;
-    grabAt(local(e.touches[0]), true);
+    if (grabAt(local(e.touches[0]), true)) glintAt(grab.j);
   }, { passive: true });
   stage.addEventListener('touchmove', (e) => {
     if (!grab || !grab.touch) return;
@@ -362,7 +375,7 @@ function start() {
 
   const sizes = new Map();
   function measure() {
-    for (const el of [...Object.values(lobes), note, title]) { el.style.transform = 'none'; sizes.set(el, [el.offsetWidth, el.offsetHeight]); }
+    for (const el of [...Object.values(lobes), title]) { el.style.transform = 'none'; sizes.set(el, [el.offsetWidth, el.offsetHeight]); }
     measured = true;
   }
 
@@ -384,7 +397,7 @@ function start() {
     const e = smooth(0, 1, clamp(k, 0, 1)), sc = rope.sc, cx = rope.cx, cy = rope.cy;
     const far = rope.far * sc, armW = ARM_WIDTH * sc, foot = FOOT * sc, footW = FOOT_WIDTH * sc;
     const narrow = W < 620, big = narrow || short ? 1.5 : 2.2;
-    const ORBIT = tall ? ORBIT_TALL : short ? ORBIT_SHORT : ORBIT_WIDE, rects = {};
+    const ORBIT = tall ? ORBIT_TALL : short ? ORBIT_SHORT : ORBIT_WIDE;
     const swing = smooth(0, 0.8, e), slide = smooth(0.45, 1, e);
     for (const key of Object.keys(ORBIT)) {
       const el = lobes[key]; if (!el) continue;
@@ -400,7 +413,7 @@ function start() {
         else x = mix(x, cx + sign * far * 0.62, slide);
       }
       const s = mix(1, isArm ? big : narrow ? 1 : 1.1, e);
-      rects[key] = place(el, x, y, 0.5 - 0.5 * co, 0.5 - 0.5 * si, s, w, h);
+      place(el, x, y, 0.5 - 0.5 * co, 0.5 - 0.5 * si, s, w, h);
       el._s = s;
       reveal(pieces.get(el), smooth(0.3, 0.97, k), -1, 14, 8);
       el.classList.toggle('on', live(key) && (hot === end || (flashKey === key && performance.now() < flashUntil)));
@@ -414,44 +427,6 @@ function start() {
     titleSub.style.opacity = smooth(0.8, 1, k).toFixed(3);
     title.style.transform = `translateY(${ny.toFixed(1)}px)`;
     masthead.style.opacity = (1 - smooth(0.12, 0.42, k)).toFixed(3);
-
-    // "this bit never comes out", pointing back at the weave
-    let n = smooth(0.82, 1, k), noteAt = [0, 0];
-    const [nw, nh] = sizes.get(note);
-    if (n > 0) {
-      let x, y;
-      if (tall) {
-        // under About, above the button
-        x = cx + footW * 0.7 + 24;
-        const top = rects.bl ? rects.bl[1] + rects.bl[3] + 2 : cy + foot + footW, bottom = hint.offsetTop - 4;
-        y = top;
-        if (bottom - top < nh * 0.9) n = 0;
-      } else {
-        // to the right of the weave, between Write above and Read the Latest below
-        x = cx + foot + footW + 34;
-        const top = rects.tr ? rects.tr[1] + rects.tr[3] + 4 : cy, bottom = rects.br ? rects.br[1] - 4 : H;
-        y = clamp(cy + footW * 0.35, top, bottom - nh);
-        if (bottom - top < nh * 0.8) n = 0;
-      }
-      note.style.transform = `translate(${clamp(x, 8, W - nw - 8).toFixed(1)}px, ${clamp(y, 8, H - nh - 8).toFixed(1)}px)`;
-      noteAt = [x, y];
-    }
-    note.style.opacity = n.toFixed(3);
-    // the hairline: from the note's near end to the crossing of the weave nearest it
-    leader.style.opacity = n.toFixed(3);
-    if (n > 0) {
-      const nx = clamp(noteAt[0], 8, W - nw - 8) - 10, ny2 = clamp(noteAt[1], 8, H - nh - 8) + nh * 0.55;
-      let best = null, bd = 1e9;
-      for (const [a] of rope.cross) { const d = Math.hypot(rope.x(a) - nx, rope.y(a) - ny2); if (d < bd) { bd = d; best = a; } }
-      if (best !== null) {
-        const ex = rope.x(best), ey = rope.y(best);
-        // upright, a straight line would cut through the word above the note: turn a corner instead
-        const pts = tall ? [[nx, ny2], [ex, ny2], [ex, ey]] : [[nx, ny2], [ex, ey]];
-        leaderLine.setAttribute('points', pts.map((q) => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' '));
-        leaderDot.setAttribute('cx', ex.toFixed(1)); leaderDot.setAttribute('cy', ey.toFixed(1));
-      }
-    }
-    note.style.filter = n > 0 && n < 1 && !still ? `blur(${((1 - n) * 6).toFixed(2)}px)` : '';
   }
 
   // ---------------------------------------------------------------- the indicators
@@ -474,7 +449,7 @@ function start() {
     const idle = now - lastTouch > 6000;
     const want = tiedNow() && (!touched || idle) && !grab ? 1 : 0;
     gripShow += (want - gripShow) * (1 - Math.exp(-dt * (want ? 2.5 : 8)));
-    const vis = gripShow * (1 - smooth(0.02, 0.2, k));
+    const vis = gripShow * (1 - smooth(0.02, 0.2, k)) * (demoT > 0.08 && demoT < 0.7 ? 0.35 : 1);
     for (let g = 0; g < 2; g++) {
       const el = grips[g], j = gripPoint(g);
       el.style.opacity = vis.toFixed(3);
@@ -483,15 +458,15 @@ function start() {
       el.style.transform = `translate(${rope.x(j).toFixed(1)}px, ${rope.y(j).toFixed(1)}px) rotate(${a}deg)`;
     }
     // the pull: a ring round the hand, filling until it gives
-    const m = grab && !grab.gave && !grab.wasOpen && grab.far > 6 ? 1 : 0;
+    const m = grab && grab.touch && !grab.gave && !grab.wasOpen && grab.far > 6 ? 1 : 0;
     meter.style.opacity = m;
     if (grab) {
       const j = grab.j;
       meter.style.transform = `translate(${rope.x(j).toFixed(1)}px, ${rope.y(j).toFixed(1)}px)`;
       meter.querySelector('.meter__fill').style.strokeDashoffset = (1 - clamp(grab.tension, 0, 1)).toFixed(3);
     }
-    hint.style.setProperty('--p', grab && !grab.wasOpen && !grab.gave ? clamp(grab.tension, 0, 1).toFixed(3) : '0');
-    const tied = tiedNow(), label = tied ? 'Pull it apart' : 'Tie it back up';
+    hint.style.setProperty('--p', grab && !grab.wasOpen && !grab.gave ? clamp(grab.tension, 0, 1).toFixed(3) : demoPull.toFixed(3));
+    const tied = tiedNow(), label = tied ? (finePointer ? 'Drag to pull it apart' : 'Swipe to pull it apart') : 'Tie it back up';
     hint.classList.toggle('is-caption', tied);
     if (hintText.textContent !== label) {
       hintText.textContent = label;
@@ -500,30 +475,135 @@ function start() {
     hint.style.opacity = grab && grab.gave ? 0.4 : 1;
   }
 
-  // now and then, until someone touches it, it gives itself a small pull
-  let tugAt = 1800, tugging = -1;
-  function selfTug(now, dt) {
-    if (still) return false;
-    const ok = tiedNow() && !grab && (!touched || now - lastTouch > 6000) && k < 0.05 && !document.hidden;
-    if (tugging < 0) {
-      if (!ok) { tugAt = Math.max(tugAt, now + 2500); return false; }
-      if (now < tugAt) return false;
-      tugging = 0; grips.forEach((g) => { g.classList.remove('tug'); void g.offsetWidth; g.classList.add('tug'); });
+  // Hint motion: the gesture shown on the knot itself. Now and then, until
+  // someone has hold of it, two fingertips land on the grips, press, and draw
+  // the two lobes apart; the rope really stretches after them, the line under
+  // the button fills part way, and then they let go and it springs back.
+  const DEMO = 2.8;                       // seconds, of which the first half is the pull
+  let demoAt = 1300, demoT = -1, demoPull = 0;
+  const demoFrom = [[0, 0], [0, 0]], demoJ = [0, 0], demoAt2 = [[0, 0], [0, 0]];
+  const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+  function demoDir(g) { return tall ? [0, g === 0 ? -1 : 1] : [g === 0 ? -1 : 1, 0]; }
+  function demo(now, dt) {
+    const ok = !still && tiedNow() && !grab && (!touched || now - lastTouch > 8000) && !document.hidden && now - handMoved > 2500;
+    if (demoT < 0) {
+      demoPull = 0;
+      if (!ok || k > 0.05) { demoAt = Math.max(demoAt, now + 2500); for (const el of [...ghosts, ...trails]) el.style.opacity = '0'; return false; }
+      if (now < demoAt) return false;
+      demoT = 0;
+      for (let g = 0; g < 2; g++) { demoJ[g] = gripPoint(g); demoFrom[g] = [rope.x(demoJ[g]), rope.y(demoJ[g])]; }
     }
-    tugging += dt / 0.9;
-    const s = Math.sin(Math.PI * clamp(tugging, 0, 1)) ** 2, amt = 34 * s;
+    demoT += dt / DEMO;
+    const t = demoT;
+    const arrive = smooth(0, 0.1, t), press = smooth(0.1, 0.17, t), draw = easeInOut(clamp((t - 0.17) / 0.36, 0, 1));
+    const lift = smooth(0.6, 0.72, t), D = REACH * rope.sc * 0.5 * 0.72 * draw;
+    demoPull = 0.72 * draw * (1 - lift);
     for (let g = 0; g < 2; g++) {
-      const j = rope.tips[g === 0 ? 0 : 2];
-      const d = tall ? [0, g === 0 ? -1 : 1] : [g === 0 ? -1 : 1, 0];
-      rope.tug(j, d[0] * amt, d[1] * amt, 0.08);
+      const d = demoDir(g);
+      // the fingertip stays on the rope it holds, and is left where it let go
+      if (t < 0.62) demoAt2[g] = [rope.x(demoJ[g]), rope.y(demoJ[g])];
+      const [x, y] = demoAt2[g], run = Math.hypot(x - demoFrom[g][0], y - demoFrom[g][1]);
+      const sc = 1.3 - 0.3 * arrive - 0.14 * press + 0.5 * lift;
+      ghosts[g].style.opacity = (arrive * (1 - lift)).toFixed(3);
+      ghosts[g].style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${sc.toFixed(3)})`;
+      trails[g].style.opacity = (0.9 * smooth(0, 0.15, draw) * (1 - lift)).toFixed(3);
+      const ang = Math.atan2(d[1], d[0]) * 180 / Math.PI + 180;
+      trails[g].style.width = `${run.toFixed(1)}px`;
+      trails[g].style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${ang}deg)`;
+      // the rope follows the fingertip while it is held
+      if (t > 0.12 && t < 0.62) rope.tug(demoJ[g], d[0] * D / rope.sc, d[1] * D / rope.sc, 0.3);
     }
-    if (tugging >= 1 || !ok) { tugging = -1; tugAt = now + 5200; }
+    if (t >= 1 || !ok) { demoT = -1; demoAt = now + 4600; for (const el of [...ghosts, ...trails]) el.style.opacity = '0'; }
     return true;
+  }
+
+  // the pointer over the knot: a ring that says "Pull"; held, it fills until it gives
+  let pointerAt = null, handMoved = -1e9;
+  function pointerRing() {
+    const show = finePointer && pointerAt && !menuOn && (grab ? !grab.touch && !grab.gave && !grab.wasOpen : pointerAt.over);
+    stage.classList.toggle('pointer-pull', !!show);
+    cursor.classList.toggle('on', !!show);
+    if (!show) return;
+    const p = grab && !grab.touch ? grab.p : pointerAt.p;
+    cursor.style.transform = `translate(${p[0].toFixed(1)}px, ${p[1].toFixed(1)}px)`;
+    cursor.classList.toggle('held', !!grab);
+    cursorFill.style.strokeDashoffset = grab ? (1 - clamp(grab.tension, 0, 1)).toFixed(3) : '1';
+  }
+
+  // The hand over the knot. A soft light follows it across the ribbon (a satin
+  // sheen), strands near it lean towards it a little, and brushing across them
+  // sends a small wave along the loop. Held, the light stays with the hand.
+  const sheen = [0, 0, 0];                 // x, y, strength
+  let lastHand = null;
+  // the knot turns a few degrees towards the hand (radians about x and y)
+  const turn = [0, 0];
+  // glints: where the hand comes onto a strand, a band of light runs both ways round its loop
+  const glints = [], glintData = new Float32Array(24);
+  let lastGlint = { l: -1, s: 0, at: -1e9 };
+  function glintAt(j) {
+    if (still) return;
+    const l = j < N ? 0 : 1, s0 = (j % N) / N, now = performance.now();
+    const ds = Math.abs(((s0 - lastGlint.s + 1.5) % 1) - 0.5);
+    if (l === lastGlint.l && ds < 0.14 && now - lastGlint.at < 1400) return;
+    if (now - lastGlint.at < 260) return;
+    lastGlint = { l, s: s0, at: now };
+    glints.push({ l, s0, t: 0 });
+    if (glints.length > 6) glints.shift();
+  }
+  function hand(dt) {
+    const p = grab && grab.p ? grab.p : finePointer && pointerAt ? pointerAt.p : null;
+    const want = p && !still ? 1 : 0;
+    const s0 = sheen[2];
+    sheen[2] += (want - sheen[2]) * (1 - Math.exp(-dt * (want ? 5 : 3)));
+    if (p) {
+      if (sheen[2] < 0.02) { sheen[0] = p[0]; sheen[1] = p[1]; }
+      sheen[0] += (p[0] - sheen[0]) * (1 - Math.exp(-dt * 14));
+      sheen[1] += (p[1] - sheen[1]) * (1 - Math.exp(-dt * 14));
+    }
+    let busy = Math.abs(sheen[2] - s0) > 1e-4 || (p && Math.hypot(p[0] - sheen[0], p[1] - sheen[1]) > 0.3);
+    if (p && !grab && !still && finePointer) {
+      const r = 120, sc = rope.sc;
+      const vx = lastHand ? (p[0] - lastHand[0]) / Math.max(dt, 1 / 240) : 0, vy = lastHand ? (p[1] - lastHand[1]) / Math.max(dt, 1 / 240) : 0;
+      const speed = Math.min(1, Math.hypot(vx, vy) / 2400), f = Math.min(2, dt * 60);
+      for (let j = 0; j < rope.px.length; j++) {
+        const dx = p[0] - rope.x(j), dy = p[1] - rope.y(j), d = Math.hypot(dx, dy);
+        if (d > r) continue;
+        const w = (1 - d / r) ** 2;
+        // lean towards the hand
+        rope.dx[j] += (dx / sc) * 0.0022 * w * f;
+        rope.dy[j] += (dy / sc) * 0.0022 * w * f;
+        // and be brushed by it
+        rope.vx[j] += (vx / sc) * 0.04 * w * speed * f;
+        rope.vy[j] += (vy / sc) * 0.04 * w * speed * f;
+      }
+      busy = true;
+    }
+    lastHand = p && !grab ? p.slice() : null;
+
+    // turn towards it
+    const reach = REACH * rope.sc * 1.4, tx = p && !still ? clamp((p[1] - rope.cy) / reach, -1, 1) * 0.085 : 0;
+    const ty = p && !still ? -clamp((p[0] - rope.cx) / reach, -1, 1) * 0.085 : 0;
+    const t0 = turn[0], t1 = turn[1], ease = 1 - Math.exp(-dt * 3.2);
+    turn[0] += (tx - turn[0]) * ease; turn[1] += (ty - turn[1]) * ease;
+    if (Math.abs(turn[0] - t0) + Math.abs(turn[1] - t1) > 2e-5) busy = true;
+
+    // and run the glints on
+    glintData.fill(0);
+    for (let i = glints.length - 1; i >= 0; i--) {
+      const g = glints[i];
+      g.t += dt;
+      if (g.t > 1.9) { glints.splice(i, 1); continue; }
+    }
+    glints.forEach((g, i) => {
+      glintData.set([g.l, g.s0, g.t * 0.3, smooth(0, 0.12, g.t) * (1 - smooth(1.0, 1.9, g.t))], i * 4);
+    });
+    if (glints.length) busy = true;
+    return busy;
   }
 
   // ---------------------------------------------------------------- the frame
   const H_STEP = 1 / 240;
-  let last = 0, acc = 0, slowFrames = 0;
+  let last = 0, acc = 0, slowFrames = 0, easyNeed = 240, raised = false;
   function frame(now) {
     requestAnimationFrame(frame);
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
@@ -532,6 +612,7 @@ function start() {
     // what k is heading for
     let target = Math.max(open, scrollK()), stiff = 6.6, damp = 0.74;
     if (grab && !grab.letGo && !grab.wasOpen) target = Math.max(target, 0.2 * smooth(0, 1, grab.tension) * (0.35 + 0.65 * Math.max(0, grab.along || 0)));
+    if (demoPull > 0) target = Math.max(target, 0.2 * smooth(0, 1, demoPull));
     if (!open && !grab && scrollY > 0) { stiff = 10; damp = 1; }   // following the scroll: no bounce
     if (still) { k = target; kv = 0; }
     else {
@@ -552,7 +633,7 @@ function start() {
       if (grab.letGo && grab.hold <= 0) { grab = null; rope.grab = null; }
       dirty = true;
     }
-    const tugged = selfTug(now, dt) || nudges.length > 0;
+    const tugged = demo(now, dt) || nudges.length > 0;
     for (let i = nudges.length - 1; i >= 0; i--) {
       const u = nudges[i];
       u.t += dt / 0.55;
@@ -582,18 +663,24 @@ function start() {
     }
     for (let n = 0; n < 3; n++) light[n] += (aim[n] - light[n]) * (1 - Math.exp(-dt * 3));
     painter.look.light = light;
+    const touching = hand(dt);
 
-    const moving = dirty || tugged || rope.energy() > 0.02 || glow.some((g) => g > 0.002 && g < 0.998) || Math.abs(light[0] - aim[0]) + Math.abs(light[1] - aim[1]) > 1e-4;
+    const moving = dirty || tugged || touching || rope.energy() > 0.02 || glow.some((g) => g > 0.002 && g < 0.998) || Math.abs(light[0] - aim[0]) + Math.abs(light[1] - aim[1]) > 1e-4;
     rope.settle(grab ? grab.j : 0, grab ? grab.hold : 0);
     if (moving || painter.lost) {
-      painter.draw(rope, glow);
+      painter.draw(rope, glow, 1, { hand: sheen, turn, pulses: glintData });
       words();
       dirty = false;
       // a slow machine draws fewer pixels
-      if (dt > 0.04 && dpr > 1) { if (++slowFrames > 45) { dprCap = Math.max(1, dpr - 0.5); slowFrames = 0; size(false); } }
-      else slowFrames = Math.max(0, slowFrames - 1);
+      // a device that is really struggling draws fewer pixels, and gets them back when it is not
+      // (a raise that has to be taken back doubles the wait before the next one)
+      if (dt > 0.045) slowFrames++; else if (dt < 0.022) slowFrames -= 0.25;
+      if (slowFrames > 90 && dpr > dprFloor) { dprCap = Math.max(dprFloor, dpr - 0.5); slowFrames = 0; if (raised) easyNeed = Math.min(easyNeed * 2, 3840); raised = false; size(false); }
+      else if (slowFrames < -easyNeed && dpr < dprTop) { dprCap = Math.min(3, dpr + 0.5); slowFrames = 0; raised = true; size(false); }
+      slowFrames = clamp(slowFrames, -easyNeed - 60, 120);
     }
     indicators(now, dt);
+    pointerRing();
     if (open) holdOpenByScroll();
   }
 
@@ -613,6 +700,7 @@ function start() {
   painter.draw(rope, glow);
   words();
   menu.inert = true;
+  hintText.textContent = finePointer ? 'Drag to pull it apart' : 'Swipe to pull it apart';
   html.classList.remove('fallback');
   html.classList.add('live');
   requestAnimationFrame(frame);

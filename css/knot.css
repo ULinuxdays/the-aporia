@@ -124,15 +124,7 @@ html:not(.live) .menu li:nth-child(4) { left: 100%; bottom: 6%; }
   html:not(.live) .lobe .nl { display: block; }
 }
 
-/* ---- the note, and the button under the knot ----------------------------- */
-
-.note { position: absolute; left: 0; top: 0; z-index: 2; margin: 0; color: var(--ink-soft); opacity: 0; pointer-events: none; }
-html:not(.live) .note, html:not(.live) .leader { display: none; }
-.note__text { display: block; font: italic 400 1.05rem/1.2 var(--didone); letter-spacing: 0.01em; white-space: nowrap; }
-@media (max-width: 46rem) { .note__text { font-size: 0.95rem; } }
-.leader { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 2; overflow: visible; pointer-events: none; opacity: 0; color: var(--ink-soft); }
-.leader polyline { fill: none; stroke: currentColor; stroke-width: 1; stroke-linejoin: round; }
-.leader circle { fill: currentColor; }
+/* ---- the button under the knot -------------------------------------------- */
 
 .hint {
   position: absolute; left: 50%; bottom: max(1.4rem, env(safe-area-inset-bottom)); z-index: 3;
@@ -174,15 +166,41 @@ html:not(.live) .grip, html:not(.live) .meter { display: none; }
 .grip svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .grip__ring { fill: rgba(8, 8, 11, 0.5); stroke: rgba(244, 241, 234, 0.85); stroke-width: 1; }
 .grip__arrow { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-.grip::after { content: ""; position: absolute; inset: 2px; border-radius: 50%; border: 1px solid rgba(244, 241, 234, 0.7); opacity: 0; }
-.grip.tug::after { animation: ripple 1400ms cubic-bezier(0.22, 1, 0.36, 1); }
-@keyframes ripple { from { opacity: 0.7; transform: scale(1); } to { opacity: 0; transform: scale(2.1); } }
 .meter { width: 76px; height: 76px; margin: -38px 0 0 -38px; }
 .meter.touch { width: 116px; height: 116px; margin: -58px 0 0 -58px; }
 .meter svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .meter circle { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .meter__track { stroke: rgba(244, 241, 234, 0.22); }
 .meter__fill { stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+
+/* ---- the gesture, shown: "hint motion" -------------------------------------
+   Two fingertips land on the grips, press, and draw the lobes apart; the rope
+   really stretches with them, then they let go. js/knot/main.js demo(). */
+
+.ghost, .trail { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; opacity: 0; }
+html:not(.live) .ghost, html:not(.live) .trail, html:not(.live) .cursor { display: none; }
+.ghost {
+  width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 252, 244, 0.62), rgba(255, 252, 244, 0.26) 60%, rgba(255, 252, 244, 0.1));
+  border: 1px solid rgba(255, 252, 244, 0.9);
+  box-shadow: 0 0 0 8px rgba(255, 252, 244, 0.08), 0 8px 22px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.trail { height: 1px; margin-top: -0.5px; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(244, 241, 234, 0), rgba(244, 241, 234, 0.55)); }
+
+/* the pointer over the knot: a ring that says "Pull", which fills as you do */
+.cursor { position: absolute; left: 0; top: 0; z-index: 4; width: 68px; height: 68px; margin: -34px 0 0 -34px; pointer-events: none; opacity: 0; transition: opacity 180ms ease, width 220ms ease, height 220ms ease, margin 220ms ease; }
+.cursor svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.cursor circle { fill: none; vector-effect: non-scaling-stroke; }
+.cursor__ring { stroke: rgba(244, 241, 234, 0.85); stroke-width: 1; fill: rgba(8, 8, 11, 0.28) !important; }
+.cursor__fill { stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.cursor__arrows { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linecap: round; vector-effect: non-scaling-stroke; transform-origin: 50px 50px; transform: rotate(90deg); transition: opacity 200ms ease; }
+html.tall .cursor__arrows { transform: none; }
+.cursor__label { position: absolute; inset: 0; display: grid; place-items: center; font: 500 0.56rem/1 var(--mono); letter-spacing: 0.22em; padding-left: 0.22em; text-transform: uppercase; color: var(--ink); transition: opacity 200ms ease; }
+.cursor.on { opacity: 1; }
+.cursor.held { width: 84px; height: 84px; margin: -42px 0 0 -42px; }
+.cursor.held .cursor__label, .cursor.held .cursor__arrows { opacity: 0; }
+html.live .stage.pointer-pull, html.live .stage.pointer-pull * { cursor: none !important; }
 
 /* ---- the menu, live: only once the knot is out ---------------------------- */
 
@@ -191,6 +209,7 @@ html.live .lobe__in { display: inline-block; will-change: transform; }
 
 @media (prefers-reduced-motion: reduce) {
   html.live .stage { animation: none; }
-  .grip.tug::after, .lobe.is-soon.said, .shiny, .hint.swap .hint__text { animation: none; }
+  .lobe.is-soon.said, .shiny, .hint.swap .hint__text { animation: none; }
+  .cursor { transition: none; }
   .shiny { background-position: 100% 0; }
 }

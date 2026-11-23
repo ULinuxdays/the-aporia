@@ -119,8 +119,11 @@ export function decideMode() {
   // Measured on an Apple M4 at DPR 2: 90k and 120k both scrub at a steady
   // 60 fps (p95 18 ms); the GPU is not the limit at these counts. 90k is the
   // approved look; below it the figures lose the detail the normals need.
-  if (narrow) { tier = 'phone'; count = 32000; }
-  else if (w < 1100) { tier = 'tablet'; count = 45000; }
+  // Phones get the desktop budget too: a phone screen is small but its GPU is
+  // not (a recent iPhone holds 60k at DPR 3 without effort), and at 32k the
+  // grains had to be drawn so much bigger that the figures looked coarse.
+  if (narrow) { tier = 'phone'; count = 60000; }
+  else if (w < 1100) { tier = 'tablet'; count = 80000; }       // the figure is ~78 % of the count: 80k shows the whole of each 60k scan
   else if (cores >= 8 && mem >= 8) { tier = 'desktop-strong'; count = 90000; }
   else { tier = 'desktop'; count = 60000; }
   if (honest && (cores <= 4 || mem <= 4)) { count = Math.round(count * 0.6); tier += '-weak'; }

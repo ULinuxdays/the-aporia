@@ -55,10 +55,15 @@ iPhone), a viewport under 280 px on its short side, scans that cannot be
 fetched after retries, or no WebGL context that runs without a major performance
 caveat (software GL gets the static page on purpose). Otherwise the scene loads
 with a particle budget by tier: 90 000 (≥ 8 cores, ≥ 8 GB, ≥ 1100 px),
-60 000 (desktop), 45 000 (tablet), 32 000 (phone); ×0.6 on ≤ 4 cores or
-≤ 4 GB. Point size is compensated so density reads the same. `?count=N`
+60 000 (desktop), 80 000 (tablet), 60 000 (phone; until 2026-11-23 tablets had
+45 000 and phones 32 000, and the figures looked coarse); ×0.6 on ≤ 4 cores or ≤ 4 GB where the browser
+reports memory. Point size is compensated so density reads the same. `?count=N`
 overrides for testing. (Measured: 90k and 120k both hold 60 fps on an M4 at
-DPR 2; the GPU is not the limit, the normals' clarity is.)
+DPR 2; the GPU is not the limit, the normals' clarity is.) Pixel ratio: up to
+3 on a small screen, 2 on a large one; a device that keeps missing frames steps
+down by 0.5, never below 2 on a sharp screen, and back up when it can; a raise
+that has to be undone doubles the wait before the next (`govern()` in
+`js/scene.js`).
 
 The text is readable and correctly coloured before a single cloud byte
 arrives; the canvas fades in when the scene is ready.
@@ -211,13 +216,18 @@ How it behaves, so it can be checked after a change:
   ties it again.
 - On a phone the first swipe on the knot pulls it; once it is out, swipes
   scroll. A swipe off the knot always scrolls.
-- "Pull it apart" / "Tie it back up" (under the knot) is a real button, for the
-  keyboard; once the knot is out it can be clicked too. The two round grips show
-  where to take hold; they give themselves a small tug now and then until
-  someone touches the knot, step aside once someone has, and come back after six
-  idle seconds.
-- Reduced motion: no scroll, no tugs, and the button (or a pull) changes it at
-  once.
+- "Drag to pull it apart" (or "Swipe…" on a touch screen) / "Tie it back up",
+  under the knot, is a real button, for the keyboard; once the knot is out it
+  can be clicked too. The two round grips show where to take hold. Every few
+  seconds, until someone takes hold, two fingertips land on the grips and draw
+  the lobes apart (the rope really stretches), then let go. Over the knot the
+  pointer becomes a ring that says "Pull" and fills as you pull.
+- Hovering, tied or pulled: the knot turns a few degrees towards the pointer, a
+  soft light follows it across the ribbon (which swells a little under it), the
+  strands lean towards it, and where the pointer comes onto a strand a glint
+  runs both ways round that loop.
+- Reduced motion: no scroll, no demonstration, and the button (or a pull)
+  changes it at once.
 - No WebGL2, no script, or a script that fails: `assets/static/knot.webp` (a
   still from the same renderer) with the menu round it.
 
@@ -236,4 +246,4 @@ shadow, grain); the colours are taken from `assets/logo.png`.
 To re-render the still or the social image (`assets/social-knot.jpg`,
 1200 × 630 at 2×), screenshot the live page: the still at 1200 × 1200 with a
 transparent background and the knot tied, the social image at 1200 × 630
-pulled out with the menu, the note and the button hidden.
+pulled out with the menu and the button hidden.

@@ -84,9 +84,6 @@
       </ul>
     </nav>
 
-    <p class="note" id="note" aria-hidden="true"><span class="note__text">this bit never comes out</span></p>
-    <!-- a hairline from the note to the weave -->
-    <svg class="leader" id="leader" aria-hidden="true"><polyline /><circle r="2.4" /></svg>
     <!-- Tied, this is only a caption for the mouse (the knot has to be pulled),
          but it stays a button for the keyboard and for screen readers. -->
     <button class="hint" id="hint" type="button" aria-describedby="hint-what">
@@ -99,6 +96,14 @@
   <!-- where to take hold: one on each loop -->
   <div class="grip" id="grip-0" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="20" /><path class="grip__arrow" d="M15.5 24 H 32 M 26.5 18.5 L 32 24 L 26.5 29.5" /></svg></div>
   <div class="grip" id="grip-1" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="20" /><path class="grip__arrow" d="M15.5 24 H 32 M 26.5 18.5 L 32 24 L 26.5 29.5" /></svg></div>
+  <!-- the gesture, shown on the knot itself: two fingertips draw the lobes apart -->
+  <span class="trail" id="trail-0" aria-hidden="true"></span><span class="trail" id="trail-1" aria-hidden="true"></span>
+  <span class="ghost" id="ghost-0" aria-hidden="true"></span><span class="ghost" id="ghost-1" aria-hidden="true"></span>
+  <!-- over the knot, the pointer says what it can do -->
+  <div class="cursor" id="cursor" aria-hidden="true">
+    <svg viewBox="0 0 100 100"><circle class="cursor__ring" cx="50" cy="50" r="47" /><circle class="cursor__fill" cx="50" cy="50" r="47" pathLength="1" /><path class="cursor__arrows" d="M14 50 l 6 -5 M14 50 l 6 5 M86 50 l -6 -5 M86 50 l -6 5" /></svg>
+    <span class="cursor__label">Pull</span>
+  </div>
   <!-- how far until it gives -->
   <div class="meter" id="meter" aria-hidden="true"><svg viewBox="0 0 100 100"><circle class="meter__track" cx="50" cy="50" r="47" /><circle class="meter__fill" cx="50" cy="50" r="47" pathLength="1" /></svg></div>
 </main>

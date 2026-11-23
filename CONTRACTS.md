@@ -786,15 +786,32 @@ now means `about.html`.
   `ORBIT_*`), then the arm's words slide along under the arm. They never cross a
   strand. The name sits behind the canvas, so the arms pass in front of it.
   Each word is split into `.ch` letters and revealed by `reveal()` (Blur Text,
-  after React Bits) scrubbed by k; the note is joined to the nearest crossing
-  by a hairline (`#leader`), with a right angle in it when the knot is upright.
+  after React Bits) scrubbed by k.
+- **Saying it must be pulled** (tied only): `demo()` is "hint motion": every
+  ~7 s until someone has hold of the knot (and not while a pointer is moving
+  over it) two fingertips (`.ghost`) land on the grips, press, and draw the two
+  lobes apart; the rope is really tugged after them and k stretches as in a real
+  pull, then they let go. Over the knot a fine pointer becomes `.cursor`, a ring
+  reading "Pull" that fills with the tension once held (touch keeps `.meter`).
+  The button reads "Drag to pull it apart" (fine pointer) or "Swipe to pull it
+  apart". Reduced motion: no demo.
+- **The hand** (`hand()`), tied or pulled: a soft lamp follows the pointer (or
+  the held point) across the ribbon (`uHand` in paint.js) and the ribbon swells
+  ~7 % under it; the whole knot turns up to ~5° towards it (`uTurn`, about the
+  knot's centre; hit tests ignore the turn, a few px at most); strands within
+  120 px lean a little towards it and a quick pass gives them a push; and where
+  it comes onto a strand a glint runs both ways round that loop (`uPulse[6]`:
+  loop, start 0…1, distance run, brightness). Reduced motion: none of the
+  motion, the lamp only.
 - **Paint** (`paint.js`, WebGL2 only): the rope goes up as a 200×4 float texture
   per frame; the vertex shader runs a cubic B-spline through it and sweeps the
   band (420 rings × 36 around per loop); depth sorts over and under. Shadows
   come from a quarter-size height map with four "above this level" channels,
-  blurred. Grain is a fixed screen-space texture. Nothing is drawn while
-  nothing moves. If frames take over 40 ms for 45 frames the pixel ratio steps
-  down.
+  blurred. Grain is a fixed screen-space texture, sized to the knot (finer on
+  a phone). Nothing is drawn while nothing moves. Pixel ratio: the screen's
+  own, up to 3, within ~6M pixels; a device that keeps missing frames steps
+  down by 0.5 but never below 2 on a sharp screen, and steps back up after a
+  few seconds of fast frames.
 - **Fallbacks**: no WebGL2 → `html.fallback` (the inline head script also sets
   it if the module has not started within 3.5 s or a script fails to load):
   `assets/static/knot.webp` with the menu laid out round it by CSS. No script:

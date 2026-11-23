@@ -39,6 +39,9 @@ uniform sampler2D uRope;    // rows 0-1 (a loop each): x, y, weave, width · row
 uniform vec2 uView;
 uniform vec4 uShape;        // points per loop, squareness, thickness, weave height
 uniform vec2 uBelt, uTilt;
+uniform vec3 uHand;         // the pointer: x, y (css px), how present it is
+uniform float uHandR;
+uniform vec2 uTurn, uCenter; // the knot turned towards the pointer (radians, about x and y) round its centre
 in vec3 aP;                 // along (0…1), round (0…2π), loop
 vec4 ctl(float i, int row) { int n = int(uShape.x); int k = int(i); k -= (k / n) * n; if (k < 0) k += n; return texelFetch(uRope, ivec2(k, row), 0); }
 vec4 spline(vec4 a, vec4 b, vec4 c, vec4 d, float t) { float t2 = t * t, t3 = t2 * t; return (a * (1. - 3. * t + 3. * t2 - t3) + b * (4. - 6. * t2 + 3. * t3) + c * (1. + 3. * t + 3. * t2 - 3. * t3) + d * t3) / 6.; }
@@ -54,7 +57,9 @@ const SWEEP = `
   vec4 e = spline(ctl(i - 1., lq), ctl(i, lq), ctl(i + 1., lq), ctl(i + 2., lq), t);
   float l = max(length(v.xy), 1e-4);
   vec2 T = v.xy / l, Nn = vec2(T.y, -T.x);
-  float w = p.w, zed = p.z * uShape.w * w + e.w, slope = (v.z * uShape.w * w) / l;
+  vec2 toHand = uHand.xy - p.xy;
+  float w = p.w * (1. + 0.07 * uHand.z * exp(-dot(toHand, toHand) / (uHandR * uHandR)));   // a little fuller under the hand
+  float zed = p.z * uShape.w * w + e.w, slope = (v.z * uShape.w * w) / l;
   float belt = lp == 0 ? uBelt.x : uBelt.y;
   vec2 tn = normalize(mix(vec2(1., 0.), e.yz, belt));
   vec3 Wd = vec3(Nn, 0.) * tn.x - vec3(T, 0.) * tn.y;
@@ -63,16 +68,21 @@ const SWEEP = `
   vec3 Bn = cross(Wd, normalize(vec3(T, slope))); Bn /= max(length(Bn), 1e-3);
   float p2 = 2. / uShape.y, ca = cos(aP.y), sa = sin(aP.y);
   vec3 pos = vec3(p.xy, zed) + Wd * (sign(ca) * pow(abs(ca), p2) * w) + Bn * (sign(sa) * pow(abs(sa), p2) * w * uShape.z);
+  // turned a few degrees towards the pointer (screen axes: y down, z out)
+  float cX = cos(uTurn.x), sX = sin(uTurn.x), cY = cos(uTurn.y), sY = sin(uTurn.y);
+  mat3 turn = mat3(cY, 0., -sY, 0., 1., 0., sY, 0., cY) * mat3(1., 0., 0., 0., cX, sX, 0., -sX, cX);
+  pos = turn * (pos - vec3(uCenter, 0.)) + vec3(uCenter, 0.);
+  Wd = turn * Wd; Bn = turn * Bn;
   gl_Position = vec4(pos.x / uView.x * 2. - 1., 1. - pos.y / uView.y * 2., -pos.z / 4000., 1.);
 `;
 
 const VS = `#version 300 es
 ${HEAD}
 uniform vec4 uGlow, uEnds; uniform float uHalf;
-out vec3 vX, vY; out vec2 vPx; out float vA, vZ, vW, vGlow;
+out vec3 vX, vY; out vec2 vPx; out float vA, vZ, vW, vGlow, vS; flat out int vL;
 void main() {
   ${SWEEP}
-  vX = Wd; vY = Bn; vA = aP.y; vZ = pos.z; vW = w; vPx = pos.xy;
+  vX = Wd; vY = Bn; vA = aP.y; vZ = pos.z; vW = w; vPx = pos.xy; vS = aP.x; vL = lp;
   // a lobe lit up for its link runs gold from its end towards the weave
   int k = lp * 2 + (e.x < 0. ? 0 : 1);
   float g = k == 0 ? uGlow.x : k == 1 ? uGlow.y : k == 2 ? uGlow.z : uGlow.w;
@@ -82,8 +92,9 @@ void main() {
 
 const FS = `#version 300 es
 precision highp float;
-in vec3 vX, vY; in vec2 vPx; in float vA, vZ, vW, vGlow;
-uniform vec4 uShape, uTune; uniform vec3 uLight, uG; uniform vec2 uView; uniform float uGrainPx, uRound, uAlpha;
+in vec3 vX, vY; in vec2 vPx; in float vA, vZ, vW, vGlow, vS; flat in int vL;
+uniform vec4 uShape, uTune; uniform vec3 uLight, uG, uHand; uniform vec2 uView; uniform float uGrainPx, uRound, uAlpha, uHandR;
+uniform vec4 uPulse[6];     // glints running round a loop: loop, where they set off (0…1), how far they have run, how bright
 uniform sampler2D uAbove, uGrain, uRamp;
 out vec4 o;
 void main() {
@@ -100,6 +111,26 @@ void main() {
   float v = uTune.x + uTune.y * lit * lit + uTune.z * lit;
   v += pow(1. - clamp(N.z, 0., 1.), 3.) * uG.x * smoothstep(-0.2, 0.8, d);
   v *= 1. - uTune.w * smoothstep(0., 0.62, above);
+  // the hand's light: a soft lamp just above the ribbon, wherever the pointer is
+  if (uHand.z > 0.001) {
+    vec2 dp = uHand.xy - vPx; float r2 = dot(dp, dp) / (uHandR * uHandR);
+    float fall = uHand.z * exp(-r2);
+    if (fall > 0.002) {
+      vec3 Lh = normalize(vec3(dp.x, dp.y, uHandR * 0.55 - vZ));      // (screen axes: y down, z out)
+      vec3 Hh = normalize(Lh + vec3(0., 0., 1.));
+      float sat = pow(max(dot(N, Hh), 0.), 14.), diff = max(dot(N, Lh), 0.);
+      v += min(0.22, fall * (0.11 * diff + 0.26 * sat)) * (1. - 0.45 * smoothstep(0., 0.62, above));
+    }
+  }
+  // a glint set off where the hand came onto a strand, running both ways round its loop
+  float glint = 0.;
+  for (int i = 0; i < 6; i++) {
+    vec4 P = uPulse[i];
+    if (P.w < 0.001 || int(P.x) != vL) continue;
+    float a = fract(vS - P.y - P.z + 0.5) - 0.5, b = fract(vS - P.y + P.z + 0.5) - 0.5, dd = min(abs(a), abs(b));
+    glint += P.w * exp(-dd * dd / 0.00045);
+  }
+  v += 0.2 * min(glint, 1.) * (0.35 + 0.65 * clamp(N.z, 0., 1.)) * (1. - 0.5 * smoothstep(0., 0.62, above));
   float g = texture(uGrain, gl_FragCoord.xy / (256. * uGrainPx)).r - 0.5;
   v += g * mix(uG.y, uG.z, smoothstep(0.05, 0.4, v)) * (1. - 0.6 * smoothstep(0.75, 1., v));
   v = clamp(v, 0.004, 0.996);
@@ -213,7 +244,10 @@ export function createPainter(canvas) {
     gl.useProgram(pr.p); bind(0, ropeTex, pr.u.uRope);
     gl.uniform2f(pr.u.uView, W, H); gl.uniform4f(pr.u.uShape, N, look.p, look.b, look.z);
     gl.uniform2f(pr.u.uBelt, look.belt[0], look.belt[1]); gl.uniform2f(pr.u.uTilt, look.tilt[0], look.tilt[1]);
+    gl.uniform3f(pr.u.uHand, hand[0], hand[1], hand[2]); gl.uniform1f(pr.u.uHandR, handR);
+    gl.uniform2f(pr.u.uTurn, turn[0], turn[1]); gl.uniform2f(pr.u.uCenter, centre[0], centre[1]);
   }
+  let hand = [0, 0, 0], handR = 100, turn = [0, 0], centre = [0, 0];
 
   return {
     look,
@@ -224,7 +258,10 @@ export function createPainter(canvas) {
       sizeSmall(Math.max(16, Math.round(w / 4)), Math.max(16, Math.round(h / 4)));
     },
     /** @param glow per lobe end: loop 0 arm, loop 0 foot, loop 1 arm, loop 1 foot */
-    draw(rope, glow = [0, 0, 0, 0], alpha = 1) {
+    /** @param extra { hand: [x, y, presence], turn: [about x, about y], pulses: Float32Array(24) } */
+    draw(rope, glow = [0, 0, 0, 0], alpha = 1, extra = {}) {
+      hand = extra.hand || [0, 0, 0]; handR = Math.max(90, 150 * rope.sc);
+      turn = extra.turn || [0, 0]; centre = [rope.cx, rope.cy];
       if (gl.isContextLost()) return;
       const n = rope.px.length / 2, sc = rope.sc;
       if (!data || N !== n) {
@@ -256,12 +293,15 @@ export function createPainter(canvas) {
       gl.uniform3fv(main.u.uLight, look.light); gl.uniform4fv(main.u.uTune, look.tune); gl.uniform3fv(main.u.uG, look.g);
       gl.uniform1f(main.u.uRound, look.round); gl.uniform1f(main.u.uGrainPx, look.grain * ratio); gl.uniform1f(main.u.uAlpha, alpha);
       gl.uniform4f(main.u.uGlow, glow[0], glow[1], glow[2], glow[3]);
+      gl.uniform4fv(main.u['uPulse[0]'] || main.u.uPulse, extra.pulses || NO_PULSES);
       gl.uniform4fv(main.u.uEnds, rope.ends.map((e) => e * sc)); gl.uniform1f(main.u.uHalf, rope.half * sc);
       gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_INT, 0);
       gl.bindVertexArray(null);
     },
   };
 }
+
+const NO_PULSES = new Float32Array(24);
 
 /** Fine, even grain: seeded white noise, ranked so every level is used equally. */
 function grain(n) {
