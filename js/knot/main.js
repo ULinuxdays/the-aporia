@@ -23,7 +23,8 @@ const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const stage = $('stage'), ui = $('ui'), cv = $('rope'), hint = $('hint'), hintText = $('hint-text');
-const title = $('title'), masthead = $('masthead'), note = $('note'), meter = $('meter');
+const title = $('title'), masthead = $('masthead'), note = $('note'), meter = $('meter'), menu = $('menu');
+const leader = $('leader'), leaderLine = leader.querySelector('polyline'), leaderDot = leader.querySelector('circle');
 const grips = [$('grip-0'), $('grip-1')];
 const lobes = {};
 for (const el of document.querySelectorAll('.lobe')) lobes[el.dataset.lobe] = el;
@@ -100,6 +101,7 @@ function start() {
 
   // ---------------------------------------------------------------- state
   let k = 0, kv = 0;                      // how far it is pulled out, and how fast that is changing
+  let menuOn = false;
   let open = 0;                           // pulled out by hand or by the button
   let grab = null, hot = -1, touched = false, lastTouch = performance.now();
   const glow = [0, 0, 0, 0];               // per end of a loop, as rope.endOf numbers them
@@ -203,7 +205,9 @@ function start() {
   }
   // a click or a tap that did not move
   function tap(g) {
-    if (g.grip && tiedNow()) { setOpen(1); return; }
+    // Until the knot has been pulled out there is nothing to press: a click
+    // only gives it a small tug, which is the hint.
+    if (!menuOn) { nudge(g.j); return; }
     const key = LOBE_OF_END()[rope.endOf(g.j)];
     if (g.touch) { flash(key); return; }
     if (live(key)) lobes[key].click();
@@ -213,6 +217,12 @@ function start() {
     const el = lobes[key]; if (!el) return;
     el.classList.remove('said'); void el.offsetWidth; el.classList.add('said');
     clearTimeout(el._said); el._said = setTimeout(() => el.classList.remove('said'), 1600);
+  }
+  const nudges = [];
+  function nudge(j) {
+    const d = norm(rope.x(j) - rope.cx, rope.y(j) - rope.cy);
+    nudges.push({ j, d, t: 0 });
+    dirty = true;
   }
   let flashKey = null, flashUntil = 0;
   function flash(key) { flashKey = key; flashUntil = performance.now() + 900; if (!live(key)) say(key); }
@@ -230,7 +240,7 @@ function start() {
     if (e.target === cv || e.target === stage) {
       const j = onGrip(p) >= 0 ? onGrip(p) : hit(p);
       const key = j === null ? null : LOBE_OF_END()[rope.endOf(j)];
-      hot = key && live(key) ? rope.endOf(j) : -1;
+      hot = menuOn && key && live(key) ? rope.endOf(j) : -1;
       stage.classList.toggle('can', j !== null);
     }
     dirty = true;
@@ -263,7 +273,7 @@ function start() {
       el.addEventListener('click', () => say(key));
       continue;
     }
-    const on = () => { hot = endOfLobe(key); dirty = true; }, off = () => { hot = -1; dirty = true; };
+    const on = () => { if (menuOn) { hot = endOfLobe(key); dirty = true; } }, off = () => { hot = -1; dirty = true; };
     el.addEventListener('pointerenter', on); el.addEventListener('pointerleave', off);
     el.addEventListener('focus', on); el.addEventListener('blur', off);
   }
@@ -279,6 +289,77 @@ function start() {
     el.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px) scale(${s.toFixed(4)})`;
     return [left, top, w * s, h * s];
   }
+  // Blur Text, after React Bits (reactbits.dev, MIT + Commons Clause, © David Haz):
+  // the words come in a letter at a time, each from blurred and a little off its
+  // line, past it, and back. Here it is scrubbed by k instead of timed, so the
+  // words come and go with the knot.
+  const pieces = new Map();
+  function split(el) {
+    const list = [];
+    const walk = (node) => {
+      for (const c of [...node.childNodes]) {
+        if (c.nodeType === 1) { walk(c); continue; }
+        if (c.nodeType !== 3) continue;
+        const frag = document.createDocumentFragment();
+        for (const ch of c.textContent) {
+          if (/\s/.test(ch)) { frag.append(ch); continue; }
+          const sp = document.createElement('span');
+          sp.className = 'ch'; sp.textContent = ch; sp.setAttribute('aria-hidden', 'true');
+          frag.append(sp); list.push(sp);
+        }
+        c.replaceWith(frag);
+      }
+    };
+    walk(el);
+    pieces.set(el, list);
+  }
+  function reveal(list, e, dir, dist, blur) {
+    const n = list.length, spread = 0.45;
+    for (let i = 0; i < n; i++) {
+      const sp = list[i], start = n > 1 ? i / (n - 1) * spread : 0;
+      const p = still ? (e > 0.5 ? 1 : 0) : clamp((e - start) / (1 - spread), 0, 1);
+      if (p === sp._p) continue;
+      sp._p = p;
+      let b, o, y;
+      if (p < 0.5) { const q = p / 0.5; b = mix(blur, blur / 2, q); o = 0.5 * q; y = mix(dir * dist, -dir * dist / 10, q); }
+      else { const q = (p - 0.5) / 0.5; b = mix(blur / 2, 0, q); o = mix(0.5, 1, q); y = mix(-dir * dist / 10, 0, 1 - (1 - q) * (1 - q)); }
+      sp.style.opacity = o.toFixed(3);
+      sp.style.transform = Math.abs(y) > 0.01 ? `translateY(${y.toFixed(2)}px)` : '';
+      sp.style.filter = b > 0.05 ? `blur(${b.toFixed(2)}px)` : '';
+    }
+  }
+  const titleName = title.querySelector('.title__name'), titleSub = title.querySelector('.title__sub');
+  for (const el of Object.values(lobes)) {
+    el.setAttribute('aria-label', el.textContent.replace(/\s+/g, ' ').trim());
+    const inner = document.createElement('span');
+    inner.className = 'lobe__in';
+    inner.append(...el.childNodes);
+    el.append(inner);
+    split(el);
+  }
+  split(titleName); pieces.set(title, pieces.get(titleName));
+  titleSub.style.opacity = '0';
+  title.style.opacity = '1';
+
+  // Magnet, after React Bits: a menu word leans towards the pointer as it comes
+  // near (a fifth of the way), and settles back when it leaves.
+  addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch' || still) return;
+    for (const el of Object.values(lobes)) {
+      const inner = el.firstElementChild, r = el.getBoundingClientRect(), s = el._s || 1;
+      const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+      if (menuOn && Math.abs(dx) < r.width / 2 + 46 && Math.abs(dy) < r.height / 2 + 46) {
+        inner.style.transition = 'transform 0.3s ease-out';
+        inner.style.transform = `translate3d(${(dx / 5 / s).toFixed(2)}px, ${(dy / 5 / s).toFixed(2)}px, 0)`;
+        inner._on = true;
+      } else if (inner._on) {
+        inner.style.transition = 'transform 0.5s ease-in-out';
+        inner.style.transform = '';
+        inner._on = false;
+      }
+    }
+  }, { passive: true });
+
   const sizes = new Map();
   function measure() {
     for (const el of [...Object.values(lobes), note, title]) { el.style.transform = 'none'; sizes.set(el, [el.offsetWidth, el.offsetHeight]); }
@@ -289,7 +370,7 @@ function start() {
   // off the lobe's outer corner and swings round under it (or beside it, when
   // the knot stands upright), so it never crosses a strand; under the arms it then
   // slides in along them. [end of the loop, angle tied, angle pulled, is an arm]
-  const ORBIT_WIDE = { tl: [0, 225, 90, 1], tr: [2, 315, 450, 1], bl: [3, 135, 100, 0], br: [1, 45, 80, 0] };
+  const ORBIT_WIDE = { tl: [0, 225, 90, 1], tr: [2, 315, 450, 1], bl: [3, 135, 122, 0], br: [1, 45, 58, 0] };
   const ORBIT_TALL = { tl: [0, 270, 360, 1], bl: [2, 90, 0, 1], tr: [3, 270, 360, 0], br: [1, 90, 0, 0] };
   const ORBIT_SHORT = { tl: [0, 196, 90, 1], tr: [2, 344, 450, 1], bl: [3, 164, 150, 0], br: [1, 16, 30, 0] };   // a phone on its side: beside the lobes, clear of the masthead
   function capCentre(end) {
@@ -320,6 +401,8 @@ function start() {
       }
       const s = mix(1, isArm ? big : narrow ? 1 : 1.1, e);
       rects[key] = place(el, x, y, 0.5 - 0.5 * co, 0.5 - 0.5 * si, s, w, h);
+      el._s = s;
+      reveal(pieces.get(el), smooth(0.3, 0.97, k), -1, 14, 8);
       el.classList.toggle('on', live(key) && (hot === end || (flashKey === key && performance.now() < flashUntil)));
     }
 
@@ -327,31 +410,48 @@ function start() {
     const t = smooth(0.45, 1, k), [, th] = sizes.get(title);
     const armTop = cy - ARM * sc - armW;
     const ny = tall ? Math.max(14, H * 0.045) : short ? 10 : Math.max(46, (armTop - th) * 0.45);
-    title.style.opacity = t.toFixed(3);
-    title.style.transform = `translateY(${(ny + (1 - t) * 26).toFixed(1)}px)`;
-    masthead.style.opacity = (1 - smooth(0.3, 0.75, k)).toFixed(3);
+    reveal(pieces.get(title), smooth(0.45, 1, k), 1, 34, 12);
+    titleSub.style.opacity = smooth(0.8, 1, k).toFixed(3);
+    title.style.transform = `translateY(${ny.toFixed(1)}px)`;
+    masthead.style.opacity = (1 - smooth(0.12, 0.42, k)).toFixed(3);
 
     // "this bit never comes out", pointing back at the weave
-    let n = smooth(0.82, 1, k);
+    let n = smooth(0.82, 1, k), noteAt = [0, 0];
     const [nw, nh] = sizes.get(note);
     if (n > 0) {
       let x, y;
       if (tall) {
         // under About, above the button
-        x = cx + footW * 0.7;
+        x = cx + footW * 0.7 + 24;
         const top = rects.bl ? rects.bl[1] + rects.bl[3] + 2 : cy + foot + footW, bottom = hint.offsetTop - 4;
         y = top;
         if (bottom - top < nh * 0.9) n = 0;
       } else {
         // to the right of the weave, between Write above and Read the Latest below
-        x = cx + foot + footW + 4;
+        x = cx + foot + footW + 34;
         const top = rects.tr ? rects.tr[1] + rects.tr[3] + 4 : cy, bottom = rects.br ? rects.br[1] - 4 : H;
         y = clamp(cy + footW * 0.35, top, bottom - nh);
         if (bottom - top < nh * 0.8) n = 0;
       }
       note.style.transform = `translate(${clamp(x, 8, W - nw - 8).toFixed(1)}px, ${clamp(y, 8, H - nh - 8).toFixed(1)}px)`;
+      noteAt = [x, y];
     }
     note.style.opacity = n.toFixed(3);
+    // the hairline: from the note's near end to the crossing of the weave nearest it
+    leader.style.opacity = n.toFixed(3);
+    if (n > 0) {
+      const nx = clamp(noteAt[0], 8, W - nw - 8) - 10, ny2 = clamp(noteAt[1], 8, H - nh - 8) + nh * 0.55;
+      let best = null, bd = 1e9;
+      for (const [a] of rope.cross) { const d = Math.hypot(rope.x(a) - nx, rope.y(a) - ny2); if (d < bd) { bd = d; best = a; } }
+      if (best !== null) {
+        const ex = rope.x(best), ey = rope.y(best);
+        // upright, a straight line would cut through the word above the note: turn a corner instead
+        const pts = tall ? [[nx, ny2], [ex, ny2], [ex, ey]] : [[nx, ny2], [ex, ey]];
+        leaderLine.setAttribute('points', pts.map((q) => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' '));
+        leaderDot.setAttribute('cx', ex.toFixed(1)); leaderDot.setAttribute('cy', ey.toFixed(1));
+      }
+    }
+    note.style.filter = n > 0 && n < 1 && !still ? `blur(${((1 - n) * 6).toFixed(2)}px)` : '';
   }
 
   // ---------------------------------------------------------------- the indicators
@@ -391,8 +491,12 @@ function start() {
       meter.querySelector('.meter__fill').style.strokeDashoffset = (1 - clamp(grab.tension, 0, 1)).toFixed(3);
     }
     hint.style.setProperty('--p', grab && !grab.wasOpen && !grab.gave ? clamp(grab.tension, 0, 1).toFixed(3) : '0');
-    const label = tiedNow() ? 'Pull it apart' : 'Tie it back up';
-    if (hintText.textContent !== label) hintText.textContent = label;
+    const tied = tiedNow(), label = tied ? 'Pull it apart' : 'Tie it back up';
+    hint.classList.toggle('is-caption', tied);
+    if (hintText.textContent !== label) {
+      hintText.textContent = label;
+      hint.classList.remove('swap'); void hint.offsetWidth; hint.classList.add('swap');
+    }
     hint.style.opacity = grab && grab.gave ? 0.4 : 1;
   }
 
@@ -448,7 +552,21 @@ function start() {
       if (grab.letGo && grab.hold <= 0) { grab = null; rope.grab = null; }
       dirty = true;
     }
-    const tugged = selfTug(now, dt);
+    const tugged = selfTug(now, dt) || nudges.length > 0;
+    for (let i = nudges.length - 1; i >= 0; i--) {
+      const u = nudges[i];
+      u.t += dt / 0.55;
+      const a = 26 * Math.sin(Math.PI * clamp(u.t, 0, 1)) ** 2;
+      rope.tug(u.j, u.d[0] * a, u.d[1] * a, 0.1);
+      if (u.t >= 1) nudges.splice(i, 1);
+    }
+    // the menu can be used once the knot is out, and not before
+    const on = k > 0.9 && !tiedNow();
+    if (on !== menuOn) {
+      menuOn = on; menu.inert = !on;
+      html.classList.toggle('menu-on', on);
+      if (!on) hot = -1;
+    }
 
     // springs
     if (!still || grab) {
@@ -494,6 +612,7 @@ function start() {
   k = scrollK(); rope.setPose(k); centre();
   painter.draw(rope, glow);
   words();
+  menu.inert = true;
   html.classList.remove('fallback');
   html.classList.add('live');
   requestAnimationFrame(frame);

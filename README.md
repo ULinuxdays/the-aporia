@@ -4,9 +4,10 @@ The site of *The Aporia*, a student philosophy magazine. Three pages:
 
 - **`index.html` — the landing page: the knot.** The two woven loops of the
   logo, which can be pulled into a line but never apart. Pulling them (or
-  scrolling) brings out the name and the menu: Archive, Write, About, Read the
-  Latest. Raw WebGL2 and no libraries: it never loads three.js, anime.js or a
-  scan. See CONTRACTS §18.
+  scrolling) brings out the name and the menu: Archive and About on the two
+  arms, Write and Read the Latest on the two small lobes. Nothing on it can be
+  clicked until the knot has been pulled. Raw WebGL2 and no libraries: it never
+  loads three.js, anime.js or a scan. See CONTRACTS §18.
 - **`about.html` — About: the scroll experience** (the particle scans of the
   Thinker and Epicurus, five acts, a portal at the end to the shelf). It was the
   landing page until 2026-11-23 and is unchanged apart from its address. Old
@@ -198,7 +199,10 @@ smoke-test.html  particles-test.html      ← throwaway test pages, safe to dele
 
 How it behaves, so it can be checked after a change:
 
-- Drag a strand: it stretches, and a red ring round your hand fills as you
+- Until it is pulled, nothing can be clicked: the menu is hidden and inert, a
+  click on the knot only gives it a small tug, and "Pull it apart" is a caption
+  for the mouse (the keyboard can still press it, and it is the first Tab stop).
+- Drag a strand: it stretches, and a hairline ring round your hand fills as you
   pull. When it is full the knot gives and springs out into a line. Let go
   before then and it springs back. Pulling the arms when it is out does nothing
   but stretch them: the weave never comes out.
@@ -207,14 +211,23 @@ How it behaves, so it can be checked after a change:
   ties it again.
 - On a phone the first swipe on the knot pulls it; once it is out, swipes
   scroll. A swipe off the knot always scrolls.
-- "Pull it apart" / "Tie it back up" (red pen, under the knot) is a real
-  button, for the keyboard. The two round grips show where to take hold; they
-  give themselves a small tug now and then until someone touches the knot, step
-  aside once someone has, and come back after six idle seconds.
+- "Pull it apart" / "Tie it back up" (under the knot) is a real button, for the
+  keyboard; once the knot is out it can be clicked too. The two round grips show
+  where to take hold; they give themselves a small tug now and then until
+  someone touches the knot, step aside once someone has, and come back after six
+  idle seconds.
 - Reduced motion: no scroll, no tugs, and the button (or a pull) changes it at
   once.
 - No WebGL2, no script, or a script that fails: `assets/static/knot.webp` (a
   still from the same renderer) with the menu round it.
+
+Three effects are ported, by hand, from React Bits (https://reactbits.dev,
+MIT + Commons Clause, © David Haz). React Bits is a library of React
+components; this site has no React and no build step, so they are plain
+JS/CSS here and keep the credit in the code: **Blur Text** (the name and the
+menu come in a letter at a time, blurred and a little off their line; here
+scrubbed by how far the knot is pulled), **Shiny Text** (the light crossing
+"Pull it apart") and **Magnet** (a menu word leans towards the pointer).
 
 `window.__knot` exposes the state, the rope and the grips for tests.
 `js/knot/paint.js → LOOK` holds every number of the look (thickness, shine,

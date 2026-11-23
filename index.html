@@ -43,7 +43,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/knot.css">
 <link rel="modulepreload" href="js/knot/rope.js">
 <link rel="modulepreload" href="js/knot/paint.js">
@@ -72,33 +72,35 @@
       <p class="title__sub">a student philosophy magazine</p>
     </div>
 
-    <!-- One item per lobe of the knot. data-end is the lobe: see endOf() in rope.js. -->
-    <nav class="menu" aria-label="Main">
+    <!-- One item per lobe of the knot: data-lobe is the lobe (see LOBE_OF_END in
+         js/knot/main.js). Live, the menu only comes out, and can only be used,
+         once the knot has been pulled. -->
+    <nav class="menu" id="menu" aria-label="Main">
       <ul>
         <li><a class="lobe" data-lobe="tl" href="shelf.html">Archive</a></li>
-        <li><span class="lobe is-soon" data-lobe="tr" role="link" aria-disabled="true" data-todo="#TODO-submission-url">Write <em class="soon">soon</em></span></li>
-        <li><a class="lobe" data-lobe="bl" href="about.html">About</a></li>
+        <li><a class="lobe" data-lobe="tr" href="about.html">About</a></li>
+        <li><span class="lobe is-soon" data-lobe="bl" role="link" aria-disabled="true" data-todo="#TODO-submission-url">Write <em class="soon">soon</em></span></li>
         <li><span class="lobe is-soon is-off" data-lobe="br" role="link" aria-disabled="true" data-todo="#TODO-latest-url">Read the <span class="nl">Latest <em class="soon">soon</em></span></span></li>
       </ul>
     </nav>
 
-    <!-- red pen -->
-    <p class="note" id="note" aria-hidden="true">
-      <svg class="note__arrow" viewBox="0 0 90 60"><path d="M86 52 C 64 50, 30 42, 12 12" /><path d="M6 26 L 11 10 L 26 16" /></svg>
-      <span class="note__text">this bit never<br>comes out</span>
-    </p>
+    <p class="note" id="note" aria-hidden="true"><span class="note__text">this bit never comes out</span></p>
+    <!-- a hairline from the note to the weave -->
+    <svg class="leader" id="leader" aria-hidden="true"><polyline /><circle r="2.4" /></svg>
+    <!-- Tied, this is only a caption for the mouse (the knot has to be pulled),
+         but it stays a button for the keyboard and for screen readers. -->
     <button class="hint" id="hint" type="button" aria-describedby="hint-what">
-      <span class="hint__text" id="hint-text">Pull it apart</span>
-      <svg class="hint__line" viewBox="0 0 200 12" preserveAspectRatio="none" aria-hidden="true"><path class="hint__track" d="M3 7 C 50 3, 120 10, 197 5" /><path class="hint__fill" d="M3 7 C 50 3, 120 10, 197 5" pathLength="1" /></svg>
+      <span class="hint__text shiny" id="hint-text">Pull it apart</span>
+      <span class="hint__line" aria-hidden="true"><span class="hint__fill"></span></span>
     </button>
-    <p class="sr-only" id="hint-what">Two loops woven through each other, from the magazine's logo. Pulled, they stretch into a line, but never come apart.</p>
+    <p class="sr-only" id="hint-what">Two loops woven through each other, from the magazine's logo. Pulled, they stretch into a line and the menu comes out, but they never come apart.</p>
   </div>
 
   <!-- where to take hold: one on each loop -->
-  <div class="grip" id="grip-0" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="21" /><path class="grip__arrow" d="M14 24 H 33 M 26 16.5 L 33.5 24 L 26 31.5" /></svg></div>
-  <div class="grip" id="grip-1" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="21" /><path class="grip__arrow" d="M14 24 H 33 M 26 16.5 L 33.5 24 L 26 31.5" /></svg></div>
+  <div class="grip" id="grip-0" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="20" /><path class="grip__arrow" d="M15.5 24 H 32 M 26.5 18.5 L 32 24 L 26.5 29.5" /></svg></div>
+  <div class="grip" id="grip-1" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="20" /><path class="grip__arrow" d="M15.5 24 H 32 M 26.5 18.5 L 32 24 L 26.5 29.5" /></svg></div>
   <!-- how far until it gives -->
-  <div class="meter" id="meter" aria-hidden="true"><svg viewBox="0 0 100 100"><circle class="meter__track" cx="50" cy="50" r="46" /><circle class="meter__fill" cx="50" cy="50" r="46" pathLength="1" /></svg></div>
+  <div class="meter" id="meter" aria-hidden="true"><svg viewBox="0 0 100 100"><circle class="meter__track" cx="50" cy="50" r="47" /><circle class="meter__fill" cx="50" cy="50" r="47" pathLength="1" /></svg></div>
 </main>
 
 <!-- the scroll that pulls the knot out: the page ends with it pulled -->

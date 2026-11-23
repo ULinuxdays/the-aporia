@@ -16,11 +16,9 @@
   --ink: rgb(244, 241, 234);
   --ink-soft: rgba(244, 241, 234, 0.62);
   --ink-faint: rgba(244, 241, 234, 0.36);
-  --gold: rgb(224, 150, 72);
-  --pen: rgb(216, 96, 90);                 /* the student's red pen */
+  --gold: rgb(226, 176, 112);
   --didone: "Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
-  --hand: Caveat, "Bradley Hand", "Segoe Print", cursive;
   --gutter: clamp(1.1rem, 3.4vw, 3.6rem);
   --lobe: 1.6rem;
   /* the tied knot, edge to edge: the same sum as size() in js/knot/main.js */
@@ -97,13 +95,14 @@ html.live .masthead, html.live .menu, html.live .note, html.live .hint { positio
   padding: 0.3em 0.45em; transition: color 200ms ease;
 }
 a.lobe:hover, a.lobe.on { color: var(--gold); }
+html.live .menu .lobe { transition: color 250ms ease; }
 .lobe .nl { white-space: nowrap; }
 html.tall .lobe .nl { display: block; }
 .soon { font: 500 0.42em/1 var(--mono); font-style: normal; letter-spacing: 0.06em; text-transform: uppercase; margin-left: 0.55em; vertical-align: 0.22em; color: var(--ink-soft); transition: color 200ms ease; }
 .lobe.is-soon { cursor: default; }
 .lobe.is-off { color: var(--ink-faint); }
 .lobe.is-off .soon { color: var(--ink-faint); }
-.lobe.is-soon.said .soon { color: var(--pen); }
+.lobe.is-soon.said .soon { color: var(--ink); }
 .lobe.is-soon.said { animation: say 420ms ease; }
 @keyframes say { 25% { translate: -3px 0; } 50% { translate: 3px 0; } 75% { translate: -1px 0; } }
 
@@ -125,49 +124,73 @@ html:not(.live) .menu li:nth-child(4) { left: 100%; bottom: 6%; }
   html:not(.live) .lobe .nl { display: block; }
 }
 
-/* ---- red pen --------------------------------------------------------------- */
+/* ---- the note, and the button under the knot ----------------------------- */
 
-.note { position: absolute; left: 0; top: 0; z-index: 2; margin: 0; display: flex; align-items: flex-start; gap: 0.25rem; color: var(--pen); opacity: 0; pointer-events: none; }
-html:not(.live) .note { display: none; }
-.note__text { font: 600 1.4rem/0.95 var(--hand); white-space: nowrap; rotate: -4deg; padding-top: 1.3rem; }
-.note__arrow { width: 3.6rem; height: 2.4rem; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
-@media (max-width: 46rem) { .note__text { font-size: 1.2rem; } .note__arrow { width: 2.8rem; height: 1.9rem; } }
+.note { position: absolute; left: 0; top: 0; z-index: 2; margin: 0; color: var(--ink-soft); opacity: 0; pointer-events: none; }
+html:not(.live) .note, html:not(.live) .leader { display: none; }
+.note__text { display: block; font: italic 400 1.05rem/1.2 var(--didone); letter-spacing: 0.01em; white-space: nowrap; }
+@media (max-width: 46rem) { .note__text { font-size: 0.95rem; } }
+.leader { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 2; overflow: visible; pointer-events: none; opacity: 0; color: var(--ink-soft); }
+.leader polyline { fill: none; stroke: currentColor; stroke-width: 1; stroke-linejoin: round; }
+.leader circle { fill: currentColor; }
 
 .hint {
-  position: absolute; left: 50%; bottom: max(1.1rem, env(safe-area-inset-bottom)); z-index: 3;
-  transform: translateX(-50%); padding: 0.35rem 0.8rem 0.6rem; color: var(--pen);
-  font: 600 1.75rem/1 var(--hand); white-space: nowrap; --p: 0;
+  position: absolute; left: 50%; bottom: max(1.4rem, env(safe-area-inset-bottom)); z-index: 3;
+  transform: translateX(-50%); padding: 0.6rem 0.9rem; color: var(--ink-soft);
+  font: 500 0.7rem/1 var(--mono); letter-spacing: 0.24em; text-transform: uppercase; white-space: nowrap; --p: 0;
   transition: opacity 400ms ease;
 }
 html:not(.live) .hint { display: none; }
-.hint__text { display: block; }
-.hint__line { position: absolute; left: 0.6rem; right: 0.6rem; bottom: 0.15rem; width: calc(100% - 1.2rem); height: 0.55rem; overflow: visible; fill: none; stroke-linecap: round; }
-.hint__track { stroke: currentColor; stroke-width: 2; opacity: 0.45; }
-.hint__fill { stroke: currentColor; stroke-width: 2.6; stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--p)); }
-.hint:hover .hint__track { opacity: 0.9; }
-@media (max-height: 460px) { .title__name { font-size: min(9.5vw, 14svh); } .hint { font-size: 1.45rem; bottom: 0.4rem; left: var(--gutter); transform: none; } }
+/* tied, it is a caption: the knot is what you pull (the keyboard can still press it) */
+.hint.is-caption { pointer-events: none; cursor: default; }
+.hint__text { display: block; padding-left: 0.24em; }
+.hint__line { display: block; position: relative; height: 1px; margin-top: 0.7rem; background: rgba(244, 241, 234, 0.16); overflow: hidden; }
+.hint__fill { position: absolute; inset: 0; background: var(--ink); transform-origin: 50% 50%; transform: scaleX(var(--p)); }
+.hint:not(.is-caption):hover { color: var(--ink); }
+.hint.swap .hint__text { animation: swap 520ms cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes swap { from { opacity: 0; filter: blur(6px); transform: translateY(-6px); } }
+@media (max-height: 460px) { .title__name { font-size: min(9.5vw, 14svh); } .hint { bottom: 0.4rem; left: var(--gutter); transform: none; } }
+
+/* Shiny Text, after React Bits (reactbits.dev, MIT + Commons Clause, © David Haz):
+   one soft band of light crossing the words, then a rest. */
+.shiny {
+  background-image: linear-gradient(120deg, rgba(244, 241, 234, 0.58) 0%, rgba(244, 241, 234, 0.58) 40%, rgba(255, 252, 244, 1) 50%, rgba(244, 241, 234, 0.58) 60%, rgba(244, 241, 234, 0.58) 100%);
+  background-size: 250% 100%; background-repeat: no-repeat;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+  animation: shine 5.2s cubic-bezier(0.45, 0, 0.55, 1) 1.2s infinite;
+}
+@keyframes shine { 0% { background-position: 100% 0; } 55%, 100% { background-position: 0% 0; } }
+
+/* Blur Text, after React Bits: the words come in a letter at a time, scrubbed by
+   how far the knot is pulled (js/knot/main.js reveal()). */
+.ch { display: inline-block; white-space: pre; }
+html.live .menu .lobe .ch, html.live .title .ch { opacity: 0; }
 
 /* ---- where to take hold, and how far until it gives ------------------------ */
 
 .grip, .meter { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; opacity: 0; }
 html:not(.live) .grip, html:not(.live) .meter { display: none; }
-.grip { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
+.grip { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
 .grip svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.grip__ring { fill: rgba(8, 8, 11, 0.62); stroke: var(--ink); stroke-width: 1.6; }
-.grip__arrow { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.grip::after {
-  content: ""; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--ink); opacity: 0;
-}
-.grip.tug::after { animation: ripple 1100ms ease-out; }
-@keyframes ripple { from { opacity: 0.75; transform: scale(1); } to { opacity: 0; transform: scale(1.9); } }
-.meter { width: 70px; height: 70px; margin: -35px 0 0 -35px; }
-.meter.touch { width: 112px; height: 112px; margin: -56px 0 0 -56px; }
-.meter svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
-.meter circle { fill: none; stroke-width: 3; }
-.meter__track { stroke: rgba(244, 241, 234, 0.3); }
-.meter__fill { stroke: var(--pen); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.grip__ring { fill: rgba(8, 8, 11, 0.5); stroke: rgba(244, 241, 234, 0.85); stroke-width: 1; }
+.grip__arrow { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.grip::after { content: ""; position: absolute; inset: 2px; border-radius: 50%; border: 1px solid rgba(244, 241, 234, 0.7); opacity: 0; }
+.grip.tug::after { animation: ripple 1400ms cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes ripple { from { opacity: 0.7; transform: scale(1); } to { opacity: 0; transform: scale(2.1); } }
+.meter { width: 76px; height: 76px; margin: -38px 0 0 -38px; }
+.meter.touch { width: 116px; height: 116px; margin: -58px 0 0 -58px; }
+.meter svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+.meter circle { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.meter__track { stroke: rgba(244, 241, 234, 0.22); }
+.meter__fill { stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+
+/* ---- the menu, live: only once the knot is out ---------------------------- */
+
+html.live:not(.menu-on) .menu, html.live:not(.menu-on) .menu * { pointer-events: none !important; cursor: default; }
+html.live .lobe__in { display: inline-block; will-change: transform; }
 
 @media (prefers-reduced-motion: reduce) {
   html.live .stage { animation: none; }
-  .grip.tug::after, .lobe.is-soon.said { animation: none; }
+  .grip.tug::after, .lobe.is-soon.said, .shiny, .hint.swap .hint__text { animation: none; }
+  .shiny { background-position: 100% 0; }
 }

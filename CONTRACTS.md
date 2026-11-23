@@ -770,10 +770,20 @@ now means `about.html`.
 - **Ends and lobes**: `rope.endOf(i)` numbers the four ends 0 loop 0's arm,
   1 its foot, 2 loop 1's arm, 3 its foot. Wide: tl, br, tr, bl; tall: tl, br,
   bl, tr. The menu item of a lobe is `.lobe[data-lobe]`; only `<a class="lobe">`
-  lights its lobe (Write and Read the Latest do not).
+  lights its lobe (Write and Read the Latest do not). Wide: Archive on the left
+  arm, About on the right arm, Write under the left small lobe, Read the Latest
+  under the right one.
+- **Locked until pulled**: `menuOn` is k > 0.9 with the knot out by hand or
+  scroll. Before that `#menu` is `inert`, clicks on the knot only `nudge()` it,
+  the lobes do not light, and `.hint.is-caption` takes no pointer (keyboard
+  only). The fallback page (no WebGL2, no script) has no knot to pull, so its
+  links work as they are.
 - **The words** circle the end of their own lobe as k grows (angles in
   `ORBIT_*`), then the arm's words slide along under the arm. They never cross a
   strand. The name sits behind the canvas, so the arms pass in front of it.
+  Each word is split into `.ch` letters and revealed by `reveal()` (Blur Text,
+  after React Bits) scrubbed by k; the note is joined to the nearest crossing
+  by a hairline (`#leader`), with a right angle in it when the knot is upright.
 - **Paint** (`paint.js`, WebGL2 only): the rope goes up as a 200×4 float texture
   per frame; the vertex shader runs a cubic B-spline through it and sweeps the
   band (420 rings × 36 around per loop); depth sorts over and under. Shadows
