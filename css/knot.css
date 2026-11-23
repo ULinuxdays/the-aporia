@@ -1,0 +1,173 @@
+/* ==========================================================================
+   The Aporia — the landing page: the knot. CONTRACTS.md §18.
+
+   Two layouts share this file. The plain one (no script, no WebGL, or the
+   script failing) is the still of the knot with the menu round it, laid out
+   here. The live one (html.live) is placed by js/knot/main.js every frame;
+   here it only gets its type and colour.
+
+   The canvas is sized to the LARGE viewport (lvh) and the words to the SMALL
+   one (svh): a phone's toolbar sliding away never resizes the canvas, and never
+   puts a word under the toolbar.
+   ========================================================================== */
+
+:root {
+  --night: #08080b;
+  --ink: rgb(244, 241, 234);
+  --ink-soft: rgba(244, 241, 234, 0.62);
+  --ink-faint: rgba(244, 241, 234, 0.36);
+  --gold: rgb(224, 150, 72);
+  --pen: rgb(216, 96, 90);                 /* the student's red pen */
+  --didone: "Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --hand: Caveat, "Bradley Hand", "Segoe Print", cursive;
+  --gutter: clamp(1.1rem, 3.4vw, 3.6rem);
+  --lobe: 1.6rem;
+  /* the tied knot, edge to edge: the same sum as size() in js/knot/main.js */
+  --box: min(60vw, 100svh - 150px);
+}
+@media (max-width: 46rem) { :root { --lobe: 1.35rem; } }
+@media (max-height: 460px) { :root { --box: min(60vw, 100svh - 96px); --lobe: 1.15rem; } }
+@media (max-aspect-ratio: 20/23) { :root { --box: min(88vw, 54svh); } }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; background: var(--night); scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+body { margin: 0; background: var(--night); color: var(--ink); font: 400 1rem/1.5 var(--didone); overflow-x: hidden; overflow-x: clip; }
+a { color: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- the stage ------------------------------------------------------------ */
+
+.stage { position: relative; height: 100vh; height: 100svh; min-height: 24rem; overflow: hidden; touch-action: pan-y pinch-zoom; }
+.ui { position: absolute; inset: 0 0 auto; height: 100%; pointer-events: none; }
+.ui a, .ui button, .ui .lobe { pointer-events: auto; }
+.rope { display: none; }
+
+/* the still: the plain layout's knot */
+.still {
+  position: absolute; left: 50%; top: 50%; width: var(--box); height: auto; aspect-ratio: 1;
+  transform: translate(-50%, -50%); user-select: none; -webkit-user-select: none; pointer-events: none;
+}
+
+/* ---- live ------------------------------------------------------------------ */
+
+html.js:not(.fallback) .stage { position: fixed; inset: 0 0 auto; height: 100vh; height: 100lvh; min-height: 0; }
+html.js:not(.fallback) .ui { height: 100vh; height: 100svh; }
+html.js:not(.fallback) .still { display: none; }
+html.js:not(.fallback) .rope { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+html.js:not(.fallback) .run { height: calc(100vh + 80vh); height: calc(100lvh + 80svh); }
+html.js.still-motion .run { height: 100vh; height: 100lvh; }
+/* nothing shows until it has been placed */
+html.js:not(.live):not(.fallback) .stage { visibility: hidden; }
+html.live .stage { animation: arrive 700ms ease both; }
+@keyframes arrive { from { opacity: 0; } }
+html.live .rope { cursor: default; }
+html.live .stage.can { cursor: grab; }
+html.live .stage.has, html.live .stage.has * { cursor: grabbing !important; }
+
+/* ---- masthead -------------------------------------------------------------- */
+
+.masthead {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 3;
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 1.1rem;
+  padding: max(1rem, env(safe-area-inset-top)) var(--gutter) 0;
+}
+.masthead > * { margin: 0; }
+.masthead__mark { font: 400 1.45rem/1.1 var(--didone); letter-spacing: 0; }
+.masthead__sub, .title__sub { font: 400 0.7rem/1.4 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+@media (max-width: 46rem) { .masthead__mark { font-size: 1.3rem; } .masthead__sub { font-size: 0.62rem; } }
+
+/* the name, once it is pulled out: behind the canvas, so the arms pass in front of it */
+.title { position: absolute; left: 0; right: 0; top: 0; z-index: 0; margin: 0; text-align: center; opacity: 0; pointer-events: none; }
+.title__name { margin: 0 0 0.16em; font: 400 clamp(3.1rem, 9.5vw, 8.6rem)/0.95 var(--didone); letter-spacing: -0.03em; }
+.title__sub { margin: 0; }
+html.live .title { z-index: 0; }
+html.live .ui { z-index: auto; }
+html.live .rope { z-index: 1; }
+html.live .masthead, html.live .menu, html.live .note, html.live .hint { position: absolute; z-index: 2; }
+
+/* ---- the menu: one item per lobe ------------------------------------------- */
+
+.menu ul { list-style: none; margin: 0; padding: 0; }
+.lobe {
+  display: block; font: 400 var(--lobe)/1.05 var(--didone); letter-spacing: -0.005em; text-decoration: none; white-space: nowrap;
+  padding: 0.3em 0.45em; transition: color 200ms ease;
+}
+a.lobe:hover, a.lobe.on { color: var(--gold); }
+.lobe .nl { white-space: nowrap; }
+html.tall .lobe .nl { display: block; }
+.soon { font: 500 0.42em/1 var(--mono); font-style: normal; letter-spacing: 0.06em; text-transform: uppercase; margin-left: 0.55em; vertical-align: 0.22em; color: var(--ink-soft); transition: color 200ms ease; }
+.lobe.is-soon { cursor: default; }
+.lobe.is-off { color: var(--ink-faint); }
+.lobe.is-off .soon { color: var(--ink-faint); }
+.lobe.is-soon.said .soon { color: var(--pen); }
+.lobe.is-soon.said { animation: say 420ms ease; }
+@keyframes say { 25% { translate: -3px 0; } 50% { translate: 3px 0; } 75% { translate: -1px 0; } }
+
+html.live .menu .lobe { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+
+/* the plain layout: the menu round the still */
+.menu { position: absolute; left: 50%; top: 50%; width: var(--box); height: var(--box); transform: translate(-50%, -50%); z-index: 2; pointer-events: none; }
+html.live .menu { left: 0; top: 0; width: auto; height: auto; transform: none; }
+html:not(.live) .menu li { position: absolute; }
+html:not(.live) .menu li:nth-child(1) { right: 100%; top: 6%; }
+html:not(.live) .menu li:nth-child(2) { left: 100%; top: 6%; }
+html:not(.live) .menu li:nth-child(3) { right: 100%; bottom: 6%; }
+html:not(.live) .menu li:nth-child(4) { left: 100%; bottom: 6%; }
+@media (max-aspect-ratio: 20/23) {
+  html:not(.live) .menu li:nth-child(1) { right: auto; left: 25%; top: auto; bottom: 100%; transform: translateX(-50%); }
+  html:not(.live) .menu li:nth-child(2) { left: 75%; top: auto; bottom: 100%; transform: translateX(-50%); }
+  html:not(.live) .menu li:nth-child(3) { right: auto; left: 25%; bottom: auto; top: 100%; transform: translateX(-50%); }
+  html:not(.live) .menu li:nth-child(4) { left: 75%; bottom: auto; top: 100%; transform: translateX(-50%); text-align: center; }
+  html:not(.live) .lobe .nl { display: block; }
+}
+
+/* ---- red pen --------------------------------------------------------------- */
+
+.note { position: absolute; left: 0; top: 0; z-index: 2; margin: 0; display: flex; align-items: flex-start; gap: 0.25rem; color: var(--pen); opacity: 0; pointer-events: none; }
+html:not(.live) .note { display: none; }
+.note__text { font: 600 1.4rem/0.95 var(--hand); white-space: nowrap; rotate: -4deg; padding-top: 1.3rem; }
+.note__arrow { width: 3.6rem; height: 2.4rem; flex: none; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+@media (max-width: 46rem) { .note__text { font-size: 1.2rem; } .note__arrow { width: 2.8rem; height: 1.9rem; } }
+
+.hint {
+  position: absolute; left: 50%; bottom: max(1.1rem, env(safe-area-inset-bottom)); z-index: 3;
+  transform: translateX(-50%); padding: 0.35rem 0.8rem 0.6rem; color: var(--pen);
+  font: 600 1.75rem/1 var(--hand); white-space: nowrap; --p: 0;
+  transition: opacity 400ms ease;
+}
+html:not(.live) .hint { display: none; }
+.hint__text { display: block; }
+.hint__line { position: absolute; left: 0.6rem; right: 0.6rem; bottom: 0.15rem; width: calc(100% - 1.2rem); height: 0.55rem; overflow: visible; fill: none; stroke-linecap: round; }
+.hint__track { stroke: currentColor; stroke-width: 2; opacity: 0.45; }
+.hint__fill { stroke: currentColor; stroke-width: 2.6; stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--p)); }
+.hint:hover .hint__track { opacity: 0.9; }
+@media (max-height: 460px) { .title__name { font-size: min(9.5vw, 14svh); } .hint { font-size: 1.45rem; bottom: 0.4rem; left: var(--gutter); transform: none; } }
+
+/* ---- where to take hold, and how far until it gives ------------------------ */
+
+.grip, .meter { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; opacity: 0; }
+html:not(.live) .grip, html:not(.live) .meter { display: none; }
+.grip { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
+.grip svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.grip__ring { fill: rgba(8, 8, 11, 0.62); stroke: var(--ink); stroke-width: 1.6; }
+.grip__arrow { fill: none; stroke: var(--ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.grip::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--ink); opacity: 0;
+}
+.grip.tug::after { animation: ripple 1100ms ease-out; }
+@keyframes ripple { from { opacity: 0.75; transform: scale(1); } to { opacity: 0; transform: scale(1.9); } }
+.meter { width: 70px; height: 70px; margin: -35px 0 0 -35px; }
+.meter.touch { width: 112px; height: 112px; margin: -56px 0 0 -56px; }
+.meter svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+.meter circle { fill: none; stroke-width: 3; }
+.meter__track { stroke: rgba(244, 241, 234, 0.3); }
+.meter__fill { stroke: var(--pen); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.live .stage { animation: none; }
+  .grip.tug::after, .lobe.is-soon.said { animation: none; }
+}

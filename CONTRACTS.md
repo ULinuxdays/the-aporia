@@ -11,10 +11,12 @@ interface in a later part, add it here. If you change one, change it here
 The Aporia Web/
 ├── BRIEF.md                 what we're building and why
 ├── CONTRACTS.md             this file
-├── index.html               the page: copy, acts, masthead, colophon, the gate to the shelf
+├── index.html               the landing page: the knot (§18)
+├── about.html               About: the scroll page — copy, acts, masthead, the gate to the shelf (was index.html)
 ├── shelf.html               The Complete Shelf — the issues, as a 3D library (§16)
 ├── css/
-│   ├── styles.css           type, layout, colours; the .act heights ARE the choreography (§12)
+│   ├── knot.css             the landing page
+│   ├── styles.css           about.html: type, layout, colours; the .act heights ARE the choreography (§12)
 │   └── shelf.css            the shelf page
 ├── js/
 │   ├── clouds.js            point-cloud loader       (part 1; int16-aware since part 5)
@@ -26,7 +28,8 @@ The Aporia Web/
 │   ├── normals.js           per-point normal estimation (local PCA)
 │   ├── normals-worker.js    runs normals.js off the main thread
 │   ├── curtain.js           the grain curtain both pages draw (§15)
-│   └── shelf/               main.js · books.js · scene.js · browse.js · inspect.js · ui.js  (§16)
+│   ├── shelf/               main.js · books.js · scene.js · browse.js · inspect.js · ui.js  (§16)
+│   └── knot/                main.js · rope.js · paint.js — the landing page (§18); imports nothing outside itself
 ├── assets/
 │   ├── shelf/
 │   │   ├── manifest.json    the 19 books (§16)
@@ -734,3 +737,52 @@ and the manifest's cloth / foil / size for that book.
   (`assets/clouds/<name>.js` — regenerate it whenever the `.bin` is re-baked).
   Every attempt is length-checked. Visitors never see the procedural stand-ins;
   if a scan cannot be had, the static page shows its still.
+
+## 18. The landing page: the knot (2026-11-23)
+
+`index.html` is the knot from `assets/logo.png`. It loads no three.js, no
+anime.js and no scan: `js/knot/` imports nothing from the rest of `js/`. The
+scroll page that used to be `index.html` is `about.html`, unchanged; every
+section above that says `index.html` about acts, the masthead or the portal
+now means `about.html`.
+
+- **Two loops, 200 points each** (`rope.js`, units: a 1000-unit box centred on
+  the weave). Loop 0 runs top left to bottom right and is a *washer* (wide, a
+  slit inside); loop 1 runs bottom left to top right and is a *belt* (its width
+  keeps one direction round each bend, so you see it fold and then its inside):
+  both as in the logo. A pose `t` (0 tied, 1 pulled into a line) is a lerp of
+  two spines; loop 1 is loop 0's mirror, side to side when the line is level and
+  top to bottom when it stands upright (`tall`: the screen is more than 1.15×
+  taller than wide). Over/under is `pz` (±1 at the four crossings).
+- **Displacement D** per point springs back to the pose; it travels along a
+  strand and through the crossings. Fixed 1/240 s steps. A change of layout
+  (resize, rotation) is carried by D (`Rope.carry`), so the rope glides to the
+  new layout rather than jumping.
+- **k** (`main.js`) is the pose shown: a spring towards
+  `max(open, scroll)`; while a strand is held, up to 0.2 more with the pull's
+  tension. Tension = distance × (0.56 + 0.44 × how much of it is away from the
+  middle) ÷ (half the tied knot). At 1 it gives (`open = 1`, a kick, the hand
+  lets go). Once settled out, `open` is handed to the scroll: the page jumps
+  (invisibly; the stage is fixed) to the end of its run, so scrolling up ties it.
+- **The run**: the stage is fixed and 100lvh tall (the words 100svh), and
+  `.run` is 100lvh + 80svh, so k reaches 1 at 0.776 svh of scroll and the page
+  ends there. Reduced motion has no run.
+- **Ends and lobes**: `rope.endOf(i)` numbers the four ends 0 loop 0's arm,
+  1 its foot, 2 loop 1's arm, 3 its foot. Wide: tl, br, tr, bl; tall: tl, br,
+  bl, tr. The menu item of a lobe is `.lobe[data-lobe]`; only `<a class="lobe">`
+  lights its lobe (Write and Read the Latest do not).
+- **The words** circle the end of their own lobe as k grows (angles in
+  `ORBIT_*`), then the arm's words slide along under the arm. They never cross a
+  strand. The name sits behind the canvas, so the arms pass in front of it.
+- **Paint** (`paint.js`, WebGL2 only): the rope goes up as a 200×4 float texture
+  per frame; the vertex shader runs a cubic B-spline through it and sweeps the
+  band (420 rings × 36 around per loop); depth sorts over and under. Shadows
+  come from a quarter-size height map with four "above this level" channels,
+  blurred. Grain is a fixed screen-space texture. Nothing is drawn while
+  nothing moves. If frames take over 40 ms for 45 frames the pixel ratio steps
+  down.
+- **Fallbacks**: no WebGL2 → `html.fallback` (the inline head script also sets
+  it if the module has not started within 3.5 s or a script fails to load):
+  `assets/static/knot.webp` with the menu laid out round it by CSS. No script:
+  the same.
+

@@ -1,9 +1,21 @@
-# The Aporia — landing page
+# The Aporia — the website
 
-A scroll-driven landing page for *The Aporia*, a student philosophy magazine,
-plus *The Complete Shelf*, a 3D library of its issues. Plain HTML/CSS/JS, ES
-modules, three.js and anime.js vendored, **no build step**. Deploy by dragging
-this folder onto Netlify (or any static host).
+The site of *The Aporia*, a student philosophy magazine. Three pages:
+
+- **`index.html` — the landing page: the knot.** The two woven loops of the
+  logo, which can be pulled into a line but never apart. Pulling them (or
+  scrolling) brings out the name and the menu: Archive, Write, About, Read the
+  Latest. Raw WebGL2 and no libraries: it never loads three.js, anime.js or a
+  scan. See CONTRACTS §18.
+- **`about.html` — About: the scroll experience** (the particle scans of the
+  Thinker and Epicurus, five acts, a portal at the end to the shelf). It was the
+  landing page until 2026-11-23 and is unchanged apart from its address. Old
+  links to `/#about` are sent on to `about.html#about`.
+- **`shelf.html` — *The Complete Shelf***, a 3D library of the issues. It is the
+  "Archive" on the landing page's menu.
+
+Plain HTML/CSS/JS, ES modules, three.js and anime.js vendored, **no build
+step**. Pushing `main` deploys to https://aporia.press on Vercel.
 
 Two documents are the source of truth and every session reads them first:
 
@@ -20,7 +32,7 @@ Any static server from this folder. ES modules and `fetch()` don't work from
 python3 -m http.server 8080        # then open http://localhost:8080/
 ```
 
-Useful URL flags on `index.html`:
+Useful URL flags on `about.html`:
 
 | flag | what |
 |---|---|
@@ -139,13 +151,18 @@ One block of HTML, one shape name, one colour:
 
 ## The real links
 
-Every link still waiting for a URL carries `data-todo="#TODO-…"`. The ones with
+Every link still waiting for a URL carries `data-todo="#TODO-…"`. On the
+landing page, Write and Read the Latest are not links yet: they say "soon", do
+nothing when pressed, and Read the Latest is greyed out. Make each an
+`<a class="lobe" href="…">` (drop `is-soon`, `is-off`, `role`, `aria-disabled`
+and the `soon` tag) and its lobe lights up on hover by itself. The ones with
 nowhere to go yet are `<span class="is-placeholder">` with a "soon" tag (make
 them `<a href>` and drop the tag); Issue 01 points at the shelf meanwhile.
 Search for `TODO-`:
 
 - `#TODO-issue-01-url` — Read Issue 01 (Act IV cover, Act V button, shelf manifest `href`)
-- `#TODO-submission-url` — Send us a piece (Act V)
+- `#TODO-latest-url` — Read the Latest (the landing page's menu)
+- `#TODO-submission-url` — Send us a piece (Act V), and Write (the landing page's menu)
 - `#TODO-pitch-url` — Pitch a subject (Act IV cover, shelf manifest)
 - `#TODO-email` — the editorial address (had a home in the colophon, now removed)
 
@@ -156,20 +173,54 @@ placeholder with it. If those scans require credit, the site currently gives
 none: pick it a home before launch. The shelf page is the obvious candidate.
 
 The site's canonical domain is **https://aporia.press/** — set in `og:url`,
-`og:image`, `twitter:image` and `canonical` in `index.html`. If you ever move
-it or prefer `www.`, those four lines are the only place it appears.
+`og:image`, `twitter:image` and `canonical` in `index.html` and `about.html`.
+If you ever move it or prefer `www.`, those eight lines are the only place it
+appears.
 
 ## The Complete Shelf
 
-`shelf.html` is reachable only from the gate at the very end of the landing
-page. Books are procedural until Mint-generated GLBs are linked in with
+`shelf.html` is reached from Archive on the landing page and from the portal
+at the very end of About; its "← The Aporia" goes back to the landing page. Books are procedural until Mint-generated GLBs are linked in with
 `tools/import-mint.mjs` (see CONTRACTS §16 for the Mint workflow; the MCP
 needs an OAuth login first).
 
 ## Layout of the folder
 
 ```
-index.html  shelf.html  css/  js/  assets/  vendor/  tools/
-BRIEF.md  CONTRACTS.md  README.md
+index.html   the knot             css/knot.css   js/knot/{main,rope,paint}.js
+about.html   the scroll page      css/styles.css js/*.js (main.js, scene.js, …)
+shelf.html   the shelf            css/shelf.css  js/shelf/
+assets/  vendor/  tools/  BRIEF.md  CONTRACTS.md  README.md
 smoke-test.html  particles-test.html      ← throwaway test pages, safe to delete
 ```
+
+## The knot (`index.html`)
+
+How it behaves, so it can be checked after a change:
+
+- Drag a strand: it stretches, and a red ring round your hand fills as you
+  pull. When it is full the knot gives and springs out into a line. Let go
+  before then and it springs back. Pulling the arms when it is out does nothing
+  but stretch them: the weave never comes out.
+- Scrolling pulls it out too; the page ends with it pulled. Once it is out by
+  hand, the page quietly moves to the end of its scroll, so scrolling back up
+  ties it again.
+- On a phone the first swipe on the knot pulls it; once it is out, swipes
+  scroll. A swipe off the knot always scrolls.
+- "Pull it apart" / "Tie it back up" (red pen, under the knot) is a real
+  button, for the keyboard. The two round grips show where to take hold; they
+  give themselves a small tug now and then until someone touches the knot, step
+  aside once someone has, and come back after six idle seconds.
+- Reduced motion: no scroll, no tugs, and the button (or a pull) changes it at
+  once.
+- No WebGL2, no script, or a script that fails: `assets/static/knot.webp` (a
+  still from the same renderer) with the menu round it.
+
+`window.__knot` exposes the state, the rope and the grips for tests.
+`js/knot/paint.js → LOOK` holds every number of the look (thickness, shine,
+shadow, grain); the colours are taken from `assets/logo.png`.
+
+To re-render the still or the social image (`assets/social-knot.jpg`,
+1200 × 630 at 2×), screenshot the live page: the still at 1200 × 1200 with a
+transparent background and the knot tied, the social image at 1200 × 630
+pulled out with the menu, the note and the button hidden.
