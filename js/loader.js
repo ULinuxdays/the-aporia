@@ -80,13 +80,43 @@
   var GROUND = { 'shelf.html': 'rgb(31, 27, 24)' };
   var NIGHT = '#08080b';
   var going = false, veil = null;
+
+  /** The URL a link leads to, if it is another page of this site we hand over to. */
+  function internal(a) {
+    if (!a || a.id === 'portal' || a.hasAttribute('download') || (a.target && a.target !== '_self')) return null;
+    var url;
+    try { url = new URL(a.getAttribute('href'), location.href); } catch (err) { return null; }
+    if (url.origin !== location.origin || (url.pathname === location.pathname && url.search === location.search)) return null;
+    return url;
+  }
+  function linkOf(e) { return e.target && e.target.closest ? e.target.closest('a[href]') : null; }
+
+  // Fetch the next page (and the stylesheet it waits on) as soon as a hand is on
+  // its way to the link, so it can draw the moment the veil is up.
+  var STYLES = { 'about.html': 'css/styles.css', 'shelf.html': 'css/shelf.css', '': 'css/knot.css', 'index.html': 'css/knot.css' };
+  var fetched = {};
+  function prefetch(href) {
+    if (fetched[href]) return;
+    fetched[href] = true;
+    var l = document.createElement('link');
+    l.rel = 'prefetch'; l.href = href;
+    document.head.appendChild(l);
+  }
+  function warm(e) {
+    var url = internal(linkOf(e));
+    if (!url) return;
+    prefetch(url.href);
+    var css = STYLES[url.pathname.split('/').pop()];
+    if (css) prefetch(new URL(css, location.href).href);
+  }
+  document.addEventListener('pointerover', warm, { passive: true });
+  document.addEventListener('touchstart', warm, { passive: true });
+  document.addEventListener('focusin', warm);
+
   document.addEventListener('click', function (e) {
     if (going || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-    if (!a || a.id === 'portal' || a.hasAttribute('download') || (a.target && a.target !== '_self')) return;
-    var url;
-    try { url = new URL(a.getAttribute('href'), location.href); } catch (err) { return; }
-    if (url.origin !== location.origin || (url.pathname === location.pathname && url.search === location.search)) return;
+    var url = internal(linkOf(e));
+    if (!url) return;
     e.preventDefault();
     going = true;
     try { sessionStorage.setItem('aporia:nav', '1'); } catch (err) {}
@@ -97,7 +127,11 @@
     document.body.appendChild(veil);
     void veil.offsetHeight;                     // start from below the screen, so the rise is animated
     html.classList.add('leaving');
-    setTimeout(function () { location.href = url.href; }, 600);
+    // Go while the veil is still finishing (it is over 90 % of its way at 420 ms
+    // of 600): the browser keeps showing this page, veil and all, until the next
+    // one can draw, so the fetch overlaps the end of the rise instead of
+    // following it with a black wait.
+    setTimeout(function () { location.href = url.href; }, 420);
   });
   // Back to this page from the back/forward cache: it must not still be covered.
   addEventListener('pageshow', function () {
