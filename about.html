@@ -43,9 +43,11 @@
 
 <script>
   document.documentElement.classList.add('js');
-  // Came from another page of the site, which faded itself out (js/loader.js):
-  // bring the loading knot straight up, so the two pages read as one movement.
-  try { if (sessionStorage.getItem('aporia:nav') === '1') { sessionStorage.removeItem('aporia:nav'); document.documentElement.classList.add('arrive'); } } catch (e) {}
+  // Came from another page of the site, whose loading knot is already up
+  // (js/loader.js): show ours at once, turned on as far as that one had got.
+  (function () { try { var at = +sessionStorage.getItem('aporia:nav'); if (!at) return; sessionStorage.removeItem('aporia:nav');
+    var h = document.documentElement, ago = Date.now() - at; h.classList.add('arrive');
+    if (ago > 0 && ago < 20000) h.style.setProperty('--lk-at', -ago + 'ms'); } catch (e) {} })();
 
   // A safety net, because this page hides its own text until JavaScript says
   // otherwise (.reveal starts at opacity 0). If the scripts never run — an old

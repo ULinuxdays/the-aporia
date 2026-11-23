@@ -16,7 +16,7 @@
   display: grid; place-items: center; align-content: center; gap: 1.6rem;
   background: var(--loader-bg, #08080b);
   color: rgba(244, 241, 234, 0.62);
-  transition: transform 900ms cubic-bezier(.4, 0, .2, 1) 60ms, visibility 0s 1000ms;
+  transition: transform 760ms cubic-bezier(.4, 0, .2, 1), visibility 0s 800ms;
 }
 /* the soft lower edge it carries up with it: hidden below the screen until it moves */
 .loader::after {
@@ -27,16 +27,17 @@
 html:not(.js) .loader { display: none; }
 .loader.is-done { transform: translateY(calc(-100% - 45vh)); visibility: hidden; pointer-events: none; }
 
-/* the knot itself fades in after a beat, so a page that is ready at once
-   never flashes it */
+/* the knot pops up at once, already turning. --lk-at is how long it has been
+   turning: a page arrived at from another sets it, so the knot carries on from
+   where the last page's knot had got to instead of starting again. */
 .loader__knot {
   position: relative; width: 7.5rem; height: 7.5rem;
-  opacity: 0; animation: loader-in 500ms ease 200ms forwards;
+  animation: loader-pop 220ms cubic-bezier(.2, .7, .3, 1) both;
 }
-.loader__spin { position: absolute; inset: 0; animation: loader-turn 9s linear infinite; }
+.loader__spin { position: absolute; inset: 0; animation: loader-turn 9s linear var(--lk-at, 0s) infinite; }
 .loader__knot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.loader__a { animation: loader-tug-a 1.8s ease-in-out infinite alternate; }
-.loader__b { animation: loader-tug-b 1.8s ease-in-out infinite alternate; }
+.loader__a { animation: loader-tug-a 1.8s ease-in-out var(--lk-at, 0s) infinite alternate; }
+.loader__b { animation: loader-tug-b 1.8s ease-in-out var(--lk-at, 0s) infinite alternate; }
 
 /* a loop slides along its own length, so its crossings with the other stay put
    and the weave tightens and loosens rather than coming undone */
@@ -44,6 +45,7 @@ html:not(.js) .loader { display: none; }
 @keyframes loader-tug-b { from { transform: translate(-2.2%, 2.2%); } to { transform: translate(2.2%, -2.2%); } }
 @keyframes loader-turn { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes loader-in { to { opacity: 1; } }
+@keyframes loader-pop { from { opacity: 0; transform: scale(.86); } }
 
 .lk-edge { fill: none; stroke: var(--loader-bg, #08080b); stroke-width: 62; stroke-linejoin: round; }
 .lk-band { fill: none; stroke: url(#lk-gold); stroke-width: 46; stroke-linejoin: round; }
@@ -51,19 +53,17 @@ html:not(.js) .loader { display: none; }
 .loader__label {
   margin: 0; font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   font-size: 0.66rem; letter-spacing: 0.32em; text-transform: uppercase; padding-left: 0.32em;
-  opacity: 0; animation: loader-in 500ms ease 450ms forwards;
+  opacity: 0; animation: loader-in 240ms ease 80ms forwards;
 }
 
 /* ready: the loops are pulled apart, the way you open the knot on the front page,
    and the knot rides up with the screen as it fades. Animations, not
    transitions: a transition cannot start from where a running animation has
    got to, so the knot used to blink out instead of fading. */
-.loader.is-done .loader__knot { opacity: 1; animation: loader-out 640ms ease 160ms forwards; }
-.loader.is-done .loader__a { animation: loader-pull-a 560ms cubic-bezier(.5, 0, .2, 1) forwards; }
-.loader.is-done .loader__b { animation: loader-pull-b 560ms cubic-bezier(.5, 0, .2, 1) forwards; }
-.loader.is-done .loader__label { opacity: 1; animation: loader-out 240ms ease forwards; }
-/* ready before the knot had even come up: nothing to see go */
-.loader.is-done.is-quick .loader__knot, .loader.is-done.is-quick .loader__label { opacity: 0; animation: none; }
+.loader.is-done .loader__knot { opacity: 1; animation: loader-out 480ms ease 100ms forwards; }
+.loader.is-done .loader__a { animation: loader-pull-a 480ms cubic-bezier(.5, 0, .2, 1) forwards; }
+.loader.is-done .loader__b { animation: loader-pull-b 480ms cubic-bezier(.5, 0, .2, 1) forwards; }
+.loader.is-done .loader__label { opacity: 1; animation: loader-out 200ms ease forwards; }
 @keyframes loader-out { to { opacity: 0; } }
 @keyframes loader-pull-a { to { transform: translate(-12%, -12%); } }
 @keyframes loader-pull-b { to { transform: translate(12%, -12%); } }
@@ -71,17 +71,19 @@ html:not(.js) .loader { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .loader { transition: opacity 400ms ease, visibility 0s 400ms; }
   .loader.is-done { transform: none; opacity: 0; }
+  .loader__knot { animation: none; }
   .loader__spin, .loader__a, .loader__b { animation: none; }
   .loader.is-done .loader__a, .loader.is-done .loader__b { animation: none; }
 }
 
 /* ---- from one page to the next ------------------------------------------------
-   A link to another page of the site draws a veil up over this one: the next
-   page's own ground, rising from the bottom with a soft gradient for a leading
-   edge, while the front page's knot lifts a little ahead of it. When the screen
-   is covered the next page opens on the same ground, with its loading knot
-   already coming up in the middle, and when it is ready its loading screen is
-   drawn on upwards the same way. One upward movement, not a cut to black.
+   A link to another page of the site brings the loading knot up the moment it
+   is clicked, in the middle of this page, and draws a veil up behind it: the
+   next page's own ground, rising quickly from the bottom with a soft gradient
+   for a leading edge, while the front page's big knot shrinks away into the
+   little one. The next page opens on the same ground with the same knot in the
+   same place, still turning from where it was, and when it is ready its loading
+   screen is drawn on upwards the same way. One movement, never a wait on black.
    js/loader.js runs it; it needs nothing newer than CSS transitions.
    (A cross-document view transition was tried and dropped: browsers can
    capture the front page's WebGL knot as a blank white rectangle.) */
@@ -90,10 +92,14 @@ html:not(.js) .loader { display: none; }
   background: linear-gradient(to bottom, transparent 0%, var(--veil, #08080b) 31%, var(--veil, #08080b) 100%);
   background: linear-gradient(to bottom, transparent 0%, color-mix(in srgb, var(--veil, #08080b) 45%, transparent) 17%, var(--veil, #08080b) 31%, var(--veil, #08080b) 100%);
   transform: translateY(92vh);
-  transition: transform 600ms cubic-bezier(.45, .05, .25, 1);
+  transition: transform 340ms cubic-bezier(.3, 0, .15, 1);
 }
 html.leaving .veil { transform: translateY(-45vh); }
 html.leaving body { pointer-events: none; }
-html.leaving #rope { transform: translateY(-10vh) scale(0.94); opacity: 0.55; transition: transform 580ms cubic-bezier(.5, 0, .3, 1), opacity 580ms ease; }
-html.arrive .loader__knot { animation: loader-in 300ms ease forwards; }
-html.arrive .loader__label { animation: loader-in 300ms ease 100ms forwards; }
+html.leaving #rope { transform: scale(0.12); opacity: 0; transition: transform 380ms cubic-bezier(.5, 0, .2, 1), opacity 300ms ease 40ms; }
+/* the knot that comes up on the page being left: the loading screen's own
+   markup and layout, so it sits exactly where the next page's will, on no ground */
+.loader--leave { z-index: 81; background: none; pointer-events: none; }
+.loader--leave::after { display: none; }
+/* arrived from another page: the knot and its label are simply there */
+html.arrive .loader__knot, html.arrive .loader__label { opacity: 1; animation: none; }

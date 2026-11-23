@@ -9,7 +9,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -18,9 +18,11 @@
 <script src="js/loader.js" defer></script>
 <script>
   document.documentElement.classList.add('js');
-  // Came from another page of the site, which faded itself out (js/loader.js):
-  // bring the loading knot straight up, so the two pages read as one movement.
-  try { if (sessionStorage.getItem('aporia:nav') === '1') { sessionStorage.removeItem('aporia:nav'); document.documentElement.classList.add('arrive'); } } catch (e) {}
+  // Came from another page of the site, whose loading knot is already up
+  // (js/loader.js): show ours at once, turned on as far as that one had got.
+  (function () { try { var at = +sessionStorage.getItem('aporia:nav'); if (!at) return; sessionStorage.removeItem('aporia:nav');
+    var h = document.documentElement, ago = Date.now() - at; h.classList.add('arrive');
+    if (ago > 0 && ago < 20000) h.style.setProperty('--lk-at', -ago + 'ms'); } catch (e) {} })();
   // came through the portal? open out of the circle (js/shelf/main.js finishes it)
   try {
     if (sessionStorage.getItem('aporia:portal') === '1' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {

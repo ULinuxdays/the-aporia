@@ -836,8 +836,9 @@ ground (`--loader-bg`), with "Loading" in mono caps under it.
   over-and-under weave, with no clip paths (a clip left seams across the band).
   It turns once every 9 s while the two loops tug along their own lengths,
   which keeps the crossings fixed. All of it is transform and opacity, so it
-  stays smooth while the page is busy building its scene. The knot itself fades
-  in after 200 ms, so a page that is ready at once never flashes it.
+  stays smooth while the page is busy building its scene. The knot pops up at
+  once (220 ms): don't delay it. A delay meant a page that was ready quickly
+  (the front page on a return visit) showed itself before its knot came up.
 - **Ready** (`js/loader.js`): `html[data-ready="1"]` (the shelf), `#stage.is-ready`
   (About, the figure on screen), `html.live` (the front page), or a plain page
   (`static`, `no-webgl`, `fallback`); and the web fonts in, or 1.2 s. Then the
@@ -849,20 +850,37 @@ ground (`--loader-bg`), with "Loading" in mono caps under it.
   at once (`html.arriving`). Restored from the back/forward cache: at once.
 - **No JavaScript**: not shown (`html:not(.js)`). Reduced motion: it does not
   turn or tug; it still fades.
-- **Between pages** (`js/loader.js`, second half): a click on a link to another
-  page of the site draws a veil up over this page (`.veil`, 600 ms): the next
-  page's own ground (`GROUND` in loader.js: the shelf's brown, otherwise
-  #08080b) rising from the bottom with a soft gradient for a leading edge,
-  while the front page's knot lifts a little ahead of it. Then it sets
-  `sessionStorage['aporia:nav']` and navigates. The next page sees the flag
-  (inline in About's and the shelf's heads; loader.js on the front page) and
-  adds `html.arrive`, which brings its loading knot straight up in the middle
-  instead of after a beat. Not for new tabs, modified clicks, other sites,
-  same-page anchors, or `#portal` (its own curtain). `pageshow` takes the veil
-  and `leaving` off, so the back button never returns to a covered page. Off
-  under reduced motion.
+- **Between pages** (`js/loader.js`, second part): a click on a link to another
+  page of the site brings the loading knot up on this page at once, in the
+  first frame (`.loader--leave`: a copy of the loading screen's own markup and
+  layout with no ground, so the knot sits exactly where the next page's will).
+  Behind it a veil rises (`.veil`, 340 ms): the next page's own ground
+  (`GROUND` in loader.js: the shelf's brown, otherwise #08080b) coming up from
+  the bottom with a soft gradient for a leading edge, while the front page's big
+  knot shrinks away into the little one. It stores the time of the click in
+  `sessionStorage['aporia:nav']` and navigates at 230 ms. The next page reads it
+  in an inline script in its head (all three pages have it; keep them the same),
+  adds `html.arrive`, which shows its knot at full strength from the first
+  frame, and sets `--lk-at` to minus the time since the click, which starts the
+  knot's turn and tug that far in: the knot never leaves the screen or jumps.
+  Not for new tabs, modified clicks, other sites, same-page anchors, or
+  `#portal` (its own curtain). `pageshow` takes the veil, the knot and `leaving`
+  off, so the back button never returns to a covered page. Off under reduced
+  motion.
+- **The first frame waits on every stylesheet in the head**, the Google Fonts
+  one included, so the next page's knot can only draw once they are in. All
+  three pages ask for the very same Google Fonts URL (the union of the faces any
+  of them uses; a declared face costs nothing until text uses it), so it is in
+  the cache from the first page on. Keep the three URLs identical. It cannot be
+  made non-blocking: About and the shelf draw canvas text in these faces with
+  `document.fonts.load`, which needs the stylesheet's `@font-face` rules.
+  `js/loader.js` (last part) also prefetches a page and its stylesheet when a
+  pointer, finger or focus reaches its link, and every linked page once this one
+  has loaded (not under Save-Data); Chrome then uses them without a round trip
+  for five minutes. The site sends `max-age=0` (vercel.json), so without that
+  every file is re-checked on every page.
 - **The lift**: when the page is ready the loading screen is drawn up and away
-  (`translateY`, 900 ms) carrying a 45vh gradient as its lower edge
+  (`translateY`, 760 ms) carrying a 45vh gradient as its lower edge
   (`.loader::after`), so the page is uncovered from the bottom up, continuing
   the veil's movement; the knot pulls apart and rides up with it. Its exit
   steps are CSS animations, not transitions: a transition cannot start from
