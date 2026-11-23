@@ -11,13 +11,14 @@
  * Off under prefers-reduced-motion and on touch-only devices.
  */
 
-export function createSmoothScroll({ lerp = 0.055, wheelMultiplier = 1, maxStep = 220 } = {}) {
+export function createSmoothScroll({ rate = 8, wheelMultiplier = 1, maxStep = 220 } = {}) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const coarse = matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches;
   if (reduced || coarse) return { enabled: false, dispose() {} };
 
-  let target = scrollY, current = scrollY, raf = 0, animating = false;
+  let target = scrollY, current = scrollY, raf = 0, animating = false, last = 0;
   const max = () => document.documentElement.scrollHeight - innerHeight;
+  const begin = () => { if (!animating) { animating = true; last = 0; raf = requestAnimationFrame(tick); } };
 
   function onWheel(e) {
     if (e.ctrlKey || e.metaKey) return;                       // pinch-zoom / browser zoom
@@ -29,12 +30,18 @@ export function createSmoothScroll({ lerp = 0.055, wheelMultiplier = 1, maxStep 
     dy = Math.max(-maxStep, Math.min(maxStep, dy)) * wheelMultiplier;
     if (!animating) { current = scrollY; target = scrollY; }
     target = Math.max(0, Math.min(max(), target + dy));
-    if (!animating) { animating = true; raf = requestAnimationFrame(tick); }
+    begin();
   }
 
-  function tick() {
-    current += (target - current) * lerp;
-    if (Math.abs(target - current) < 0.4) { current = target; animating = false; scrollTo(0, current); return; }
+  // Eased by time, not by frame: the page catches up with the wheel in the same
+  // time at 60 Hz and 120 Hz. `rate` 8/s closes 90 % of the gap in under 0.3 s;
+  // it used to be a fixed 5.5 % a frame, which left the page sliding for well
+  // over a second after the wheel stopped and read as lag.
+  function tick(now) {
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    last = now;
+    current += (target - current) * (1 - Math.exp(-rate * dt));
+    if (Math.abs(target - current) < 0.5) { current = target; animating = false; scrollTo(0, current); return; }
     scrollTo(0, current);
     raf = requestAnimationFrame(tick);
   }
@@ -50,7 +57,7 @@ export function createSmoothScroll({ lerp = 0.055, wheelMultiplier = 1, maxStep 
   return {
     enabled: true,
     /** Ease to an absolute position (used by the scroll cue and anchor links). */
-    scrollTo(y) { if (!animating) { current = scrollY; } target = Math.max(0, Math.min(max(), y)); if (!animating) { animating = true; raf = requestAnimationFrame(tick); } },
+    scrollTo(y) { if (!animating) { current = scrollY; } target = Math.max(0, Math.min(max(), y)); begin(); },
     dispose() { cancelAnimationFrame(raf); removeEventListener('wheel', onWheel); removeEventListener('scroll', onScroll); removeEventListener('resize', onResize); },
   };
 }

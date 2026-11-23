@@ -397,7 +397,10 @@ last act ends at its own bottom, which is now the end of the document — the
 portal is the last thing on the page, and there is no footer after it. So:
 
 - To make a beat longer or shorter, **change the section's CSS height** in
-  `css/styles.css` (`.act--monument { height: 220vh }` etc.). Nothing else.
+  `css/styles.css` (`.act--monument { height: 320vh }` etc.). Nothing else.
+  Keep every block of copy readable for at least ~1.5 screens of scroll on the
+  wide layout and ~0.8 on the compact one (2026-11-23: the old heights gave the
+  last lines of an act 0.7 and 0.3 screens, and readers saw them vanish).
 - Timing *within* an act is a table of fractions in `choreograph()` —
   `beat(act, f0, f1, { prop: to }, ease)`. `from` values are tracked
   automatically so every property is continuous across the page; the helper
@@ -430,12 +433,13 @@ budget before any heavy import (README has the table). The static page is
 start immediately and the canvas fades in (`#stage.is-ready`) when ready.
 
 **Eased wheel scrolling** (`js/smooth-scroll.js`): wheel deltas accumulate
-into a target and the native scroll position is eased toward it each frame
-(`lerp` 0.055, ~1.6 s to settle), Lenis-style — the document still scrolls
+into a target and the native scroll position is eased toward it by time
+(`rate` 8/s, 90 % of the way in under 0.3 s, settled in ~0.5 s; the old
+per-frame `lerp` 0.055 kept sliding for 1.3 s and read as lag), Lenis-style — the document still scrolls
 natively, so `position: sticky`, anchors, keyboard, touch and anime's
 observers are untouched. Off under reduced motion and on touch-only devices.
 When it is on (`html.smooth`), the master timeline's damping is lightened to
-0.65 so the scene isn't smoothed twice. GSAP ScrollSmoother was considered
+0.8 so the scene isn't smoothed twice (0.5 on touch). GSAP ScrollSmoother was considered
 and rejected: it translates a wrapper, which breaks sticky.
 
 **The scroll cue** (`#scroll-cue`): at the foot of the first screen, "Scroll"
@@ -454,12 +458,12 @@ segment stops under `prefers-reduced-motion`.
 
 | act | section | beats |
 |---|---|---|
-| I   | `.act--monument` 220vh | morph 0. camZ 6.6→6.0 `inCubic` over 0–55 % (the heavy first screenful), →5.2 over 55–100 %; camY 0.95→1.15, lookY 1.3→1.5 (looking up at him). |
-| II  | `.act--impasse` 300vh | morph 0. Camera all but stops: camZ 5.2→5.1, lookY 1.5→1.48 over 0–86 %. Last slice: morph 0→0.05 `inExpo` (86–100 %) and spread 0.45→1.6 `inExpo` (84–100 %) — the plinth begins to give. Only the base group moves at morph ≤ 0.05 (§10 seeds). |
-| III | `.act--fracture` 300vh (`#about`) | morph 0.05→1 `inOutQuad` over 0–62 %; spread →1.15 (0–28 %) then →0.45 (28–66 %); **tone 0→1 over 16–48 %** — `--bg` flips with it; camZ →4.8 over 0–80 %; camY/lookY →1.15/1.12 over 8–62 % (coming down to eye level). |
+| I   | `.act--monument` 320vh | morph 0. camZ 6.6→6.0 `inCubic` over 0–55 % (the heavy first screenful), →5.2 over 55–100 %; camY 0.95→1.15, lookY 1.3→1.5 (looking up at him). |
+| II  | `.act--impasse` 360vh | morph 0. Camera all but stops: camZ 5.2→5.1, lookY 1.5→1.48 over 0–86 %. Last slice: morph 0→0.05 `inExpo` (86–100 %) and spread 0.45→1.6 `inExpo` (85–100 %) — the plinth begins to give. Only the base group moves at morph ≤ 0.05 (§10 seeds). |
+| III | `.act--fracture` 400vh (`#about`) | morph 0.05→1 `inOutQuad` over 0–45 %; spread →1.15 (0–20 %) then →0.45 (20–48 %); **tone 0→1 over 12–36 %** — `--bg` flips with it; camZ →4.8 over 0–80 %; camY/lookY →1.15/1.12 over 6–45 % (coming down to eye level). The rest of the act is for reading the story beside the finished bust. |
 | IV  | `.act--lenses` 480vh | thirds. In each third the morph runs over the first 62 % then holds: 1→2 crowd (accentMix 0→0.85; camera camY 1.1, lookY 1.35, camZ 5.8, rotY −0.12 — the crowd becomes a horizon along the bottom, clear of the copy); 2→3 device (accent → technology, camY/lookY 1.15, camZ 4.9, rotY 0.1); 3→4 unformed (accent → undecided, camZ 5.4, rotY 0, drift →0.012). |
-| V   | `.act--invite` 380vh | **back to black**: `tone` → 0 over 2–26 % (the ground returns to the cold ink of Act I and the grains to marble), `size` ×1.3 so the sheet reads as a lit page, `tiltX` → 0. |
-| V (cont.) | | morph 4→5 over 0–40 % (accent → invitation, camZ 4.3 push-in on the sheet); hold; 5→6 over 55–78 % (accentMix →0.7, the underline takes the red); camZ →6.6 over 55–86 %; hold 78–86 %; **6→7 over 86–98 %: the fall and the portal** (§15), drift left raised. |
+| V   | `.act--invite` 440vh | **back to black**: `tone` → 0 over 2–26 % (the ground returns to the cold ink of Act I and the grains to marble), `size` ×1.3 so the sheet reads as a lit page, `tiltX` → 0. |
+| V (cont.) | | morph 4→5 over 0–40 % (accent → invitation, camZ 4.3 push-in on the sheet); hold; the copy leaves at 60 % (`data-leave`); 5→6 over 60–80 % (accentMix →0.7, the underline takes the red); camZ →6.6 over 60–88 %; hold 80–88 %; **6→7 over 88–98 %: the fall and the portal** (§15), drift left raised. |
 
 `INITIAL` in main.js is the state at scroll 0 (camZ 6.6, camY 0.95, lookY
 1.3, everything else at its default). Change it and Act I's `from` values
@@ -557,7 +561,7 @@ first screen (`.shortcut`, for anyone who does not want to read five acts to
 find the issues), and the end of Act V, as a particle event — the one that is
 worth the wait.
 
-**The ending.** The wordmark settles (Act V 78 %), holds (78–86 %), then every
+**The ending.** The wordmark settles (Act V 80 %), holds (80–88 %), then every
 grain falls — `spread` 0.06, no burst, low seeds first so the underline gives
 before the letters — into a heap on the ground, while the underline itself
 rises into a **ring** at eye level and a **vortex** of three arms winds inside

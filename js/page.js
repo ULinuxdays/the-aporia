@@ -104,9 +104,13 @@ function jargonField() {
     autoplay: onScroll({
       target: fracture,
       enter: compact ? { target: 'start', container: '20%' } : { target: 'start', container: '85%' },
-      leave: compact ? { target: '22%', container: 'start' } : { target: '40%', container: 'center' },
+      leave: compact ? { target: '22%', container: 'start' } : { target: '22%', container: 'center' },   // gone before the About copy arrives
       sync: DAMPING,
       debug: DEBUG,
+      // Once every word has flown off, stop the layer: sixteen floating words
+      // nobody can see were still being animated for the rest of the page.
+      onLeaveForward: () => field.classList.add('is-gone'),
+      onEnterBackward: () => field.classList.remove('is-gone'),
     }),
   });
 
@@ -119,9 +123,12 @@ function marginalia() {
   const specs = [
     // [svg data-marg, host selector relative to the svg, enter, leave] — thresholds are
     // fractions of the host that have passed the viewport centre.
-    { id: '1', host: 'section.act', enter: { target: '8%', container: 'center' }, leave: { target: '26%', container: 'center' } },
-    { id: '2', host: 'section.act', enter: { target: '42%', container: 'center' }, leave: { target: '60%', container: 'center' } },
-    { id: '4', host: 'section.act', enter: { target: '27%', container: 'center' }, leave: { target: '44%', container: 'center' } },
+    { id: '1', host: 'section.act', enter: { target: '8%', container: 'center' }, leave: { target: '18%', container: 'center' } },
+    { id: '2', host: 'section.act', enter: { target: '26%', container: 'center' }, leave: { target: '36%', container: 'center' } },
+    // drawn just after the paragraph it circles arrives (data-at / data-step in about.html)
+    compact
+      ? { id: '4', host: 'section.act', enter: { target: '38%', container: 'center' }, leave: { target: '48%', container: 'center' } }
+      : { id: '4', host: 'section.act', enter: { target: '23%', container: 'center' }, leave: { target: '33%', container: 'center' } },
   ];
   for (const spec of specs) {
     const el = document.querySelector(`svg[data-marg="${spec.id}"]`);
@@ -149,7 +156,8 @@ function issueCards() {
   fanCovers(cards);
   if (compact) {
     trackActs((f) => {
-      const k = Math.min(cards.length - 1, Math.max(0, Math.floor(f[3] * cards.length - 0.28)));
+      // the covers take over from the copy at 26 % (data-step) and share the rest evenly
+      const k = Math.min(cards.length - 1, Math.max(0, Math.floor((f[3] - 0.26) / (0.72 / cards.length))));
       cards.forEach((c, i) => c.classList.toggle('is-active', i === k));
     });
     return;

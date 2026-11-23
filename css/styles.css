@@ -163,11 +163,13 @@ html.static .progress__mark--portal { display: none; }
 /* ---- acts ---------------------------------------------------------------- */
 /* Heights are the choreography. Change them to re-time the page; nothing else. */
 .act { position: relative; }
-.act--monument { height: 220vh; }
-.act--impasse  { height: 300vh; }
-.act--fracture { height: 300vh; }
+/* Every block of copy gets at least about 1.5 screens of scroll between arriving
+   and leaving (the reveals in about.html are timed to these). */
+.act--monument { height: 320vh; }
+.act--impasse  { height: 360vh; }
+.act--fracture { height: 400vh; }
 .act--lenses   { height: 480vh; }
-.act--invite   { height: 380vh; }
+.act--invite   { height: 440vh; }
 
 
 .act__sticky {
@@ -216,7 +218,7 @@ html.static .progress__mark--portal { display: none; }
 .act--fracture .display, .act--lenses .display, .act--invite .display {
   font-family: var(--grot); font-weight: 500; letter-spacing: -0.025em;
 }
-.act--fracture .prose, .act--lenses .prose, .act--invite .prose { font-weight: 300; }
+.act--fracture .prose, .act--lenses .prose, .act--invite .prose { font-weight: 400; }
 
 /* Act III, the story: a longer read, so it uses the whole column */
 .act--fracture .prose p { max-width: none; }
@@ -250,6 +252,8 @@ html.static .progress__mark--portal { display: none; }
   background: linear-gradient(90deg, var(--rule), transparent); opacity: 0.7;
 }
 #jargon.is-floating span { animation: jargon-float 9s ease-in-out infinite alternate; animation-delay: calc(var(--s) * -4s); }
+#jargon.is-gone { visibility: hidden; }
+#jargon.is-gone span { animation: none; }
 @keyframes jargon-float { from { translate: 0 -0.25em; } to { translate: 0 0.25em; } }
 @media (max-width: 48rem) { #jargon span { font-size: 0.95rem; } }
 
@@ -374,7 +378,10 @@ html.static .progress__mark--portal { display: none; }
 }
 .scroll-cue:hover { color: var(--ink); }
 .scroll-cue__line { display: block; width: 1px; height: 4.6rem; background: var(--rule); position: relative; overflow: hidden; }
-.scroll-cue__line::after { content: ""; position: absolute; left: 0; top: -100%; width: 100%; height: 100%; background: var(--ink); animation: cue-drop 1800ms cubic-bezier(.4,0,.2,1) infinite; }
+/* the falling segment moves by transform, never by top: it runs for the whole
+   visit, and a top animation is a layout and a repaint on every frame */
+.scroll-cue__line::after { content: ""; position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: var(--ink); transform: translateY(-100%); animation: cue-drop 1800ms cubic-bezier(.4,0,.2,1) infinite; }
+.scroller[data-state="end"] .scroll-cue__line::after, .cue.is-gone .scroll-cue__line::after { animation: none; }
 
 /* ---- the indicator that stays ------------------------------------------------ */
 /* In the right gutter, set on its side, so no column of copy can ever meet it.
@@ -451,9 +458,9 @@ html.static .scroller .scroll-cue__line::after { background: rgb(244, 241, 234);
   border-color: var(--accent); width: 1.4rem; height: 1.4rem;
 }
 
-@keyframes cue-drop { 0% { top: -100%; } 55% { top: 100%; } 100% { top: 100%; } }
+@keyframes cue-drop { 0% { transform: translateY(-100%); } 55% { transform: translateY(100%); } 100% { transform: translateY(100%); } }
 @media (prefers-reduced-motion: reduce) {
-  .scroll-cue__line::after { animation: none; top: 0; }
+  .scroll-cue__line::after { animation: none; transform: none; }
 }
 
 /* ---- reveals --------------------------------------------------------------- */
@@ -529,11 +536,13 @@ html.static .shelf-link, html:not(.js) .shelf-link { display: block; margin: 1.4
    Sections overlap by one viewport, so an act's block pins as the previous one
    lets go. An act's reading length is therefore its height minus 100vh. */
 @media (max-width: 64rem) {
-  .act--monument { height: 190vh; }
-  .act--impasse  { height: 270vh; }
-  .act--fracture { height: 340vh; }
-  .act--lenses   { height: 350vh; }
-  .act--invite   { height: 330vh; }
+  /* each block of copy holds for most of a screen of scroll, so one swipe
+     can't carry it away before it has been read */
+  .act--monument { height: 300vh; }
+  .act--impasse  { height: 440vh; }
+  .act--fracture { height: 480vh; }
+  .act--lenses   { height: 480vh; }
+  .act--invite   { height: 480vh; }
   .portal-hold   { height: 110vh; }
 
   .masthead { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.15rem 1rem; padding-top: 1rem; padding-bottom: 0.7rem; font-size: 0.68rem; letter-spacing: 0.1em; }

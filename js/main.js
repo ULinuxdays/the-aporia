@@ -38,7 +38,7 @@ const TIMING = {};
 const mark = (name) => { TIMING[name] = Math.round(performance.now() - T0); };
 mark('module');
 const DEBUG = PARAMS.has('debug');
-const DAMPING = 0.35;           // onScroll sync: smaller is heavier
+const DAMPING = 0.5;            // onScroll sync: smaller is heavier (touch, where nothing else eases the scroll)
 
 /** The Act V invitation accent (sRGB 0..1). Lens accents come from the covers in the HTML. */
 export const INVITATION = [0.85, 0.42, 0.3];    // ember red — Act V is on black again, so it has to carry against the dark
@@ -172,7 +172,7 @@ async function main() {
 
   const mode = decideMode();
   const html = document.documentElement;
-  const smooth = createSmoothScroll({ lerp: 0.055 });     // eased wheel scrolling; off under reduced motion / touch
+  const smooth = createSmoothScroll();                     // eased wheel scrolling; off under reduced motion / touch
   createScroller(smooth);
   // Before the static bail-out: the static page scrolls too. The marks are a
   // callback because the rule re-reads them whenever the document changes
@@ -435,7 +435,7 @@ function createScrollChoreography(state, { debug } = {}) {
         target: '#scroll',
         enter: { target: 'start', container: 'start' },
         leave: { target: 'end', container: 'end' },
-        sync: document.documentElement.classList.contains('smooth') ? 0.65 : DAMPING,   // the wheel is already eased; don't double-smooth
+        sync: document.documentElement.classList.contains('smooth') ? 0.8 : DAMPING,   // the wheel is already eased; don't double-smooth
         debug: !!debug,
       }),
     });
@@ -523,20 +523,21 @@ function choreograph(tl, state, acts) {
   beat(II, 0.00, 0.86, { rotY: YAW.impasseEnd });           // barely drifting
   beat(II, 0.00, 0.86, { tiltX: 0.05 });
   beat(II, 0.86, 1.00, { morph: 0.05 }, 'inExpo');
-  beat(II, 0.84, 1.00, { spread: 1.6 }, 'inExpo');
+  beat(II, 0.85, 1.00, { spread: 1.6 }, 'inExpo');
 
   // ---- Act III — THE FRACTURE. The plinth collapses, the Thinker dissolves
   // and reforms as Epicurus; the turn continues through the dust and the bust
-  // is built facing us at the angle we arrive at.
-  beat(III, 0.00, 0.62, { morph: 1 }, 'inOutQuad');
-  beat(III, 0.00, 0.28, { spread: 1.15 }, 'outSine');
-  beat(III, 0.28, 0.66, { spread: 0.45 }, 'outSine');
-  beat(III, 0.16, 0.48, { tone: 1 }, 'inOutSine');
+  // is built facing us at the angle we arrive at. The collapse takes the first
+  // 45 %; the rest of the act is for reading the story beside the finished bust.
+  beat(III, 0.00, 0.45, { morph: 1 }, 'inOutQuad');
+  beat(III, 0.00, 0.20, { spread: 1.15 }, 'outSine');
+  beat(III, 0.20, 0.48, { spread: 0.45 }, 'outSine');
+  beat(III, 0.12, 0.36, { tone: 1 }, 'inOutSine');
   beat(III, 0.00, 0.80, { camZ: 4.5 }, 'inOutSine');
-  beat(III, 0.08, 0.62, { camY: 1.2 }, 'inOutSine');
-  beat(III, 0.08, 0.62, { lookY: 1.36 }, 'inOutSine');    // coming down towards eye level
-  beat(III, 0.00, 0.62, { rotY: YAW.bust });
-  beat(III, 0.62, 1.00, { rotY: YAW.fractureEnd });
+  beat(III, 0.06, 0.45, { camY: 1.2 }, 'inOutSine');
+  beat(III, 0.06, 0.45, { lookY: 1.36 }, 'inOutSine');    // coming down towards eye level
+  beat(III, 0.00, 0.45, { rotY: YAW.bust });
+  beat(III, 0.45, 1.00, { rotY: YAW.fractureEnd });
   beat(III, 0.00, 1.00, { tiltX: 0.075 }, 'inOutSine');      // the crest of the tilt
 
   // ---- Act IV — THE LENSES. One shape per issue, each with its own accent;
@@ -560,17 +561,18 @@ function choreograph(tl, state, acts) {
   beat(V, 0.00, 0.40, { morph: SHAPE_PAGE, ...rgb(INVITATION) }, 'inOutSine');
   beat(V, 0.02, 0.26, { tone: 0 }, 'inOutSine');             // 005 is on black: the page glows marble on the dark, the way we came in
   beat(V, 0.02, 0.30, { size: INITIAL.size * 1.3 }, 'inOutSine');   // …and the grains overlap a little more, so the sheet reads as a lit page rather than a grey slab
-  beat(V, 0.00, 0.86, { tiltX: 0 }, 'inOutSine');            // the lean settles out, once, as the wordmark comes level
+  beat(V, 0.00, 0.88, { tiltX: 0 }, 'inOutSine');            // the lean settles out, once, as the wordmark comes level
   beat(V, 0.00, 0.40, { camZ: 6.0, camY: 1.38, lookY: 1.12, drift: 0.006 }, 'inOutSine');
   beat(V, 0.00, 0.40, { rotY: YAW.page });
-  beat(V, 0.55, 0.78, { morph: SHAPE_WORDMARK, accentMix: 0.7 }, 'inOutSine');
-  beat(V, 0.55, 0.86, { camZ: 6.6, lookY: 1.05 }, 'inOutSine');
-  beat(V, 0.40, 0.86, { rotY: YAW.end }, 'outSine');
-  beat(V, 0.55, 0.78, { repel: 0.34, repelRadius: 0.08 }, 'inOutSine');   // the wordmark gives way under the cursor a little more
-  beat(V, 0.70, 0.86, { drift: 0.016 }, 'inSine');
-  // …it holds (78–86 %), then the letters fall and a ring gathers: the portal. No burst —
+  // the copy has gone by 60 % (data-leave in about.html), and only then the wordmark
+  beat(V, 0.60, 0.80, { morph: SHAPE_WORDMARK, accentMix: 0.7 }, 'inOutSine');
+  beat(V, 0.60, 0.88, { camZ: 6.6, lookY: 1.05 }, 'inOutSine');
+  beat(V, 0.40, 0.88, { rotY: YAW.end }, 'outSine');
+  beat(V, 0.60, 0.80, { repel: 0.34, repelRadius: 0.08 }, 'inOutSine');   // the wordmark gives way under the cursor a little more
+  beat(V, 0.72, 0.88, { drift: 0.016 }, 'inSine');
+  // …it holds (80–88 %), then the letters fall and a ring gathers: the portal. No burst —
   // straight down, staggered by seed, reads as falling.
-  beat(V, 0.86, PORTAL_AT, { morph: SHAPE_PORTAL, spread: 0.06, accentMix: 0.95, drift: 0.028, ...rgb([0.8, 0.4, 0.16]) }, 'inQuad');   // the ring burns in the orange and shimmers
+  beat(V, 0.88, PORTAL_AT, { morph: SHAPE_PORTAL, spread: 0.06, accentMix: 0.95, drift: 0.028, ...rgb([0.8, 0.4, 0.16]) }, 'inQuad');   // the ring burns in the orange and shimmers
 }
 
 /**
@@ -706,11 +708,11 @@ function easeTo(y, smooth) {
 }
 
 /** Where an act's copy is fully up: the place a link to it should land. */
-const REST = [0, 0.62, 0.6, 0.2, 0.36];
+const REST = [0, 0.36, 0.5, 0.2, 0.33];
 function restOf(k, acts) {
   const a = acts[k];
   if (!document.documentElement.classList.contains('dynamic')) return a.top;
-  return a.start + a.len * (isCompact() ? [0, 0.14, 0.2, 0.08, 0.2][k] : REST[k]);
+  return a.start + a.len * (isCompact() ? [0, 0.14, 0.34, 0.08, 0.2][k] : REST[k]);   // compact III: after the bust has formed, with the first paragraph up
 }
 
 /** Every place worth stopping, in order: what one press of the scroll indicator moves to. */
@@ -725,7 +727,7 @@ function stops() {
     const [, , , IV] = acts;
     list.push(IV.start + IV.len * 0.53, IV.start + IV.len * 0.86);
   }
-  if (dynamic) { const V = acts[acts.length - 1]; list.push(V.start + V.len * 0.82); }   // the wordmark
+  if (dynamic) { const V = acts[acts.length - 1]; list.push(V.start + V.len * 0.84); }   // the wordmark
   return [...list, maxScroll].sort((x, y) => x - y);
 }
 
@@ -757,7 +759,8 @@ function createScroller(smooth) {
       const V = acts[acts.length - 1];
       end = document.documentElement.classList.contains('dynamic') && V ? V.start + V.len * 0.93 : maxScroll - 12;   // the ring is gathering: its own note takes over
     }
-    el.dataset.state = y >= end ? 'end' : y > 40 ? 'mid' : 'start';
+    const state = y >= end ? 'end' : y > 40 ? 'mid' : 'start';
+    if (el.dataset.state !== state) el.dataset.state = state;     // only on a change: this runs on every scroll event
   };
   addEventListener('scroll', update, { passive: true });
   addEventListener('resize', update);
@@ -803,7 +806,7 @@ function createPortal(scroll) {
   if (!el) return { update() {} };
   const v = new THREE_LITE.Vec3(), u = new THREE_LITE.Vec3();
   const note = createPortalNote();
-  let lastKey = '';
+  let lastKey = '', shut = false;
   let liveScene = null, entering = false, liveCurtain = null;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -877,8 +880,13 @@ function createPortal(scroll) {
       if (!scene) return;
       liveScene = scene;
       if (entering) return;
-      const cam = scene.three.camera;
       const t = Math.min(1, Math.max(0, (s.morph - (SHAPE_PORTAL - 0.45)) / 0.45));
+      // Shut for nearly the whole page: write the shut state once, then leave the
+      // DOM alone. Writing a new position every frame for a hole nobody can see
+      // restyled the page and forced a layout on every frame of the scroll.
+      if (t <= 0 && shut) return;
+      shut = t <= 0;
+      const cam = scene.three.camera;
       // project the ring centre and a point on its rim
       const c = v.set(PORTAL.x, PORTAL.y, PORTAL.z).applyObject(scene.three.points).project(cam);
       const e = u.set(PORTAL.x + PORTAL.r, PORTAL.y, PORTAL.z).applyObject(scene.three.points).project(cam);
