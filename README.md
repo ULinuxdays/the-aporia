@@ -196,6 +196,7 @@ needs an OAuth login first).
 index.html   the knot             css/knot.css   js/knot/{main,rope,paint}.js
 about.html   the scroll page      css/styles.css js/*.js (main.js, scene.js, …)
 shelf.html   the shelf            css/shelf.css  js/shelf/
+(all three)  the loading screen   css/loader.css js/loader.js   (markup inline, CONTRACTS §19)
 assets/  vendor/  tools/  BRIEF.md  CONTRACTS.md  README.md
 smoke-test.html  particles-test.html      ← throwaway test pages, safe to delete
 ```

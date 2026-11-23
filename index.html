@@ -45,10 +45,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/knot.css">
+<link rel="stylesheet" href="css/loader.css">
+<script src="js/loader.js" defer></script>
 <link rel="modulepreload" href="js/knot/rope.js">
 <link rel="modulepreload" href="js/knot/paint.js">
 </head>
 <body>
+
+<!-- The loading screen: the logo's knot, turning and tugging until the page is
+     ready, then pulled apart. css/loader.css, js/loader.js. -->
+<div class="loader" id="loader" aria-hidden="true">
+  <svg width="0" height="0" style="position:absolute" focusable="false"><defs>
+    <path id="lk-loop" d="M -150 92 H 150 A 92 92 0 0 0 150 -92 H -150 A 92 92 0 0 0 -150 92 Z" />
+    <linearGradient id="lk-gold" gradientUnits="userSpaceOnUse" x1="-240" y1="-120" x2="240" y2="120">
+      <stop offset="0" stop-color="rgb(246, 236, 214)" /><stop offset="0.55" stop-color="rgb(226, 176, 112)" /><stop offset="1" stop-color="rgb(168, 124, 74)" />
+    </linearGradient>
+  </defs></svg>
+  <div class="loader__knot"><div class="loader__spin">
+    <svg class="loader__b" viewBox="-260 -260 520 520"><g transform="rotate(-45)"><use href="#lk-loop" class="lk-edge" /><use href="#lk-loop" class="lk-band" /></g></svg>
+    <svg class="loader__a" viewBox="-260 -260 520 520"><g transform="rotate(45)"><use href="#lk-loop" class="lk-edge" /><use href="#lk-loop" class="lk-band" /></g></svg>
+    <!-- where this loop crosses over the other: just those two pieces of it again, on top -->
+    <svg class="loader__b" viewBox="-260 -260 520 520"><g transform="rotate(-45)"><path class="lk-edge" d="M -132 92 H -52 M 52 -92 H 132" /><path class="lk-band" d="M -142 92 H -42 M 42 -92 H 142" /></g></svg>
+  </div></div>
+  <p class="loader__label">Loading</p>
+</div>
 
 <!--
   The landing page: the knot from the logo. Pull it (or scroll) and it stretches

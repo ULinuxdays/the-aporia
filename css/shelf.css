@@ -5,6 +5,7 @@
 
 :root {
   --bg: rgb(31, 27, 24);
+  --loader-bg: rgb(31, 27, 24);     /* css/loader.css: the loading screen is the room's own ground */
   --ink: rgb(236, 226, 208);
   --ink-soft: rgba(236, 226, 208, 0.62);
   --rule: rgba(236, 226, 208, 0.18);

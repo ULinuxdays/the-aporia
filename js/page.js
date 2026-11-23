@@ -3,16 +3,14 @@
  *
  *   1. The jargon field (Act I): words crowd the monument, then scatter when
  *      the plinth goes. Scroll-scrubbed.
- *   2. Marginalia: hand-drawn strokes (svg.createDrawable) and notes that
- *      stroke themselves on as you scroll. Three on the whole page.
- *   3. Act IV issue cards: the card for the current lens is highlighted.
+ *   2. Act IV issue cards: the card for the current lens is highlighted.
  *
  * Everything here reads the same sections js/main.js measures and never
  * touches the scene state. CONTRACTS.md §14.
  */
 
 import { isCompact, trackActs } from './acts.js';
-import { animate, createTimeline, onScroll, stagger, svg } from '../vendor/animejs/anime.esm.js';
+import { animate, onScroll, stagger } from '../vendor/animejs/anime.esm.js';
 
 const DEBUG = new URLSearchParams(location.search).has('debug');
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -36,7 +34,6 @@ whenMode((mode) => {
     document.querySelector('.cover[data-lens="0"]')?.classList.add('is-active');
   } else {
     jargonField();
-    marginalia();
     issueCards();
   }
 });
@@ -117,37 +114,7 @@ function jargonField() {
   if (!reduced) field.classList.add('is-floating');
 }
 
-// --------------------------------------------------------------------------- 2. marginalia
-
-function marginalia() {
-  const specs = [
-    // [svg data-marg, host selector relative to the svg, enter, leave] — thresholds are
-    // fractions of the host that have passed the viewport centre.
-    { id: '1', host: 'section.act', enter: { target: '8%', container: 'center' }, leave: { target: '18%', container: 'center' } },
-    { id: '2', host: 'section.act', enter: { target: '26%', container: 'center' }, leave: { target: '36%', container: 'center' } },
-    // drawn just after the paragraph it circles arrives (data-at / data-step in about.html)
-    compact
-      ? { id: '4', host: 'section.act', enter: { target: '38%', container: 'center' }, leave: { target: '48%', container: 'center' } }
-      : { id: '4', host: 'section.act', enter: { target: '23%', container: 'center' }, leave: { target: '33%', container: 'center' } },
-  ];
-  for (const spec of specs) {
-    const el = document.querySelector(`svg[data-marg="${spec.id}"]`);
-    const note = document.querySelector(`[data-marg-note="${spec.id}"]`);
-    if (!el) continue;
-    const host = el.closest(spec.host);
-    if (!host) continue;
-    const paths = [...el.querySelectorAll('path')];
-    const drawables = svg.createDrawable(paths);
-    const tl = createTimeline({
-      defaults: { ease: 'inOutSine' },
-      autoplay: onScroll({ target: host, enter: spec.enter, leave: spec.leave, sync: 0.5, debug: DEBUG }),
-    });
-    tl.add(drawables, { draw: { from: '0 0', to: '0 1' }, duration: 800, delay: stagger(260) }, 0);
-    if (note) tl.add(note, { opacity: { from: 0, to: 1 }, translateY: { from: '0.3rem', to: '0rem' }, duration: 450 }, 450);
-  }
-}
-
-// --------------------------------------------------------------------------- 3. issue cards
+// --------------------------------------------------------------------------- 2. issue cards
 
 function issueCards() {
   const section = document.querySelector('.act--lenses');

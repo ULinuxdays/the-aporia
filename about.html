@@ -25,8 +25,10 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500;600;800&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@300;400;500;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/loader.css">
+<script src="js/loader.js" defer></script>
 
 <!-- The import map comes first: a browser rejects one that appears after any
      module has begun loading or preloading. -->
@@ -93,6 +95,24 @@
 </head>
 <body>
 
+<!-- The loading screen: the logo's knot, turning and tugging until the page is
+     ready, then pulled apart. css/loader.css, js/loader.js. -->
+<div class="loader" id="loader" aria-hidden="true">
+  <svg width="0" height="0" style="position:absolute" focusable="false"><defs>
+    <path id="lk-loop" d="M -150 92 H 150 A 92 92 0 0 0 150 -92 H -150 A 92 92 0 0 0 -150 92 Z" />
+    <linearGradient id="lk-gold" gradientUnits="userSpaceOnUse" x1="-240" y1="-120" x2="240" y2="120">
+      <stop offset="0" stop-color="rgb(246, 236, 214)" /><stop offset="0.55" stop-color="rgb(226, 176, 112)" /><stop offset="1" stop-color="rgb(168, 124, 74)" />
+    </linearGradient>
+  </defs></svg>
+  <div class="loader__knot"><div class="loader__spin">
+    <svg class="loader__b" viewBox="-260 -260 520 520"><g transform="rotate(-45)"><use href="#lk-loop" class="lk-edge" /><use href="#lk-loop" class="lk-band" /></g></svg>
+    <svg class="loader__a" viewBox="-260 -260 520 520"><g transform="rotate(45)"><use href="#lk-loop" class="lk-edge" /><use href="#lk-loop" class="lk-band" /></g></svg>
+    <!-- where this loop crosses over the other: just those two pieces of it again, on top -->
+    <svg class="loader__b" viewBox="-260 -260 520 520"><g transform="rotate(-45)"><path class="lk-edge" d="M -132 92 H -52 M 52 -92 H 132" /><path class="lk-band" d="M -142 92 H -42 M 42 -92 H 142" /></g></svg>
+  </div></div>
+  <p class="loader__label">Loading</p>
+</div>
+
 <!-- The particle field. Fixed, under everything. Painted by js/scene.js; the
      page background behind it is --bg, written per frame by js/main.js. -->
 <canvas id="stage" aria-hidden="true"></canvas>
@@ -152,7 +172,7 @@
       <img class="act__art act__art--monument" src="assets/static/monument.webp" width="1400" height="1000" alt="" loading="lazy" decoding="async">
       <div class="act__inner act__inner--left">
         <p class="label reveal" data-at="0" data-step="0-1">001 / the monument</p>
-        <h1 class="display reveal" data-at="0" data-step="0-1">This is what<br><span class="marg-anchor">we were shown.<svg class="marg marg--underline" data-marg="1" viewBox="0 0 240 14" preserveAspectRatio="none" aria-hidden="true"><path d="M3 9 C 40 4, 82 12, 124 7 S 204 3, 237 9" /></svg><span class="marg__note marg__note--i" data-marg-note="1" aria-hidden="true">says who?</span></span></h1>
+        <h1 class="display reveal" data-at="0" data-step="0-1">This is what<br>we were shown.</h1>
         <div class="prose reveal" data-at="0.15" data-step="0.06-0.5">
           <p>Bronze. On a plinth. Above eye level. A man thinking so hard it looks like it hurts.</p>
           <p>Around him, a pile of words you were supposed to know already.</p>
@@ -190,7 +210,7 @@
           <p>It's the moment you get stuck. You were sure you understood something, and now you can't explain it.</p>
         </div>
         <div class="prose reveal" data-at="0.24" data-step="0.46-0.73">
-          <p class="marg-anchor">Socrates loved that moment. To him, it was where real thinking begins.<span class="marg marg--note-only" aria-hidden="true"><svg class="marg__svg marg--arrow" data-marg="2" viewBox="0 0 120 60" aria-hidden="true"><path d="M4 50 C 22 18, 60 8, 104 22" /><path d="M92 10 L 105 22 L 90 30" /></svg><span class="marg__note marg__note--ii" data-marg-note="2">wait, is this<br>actually true?</span></span></p>
+          <p>Socrates loved that moment. To him, it was where real thinking begins.</p>
           <p>Most people take it as a sign to give up.</p>
         </div>
         <div class="prose reveal" data-at="0.3" data-step="0.73-1">
@@ -280,7 +300,7 @@
           <p>Write it the way you'd explain it to a friend who is interested but not impressed.</p>
         </div>
         <div class="prose reveal" data-at="0.21" data-leave="0.6" data-step="0.33-0.6">
-          <p class="marg-anchor">We would rather publish an <span class="marg-anchor marg-anchor--inline">interesting mistake<svg class="marg marg--circle" data-marg="4" viewBox="0 0 200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M112 6 C 160 2, 196 18, 190 36 C 184 56, 120 60, 70 56 C 22 52, 2 40, 8 24 C 14 8, 60 4, 124 8" /></svg></span> than a safe summary.<span class="marg__note marg__note--v" data-marg-note="4" aria-hidden="true">this one</span></p>
+          <p>We would rather publish an interesting mistake than a safe summary.</p>
         </div>
         <div class="cta reveal" data-at="0.27" data-leave="0.6" data-step="0.14-0.6">
           <span class="btn btn--primary is-placeholder" data-todo="#TODO-submission-url" role="link" aria-disabled="true">Send us a piece <span class="placeholder-tag">soon</span></span>
@@ -302,10 +322,8 @@
   <a class="portal" id="portal" href="shelf.html" aria-hidden="true" tabindex="-1">
     <span class="portal__label">Go through to the shelf: every issue of The Aporia</span>
   </a>
-  <span class="portal-note marg" id="portal-note" aria-hidden="true">
-    <svg class="marg__svg marg--arrow" viewBox="0 0 120 60"><path d="M116 8 C 100 34, 70 50, 18 44" /><path d="M30 32 L 16 44 L 32 54" /></svg>
-    <span class="marg__note marg__note--portal">go on, <span class="if-mouse">click</span><span class="if-touch">tap</span> it</span>
-  </span>
+  <!-- Set in the same mono caps as the Scroll indicator it takes over from. -->
+  <span class="portal-note" id="portal-note" aria-hidden="true"><span class="if-mouse">Click</span><span class="if-touch">Tap</span> the ring to enter the shelf</span>
 
   <!-- Scroll that holds on the finished portal. Act V's last beat completes the
        ring at 98 % of the act, and with nothing after it the act's end was being

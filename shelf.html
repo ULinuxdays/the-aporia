@@ -14,6 +14,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/shelf.css">
+<link rel="stylesheet" href="css/loader.css">
+<script src="js/loader.js" defer></script>
 <script>
   document.documentElement.classList.add('js');
   // came through the portal? open out of the circle (js/shelf/main.js finishes it)
@@ -24,6 +26,18 @@
       setTimeout(function () { document.documentElement.classList.remove('arriving', 'curtained'); }, 8000);
     }
   } catch (e) {}
+  // The room's script never arrived (blocked, offline, an old browser): show the
+  // list instead, and let the loading screen go, rather than wait on a room that
+  // is not coming.
+  addEventListener('error', function (e) {
+    var t = e && e.target;
+    if (!t || t.tagName !== 'SCRIPT' || !t.src || t.src.indexOf('/js/') < 0) return;
+    var h = document.documentElement;
+    h.classList.remove('arriving', 'curtained');
+    h.classList.add('no-webgl');
+    var l = document.getElementById('loading');
+    if (l) l.textContent = 'The shelf could not load. The list below is the same run.';
+  }, true);
 </script>
 <script type="importmap">
 {
@@ -35,6 +49,24 @@
 </script>
 </head>
 <body>
+
+<!-- The loading screen: the logo's knot, turning and tugging until the page is
+     ready, then pulled apart. css/loader.css, js/loader.js. -->
+<div class="loader" id="loader" aria-hidden="true">
+  <svg width="0" height="0" style="position:absolute" focusable="false"><defs>
+    <path id="lk-loop" d="M -150 92 H 150 A 92 92 0 0 0 150 -92 H -150 A 92 92 0 0 0 -150 92 Z" />
+    <linearGradient id="lk-gold" gradientUnits="userSpaceOnUse" x1="-240" y1="-120" x2="240" y2="120">
+      <stop offset="0" stop-color="rgb(246, 236, 214)" /><stop offset="0.55" stop-color="rgb(226, 176, 112)" /><stop offset="1" stop-color="rgb(168, 124, 74)" />
+    </linearGradient>
+  </defs></svg>
+  <div class="loader__knot"><div class="loader__spin">
+    <svg class="loader__b" viewBox="-260 -260 520 520"><g transform="rotate(-45)"><use href="#lk-loop" class="lk-edge" /><use href="#lk-loop" class="lk-band" /></g></svg>
+    <svg class="loader__a" viewBox="-260 -260 520 520"><g transform="rotate(45)"><use href="#lk-loop" class="lk-edge" /><use href="#lk-loop" class="lk-band" /></g></svg>
+    <!-- where this loop crosses over the other: just those two pieces of it again, on top -->
+    <svg class="loader__b" viewBox="-260 -260 520 520"><g transform="rotate(-45)"><path class="lk-edge" d="M -132 92 H -52 M 52 -92 H 132" /><path class="lk-band" d="M -142 92 H -42 M 42 -92 H 142" /></g></svg>
+  </div></div>
+  <p class="loader__label">Loading</p>
+</div>
 
 <canvas id="stage" aria-label="The shelf. Use the arrow keys to move along it and Enter to take a book down."></canvas>
 

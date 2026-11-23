@@ -20,7 +20,7 @@
  * ?debug adds onScroll's own overlay and a readout of morph / tone / progress.
  */
 
-import { createTimeline, animate, onScroll, svg } from '../vendor/animejs/anime.esm.js';
+import { createTimeline, animate, onScroll } from '../vendor/animejs/anime.esm.js';
 import { loadAllClouds } from './clouds.js';
 import { STATE_DEFAULTS, PORTAL } from './state.js';
 import { createSmoothScroll } from './smooth-scroll.js';
@@ -383,7 +383,7 @@ function createNormalService(scene, shapeCount, { pool, nextIndex, onDone } = {}
 }
 
 /** The page and wordmark shapes are sampled from canvas text; re-sample them in the real faces once loaded. */
-const PAGE_FONT = '500 120px Caveat, "Bradley Hand", cursive';
+const PAGE_FONT = 'italic 400 120px "Bodoni Moda", Georgia, serif';      // the magazine's own italic, not a handwriting face
 const WORDMARK_FONT = '800 220px Inter, Helvetica, Arial, sans-serif';
 function rebuildTextShapesWhenFontsLoad(scene, count, clouds, buildShape, lenses, names, normals) {
   if (!document.fonts?.load) return;
@@ -915,36 +915,21 @@ function createPortal(scroll) {
   };
 }
 
-/** "go on, click it" — a pen arrow into the portal, drawn on once the ring has formed. */
+/** "Click the ring to enter the shelf": plain mono caps over the ring, faded in as it forms. */
 function createPortalNote() {
   const el = document.getElementById('portal-note');
   if (!el) return { update() {} };
-  const paths = [...el.querySelectorAll('path')];
-  const drawables = svg.createDrawable(paths);
-  const text = el.querySelector('.marg__note');
-
-  // Scrubbed, not triggered: the arrow strokes on in step with the ring
-  // gathering out of the fallen letters, the way every other mark on the page
-  // is drawn by the scroll itself. Triggering it meant it arrived after the
-  // portal had already formed.
-  const tl = createTimeline({ autoplay: false, defaults: { ease: 'inOutSine' } });
-  tl.add(drawables, { draw: { from: '0 0', to: '0 1' }, duration: 600, delay: (_, i) => i * 220 }, 0);
-  if (text) tl.add(text, { opacity: { from: 0, to: 1 }, translateY: { from: '0.35rem', to: '0rem' }, duration: 380 }, 520);
-  const span = tl.duration;
   let last = -1;
-
   return {
     update(cx, cy, r, t) {
       el.style.setProperty('--px', `${cx}px`);
       el.style.setProperty('--py', `${cy}px`);
       el.style.setProperty('--pr', `${r}px`);
-      // complete a little before the portal does, so the note is finished
-      // rather than still drawing when the ring settles
-      const p = Math.min(1, Math.max(0, t / 0.85));   // finished just before the portal settles
+      // in over the second half of the ring forming, so it is there as it settles
+      const p = Math.min(1, Math.max(0, (t - 0.45) / 0.45));
       if (Math.abs(p - last) < 0.002) return;
       last = p;
-      el.classList.toggle('is-on', p > 0.001);
-      tl.seek(span * p);
+      el.style.opacity = p.toFixed(3);
     },
   };
 }

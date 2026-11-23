@@ -24,7 +24,7 @@ The Aporia Web/
 │   ├── shapes.js            the seven morph targets  (part 2, stable)
 │   ├── scene.js             THREE.Points + shader    (part 2, stable)
 │   ├── main.js              scroll choreography      (part 3)
-│   ├── page.js              DOM mechanics: jargon field, marginalia, covers (part 4)
+│   ├── page.js              DOM mechanics: jargon field, covers (part 4)
 │   ├── normals.js           per-point normal estimation (local PCA)
 │   ├── normals-worker.js    runs normals.js off the main thread
 │   ├── curtain.js           the grain curtain both pages draw (§15)
@@ -445,7 +445,7 @@ and rejected: it translates a wrapper, which breaks sticky.
 **The scroll cue** (`#scroll-cue`): at the foot of the first screen, "Scroll"
 in mono caps beside a hairline down which one segment falls, and beneath it
 `.shortcut` — "Go directly to the shelf" in mono caps with the aside "(and
-miss out on the experience)" in the marginalia hand and the red pen. It is
+miss out on the experience)" in small Bodoni italic. It is
 bounded by printers' crop marks rather than a border: four corner rules that
 extend and take the accent on hover, which is how a magazine bounds a thing
 and keeps the page free of UI chrome. (`.skip` is a different element — the
@@ -485,9 +485,11 @@ print of the measured act spans, and `window.__aporia = { state, scroll,
 scene, measureActs }` for scripting. `?expose` sets only `window.__aporia`
 (instrumentation without the overlays — what the screenshot harness uses).
 
-**Webfonts.** After `document.fonts.load()` resolves for Caveat and Inter 800,
-main.js rebuilds shapes 5 and 6 (`rebuildTextShapesWhenFontsLoad`): the
-sheet's half-written line is set in Caveat, the wordmark in Inter 800.
+**Webfonts.** After `document.fonts.load()` resolves for Bodoni Moda italic and
+Inter 800, main.js rebuilds shapes 5 and 6 (`rebuildTextShapesWhenFontsLoad`):
+the sheet's half-written line is set in Bodoni Moda italic, the wordmark in
+Inter 800. (It was Caveat, a handwriting face, until 2026-11-23: no handwriting
+on the page any more, see §14.)
 
 **Fallbacks.** Static page (`html.static`) per `decideMode()`; a renderer that
 fails after the decision also falls back to it. Narrow screens (< 720 px) get
@@ -516,7 +518,7 @@ at the fracture and keeps descending. `tiltX` carries the lean described above.
 **The type is the argument.** Acts I and II (`.act--monument`, `.act--impasse`)
 are set in **Bodoni Moda** (Google Fonts, optical sizing on) on the cold
 ground; from Act III on, display and prose are **Inter** on paper. Labels are
-IBM Plex Mono; marginalia are Caveat. The switch is done per act in CSS, and
+IBM Plex Mono. No handwriting face. The switch is done per act in CSS, and
 `html:not(.js)` gives each act its own static ground (black for I–II, paper
 for III–V), so the thesis survives with JavaScript off. Google Fonts is the
 only external request on the page.
@@ -531,7 +533,7 @@ Below 64rem everything collapses to one column and Act III shows the swap
 list only (the Epicurus copy returns in a later pass — noted in BRIEF.md).
 
 **Colour.** Everything uses the variables in §11. Static defaults are the
-cold set. `--pen` (#cc524d) is the student's pen and does not change.
+cold set.
 
 **Placeholders.** Links that do not exist yet carry `.is-placeholder`,
 `data-placeholder="…"` and a visible `link pending` tag: the two Issue 01
@@ -545,14 +547,12 @@ Runs alongside main.js, reads the same sections, never touches `state`.
 | mechanic | markup it needs | how it is driven |
 |---|---|---|
 | Jargon field (Act I) | `#jargon > span[style="--x --y --s --r"]` — a fixed layer; words are positioned in the centre band so they crowd the monument, not the copy | fade-in scrubbed over `.act--monument` (start → 75 % past centre); scatter scrubbed over `.act--fracture` (top at 85 % of the viewport → 40 % past centre), each word flying away from the screen centre. `.is-floating` adds a CSS idle drift (off under reduced motion). |
-| Marginalia | `svg[data-marg="n"]` (paths only) + `[data-marg-note="n"]` (Caveat note), positioned relative to a `.marg-anchor`. Three on the page: I underline + "says who?", II arrow + "wait, is this actually true?", V loop + "this one". | `svg.createDrawable(paths)` drawn `'0 0' → '0 1'` in a small timeline scrubbed (`sync: 0.5`) against the host (`section.act` at fractions past centre, or the row's own position for III). Thresholds are the `specs` table at the top of `marginalia()`. Keep it to three or four; sparse reads as wit. |
 | Issue covers (Act IV) | `.covers.reveal > article.cover[data-lens="0|1|2"][style="--tint: r, g, b"]` — three magazine covers fanned in a stack (CSS vars `--rot/--dy/--sc/--fade` per lens). The reveal lives on the container, never on a cover: the reveal tween writes inline transforms. | three standalone `onScroll` observers over the thirds of `.act--lenses` toggle `.is-active`; the active cover comes to the front and straightens. |
 
-To add a marginalia: drop an `<svg class="marg … " data-marg="5">` with one or
-more `<path>` next to a `.marg-anchor`, optionally a `[data-marg-note="5"]`,
-add a line to `specs`, and position it in CSS. Paths use
-`vector-effect: non-scaling-stroke` so they can be stretched with
-`preserveAspectRatio="none"`.
+There are no marginalia. The hand-drawn strokes and red-pen notes ("says
+who?", the arrow, the loop round "interesting mistake", "go on, click it") were
+taken off on 2026-11-23 at the owner's request, with the Caveat font. Don't
+bring them back.
 
 ## 15. The portal, and the way through to the shelf
 
@@ -576,9 +576,10 @@ anywhere in this — it is all the same 90 k particles.
 **The hit area.** `#portal` is an empty circular `<a href="shelf.html">` with a
 visually-hidden label, placed over the ring each frame by projecting the ring's
 centre and rim through the scene camera (`createPortal()` in main.js →
-`--px/--py/--pr`), live once `--pt` opens (morph 6.55 → 7). A pen arrow and
-"go on, click it" (`#portal-note`) are drawn on with the vortex by the
-marginalia mechanism (§14).
+`--px/--py/--pr`), live once `--pt` opens (morph 6.55 → 7). Over it,
+`#portal-note` says "Click (Tap) the ring to enter the shelf" in the mono caps
+of the Scroll indicator, faded in over the second half of the ring forming
+(`createPortalNote()`); beside the ring on a phone held sideways.
 
 **Going through.** Clicking runs one line of travel, bottom-left → top-right,
 across both pages. On the landing page (main.js, ~1.15 s):
@@ -712,10 +713,9 @@ and the manifest's cloth / foil / size for that book.
 
 ## 17. Things that are NOT contracts yet (decide in later parts, then record here)
 
-- The accent palette (§11) and `--pen` are working values, not approved brand
-  tokens.
+- The accent palette (§11) is a working value, not approved brand tokens.
 - Small screens: Act III currently hides the Epicurus copy below 64rem; the
-  jargon field and marginalia notes are hidden there too.
+  jargon field is cut down there too.
 - The reduced-motion treatment of the morph itself (currently unchanged; the
   reveals and the jargon drift already respect it).
 - Real URLs for every `.is-placeholder` link, the domain in the OG/canonical
@@ -816,4 +816,33 @@ now means `about.html`.
   it if the module has not started within 3.5 s or a script fails to load):
   `assets/static/knot.webp` with the menu laid out round it by CSS. No script:
   the same.
+
+## 19. The loading screen (2026-11-23)
+
+Every page (`index.html`, `about.html`, `shelf.html`) opens on a loading screen
+until it is ready to be seen: the logo's knot, small, in gold on the page's own
+ground (`--loader-bg`), with "Loading" in mono caps under it.
+
+- **Markup**: `#loader` inline at the top of `<body>`, so it is on screen from
+  the first paint; `css/loader.css` and `js/loader.js` (classic, `defer`) in the
+  head. The three copies of the markup are identical: change all three.
+- **The knot** is two stadium loops (`#lk-loop`) at ±45°, gold bands with a
+  ground-coloured edge so the crossings read. Loop A is drawn over loop B, then
+  the two pieces of B that cross over A are drawn again on top: a true
+  over-and-under weave, with no clip paths (a clip left seams across the band).
+  It turns once every 9 s while the two loops tug along their own lengths,
+  which keeps the crossings fixed. All of it is transform and opacity, so it
+  stays smooth while the page is busy building its scene. The knot itself fades
+  in after 200 ms, so a page that is ready at once never flashes it.
+- **Ready** (`js/loader.js`): `html[data-ready="1"]` (the shelf), `#stage.is-ready`
+  (About, the figure on screen), `html.live` (the front page), or a plain page
+  (`static`, `no-webgl`, `fallback`); and the web fonts in, or 1.2 s. Then the
+  two loops are pulled apart and the screen fades (about 0.6 s), and the element
+  is removed. Never longer than 12 s. A failed page script lifts it at once
+  (About's and the front page's watchdogs go static/fallback; the shelf's head
+  script now does the same and shows its list).
+- **Through the portal** the shelf's curtain does this job, so the loader goes
+  at once (`html.arriving`). Restored from the back/forward cache: at once.
+- **No JavaScript**: not shown (`html:not(.js)`). Reduced motion: it does not
+  turn or tug; it still fades.
 

@@ -1,0 +1,58 @@
+/* css/loader.css — the screen a page shows while it gets itself ready.
+
+   The logo's knot, small: two loops woven through each other, over and under.
+   It turns slowly while the two loops tug against each other, and when the
+   page is ready they are pulled apart and the screen lifts (js/loader.js).
+
+   Every moving part moves by transform or opacity only, so it keeps running
+   smoothly while the page is busy building its scene on the main thread.
+   The markup is inline at the top of <body> so it is on screen from the very
+   first paint; the ground is the page's own (--loader-bg). */
+
+.loader {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center; align-content: center; gap: 1.6rem;
+  background: var(--loader-bg, #08080b);
+  color: rgba(244, 241, 234, 0.62);
+  transition: opacity 520ms ease 120ms, visibility 0s 700ms;
+}
+html:not(.js) .loader { display: none; }
+.loader.is-done { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* the knot itself fades in after a beat, so a page that is ready at once
+   never flashes it */
+.loader__knot {
+  position: relative; width: 7.5rem; height: 7.5rem;
+  opacity: 0; animation: loader-in 500ms ease 200ms forwards;
+}
+.loader__spin { position: absolute; inset: 0; animation: loader-turn 9s linear infinite; }
+.loader__knot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.loader__a { animation: loader-tug-a 1.8s ease-in-out infinite alternate; }
+.loader__b { animation: loader-tug-b 1.8s ease-in-out infinite alternate; }
+
+/* a loop slides along its own length, so its crossings with the other stay put
+   and the weave tightens and loosens rather than coming undone */
+@keyframes loader-tug-a { from { transform: translate(-2.2%, -2.2%); } to { transform: translate(2.2%, 2.2%); } }
+@keyframes loader-tug-b { from { transform: translate(-2.2%, 2.2%); } to { transform: translate(2.2%, -2.2%); } }
+@keyframes loader-turn { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes loader-in { to { opacity: 1; } }
+
+.lk-edge { fill: none; stroke: var(--loader-bg, #08080b); stroke-width: 62; stroke-linejoin: round; }
+.lk-band { fill: none; stroke: url(#lk-gold); stroke-width: 46; stroke-linejoin: round; }
+
+.loader__label {
+  margin: 0; font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.66rem; letter-spacing: 0.32em; text-transform: uppercase; padding-left: 0.32em;
+  opacity: 0; animation: loader-in 500ms ease 450ms forwards;
+}
+
+/* ready: the loops are pulled apart, the way you open the knot on the front page */
+.loader.is-done .loader__knot { animation: none; opacity: 0; transition: opacity 420ms ease 80ms; }
+.loader.is-done .loader__a { animation: none; transform: translate(-12%, -12%); transition: transform 520ms cubic-bezier(.5, 0, .2, 1); }
+.loader.is-done .loader__b { animation: none; transform: translate(12%, -12%); transition: transform 520ms cubic-bezier(.5, 0, .2, 1); }
+.loader.is-done .loader__label { animation: none; opacity: 0; transition: opacity 240ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .loader__spin, .loader__a, .loader__b { animation: none; }
+  .loader.is-done .loader__a, .loader.is-done .loader__b { transform: none; }
+}
