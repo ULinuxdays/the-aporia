@@ -58,7 +58,7 @@ const SWEEP = `
   float l = max(length(v.xy), 1e-4);
   vec2 T = v.xy / l, Nn = vec2(T.y, -T.x);
   vec2 toHand = uHand.xy - p.xy;
-  float w = p.w * (1. + 0.07 * uHand.z * exp(-dot(toHand, toHand) / (uHandR * uHandR)));   // a little fuller under the hand
+  float w = p.w * (1. + 0.04 * uHand.z * exp(-dot(toHand, toHand) / (uHandR * uHandR)));   // a little fuller under the hand
   float zed = p.z * uShape.w * w + e.w, slope = (v.z * uShape.w * w) / l;
   float belt = lp == 0 ? uBelt.x : uBelt.y;
   vec2 tn = normalize(mix(vec2(1., 0.), e.yz, belt));
@@ -87,7 +87,7 @@ void main() {
   int k = lp * 2 + (e.x < 0. ? 0 : 1);
   float g = k == 0 ? uGlow.x : k == 1 ? uGlow.y : k == 2 ? uGlow.z : uGlow.w;
   float end = k == 0 ? uEnds.x : k == 1 ? uEnds.y : k == 2 ? uEnds.z : uEnds.w, u = abs(e.x);
-  vGlow = g < 0.01 ? 0. : smoothstep(0., 0.5, g * 1.6 - max(0., end - u) / end) * smoothstep(uHalf * 0.45, uHalf * 1.15, u) * 0.62;
+  vGlow = g < 0.01 ? 0. : smoothstep(0., 0.5, g * 1.6 - max(0., end - u) / end) * smoothstep(uHalf * 0.45, uHalf * 1.15, u) * 0.45;
 }`;
 
 const FS = `#version 300 es
@@ -119,7 +119,7 @@ void main() {
       vec3 Lh = normalize(vec3(dp.x, dp.y, uHandR * 0.55 - vZ));      // (screen axes: y down, z out)
       vec3 Hh = normalize(Lh + vec3(0., 0., 1.));
       float sat = pow(max(dot(N, Hh), 0.), 14.), diff = max(dot(N, Lh), 0.);
-      v += min(0.22, fall * (0.11 * diff + 0.26 * sat)) * (1. - 0.45 * smoothstep(0., 0.62, above));
+      v += min(0.12, fall * (0.06 * diff + 0.15 * sat)) * (1. - 0.45 * smoothstep(0., 0.62, above));
     }
   }
   // a glint set off where the hand came onto a strand, running both ways round its loop
@@ -130,7 +130,7 @@ void main() {
     float a = fract(vS - P.y - P.z + 0.5) - 0.5, b = fract(vS - P.y + P.z + 0.5) - 0.5, dd = min(abs(a), abs(b));
     glint += P.w * exp(-dd * dd / 0.00045);
   }
-  v += 0.2 * min(glint, 1.) * (0.35 + 0.65 * clamp(N.z, 0., 1.)) * (1. - 0.5 * smoothstep(0., 0.62, above));
+  v += 0.1 * min(glint, 1.) * (0.35 + 0.65 * clamp(N.z, 0., 1.)) * (1. - 0.5 * smoothstep(0., 0.62, above));
   float g = texture(uGrain, gl_FragCoord.xy / (256. * uGrainPx)).r - 0.5;
   v += g * mix(uG.y, uG.z, smoothstep(0.05, 0.4, v)) * (1. - 0.6 * smoothstep(0.75, 1., v));
   v = clamp(v, 0.004, 0.996);

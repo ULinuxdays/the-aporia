@@ -791,13 +791,15 @@ now means `about.html`.
   ~7 s until someone has hold of the knot (and not while a pointer is moving
   over it) two fingertips (`.ghost`) land on the grips, press, and draw the two
   lobes apart; the rope is really tugged after them and k stretches as in a real
-  pull, then they let go. Over the knot a fine pointer becomes `.cursor`, a ring
-  reading "Pull" that fills with the tension once held (touch keeps `.meter`).
+  pull, then they let go. Over the knot a fine pointer becomes `.cursor` and a finger gets `.meter`:
+  the same mark, `.arcs` (a dot between two hairline arcs), whose arcs part with
+  the tension (`--s`, 0…1). The grips are a dot in a hairline ring with a
+  dimension line pointing the way to pull.
   The button reads "Drag to pull it apart" (fine pointer) or "Swipe to pull it
   apart". Reduced motion: no demo.
 - **The hand** (`hand()`), tied or pulled: a soft lamp follows the pointer (or
   the held point) across the ribbon (`uHand` in paint.js) and the ribbon swells
-  ~7 % under it; the whole knot turns up to ~5° towards it (`uTurn`, about the
+  ~4 % under it; the whole knot turns up to ~3.5° towards it (`uTurn`, about the
   knot's centre; hit tests ignore the turn, a few px at most); strands within
   120 px lean a little towards it and a quick pass gives them a push; and where
   it comes onto a strand a glint runs both ways round that loop (`uPulse[6]`:

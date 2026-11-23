@@ -114,18 +114,18 @@
   </div>
 
   <!-- where to take hold: one on each loop -->
-  <div class="grip" id="grip-0" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="20" /><path class="grip__arrow" d="M15.5 24 H 32 M 26.5 18.5 L 32 24 L 26.5 29.5" /></svg></div>
-  <div class="grip" id="grip-1" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="grip__ring" cx="24" cy="24" r="20" /><path class="grip__arrow" d="M15.5 24 H 32 M 26.5 18.5 L 32 24 L 26.5 29.5" /></svg></div>
+  <div class="grip" id="grip-0" aria-hidden="true"><svg viewBox="-12 -12 104 24"><circle class="grip__ring" r="10" /><circle class="grip__dot" r="2.6" /><path class="grip__shade" d="M 17 0 H 73 M 67 -4.5 L 73.5 0 L 67 4.5" /><path class="grip__line" d="M 17 0 H 73 M 67 -4.5 L 73.5 0 L 67 4.5" /><path class="grip__run" d="M 17 0 H 73" pathLength="1" /></svg></div>
+  <div class="grip" id="grip-1" aria-hidden="true"><svg viewBox="-12 -12 104 24"><circle class="grip__ring" r="10" /><circle class="grip__dot" r="2.6" /><path class="grip__shade" d="M 17 0 H 73 M 67 -4.5 L 73.5 0 L 67 4.5" /><path class="grip__line" d="M 17 0 H 73 M 67 -4.5 L 73.5 0 L 67 4.5" /><path class="grip__run" d="M 17 0 H 73" pathLength="1" /></svg></div>
   <!-- the gesture, shown on the knot itself: two fingertips draw the lobes apart -->
   <span class="trail" id="trail-0" aria-hidden="true"></span><span class="trail" id="trail-1" aria-hidden="true"></span>
   <span class="ghost" id="ghost-0" aria-hidden="true"></span><span class="ghost" id="ghost-1" aria-hidden="true"></span>
   <!-- over the knot, the pointer says what it can do -->
-  <div class="cursor" id="cursor" aria-hidden="true">
-    <svg viewBox="0 0 100 100"><circle class="cursor__ring" cx="50" cy="50" r="47" /><circle class="cursor__fill" cx="50" cy="50" r="47" pathLength="1" /><path class="cursor__arrows" d="M14 50 l 6 -5 M14 50 l 6 5 M86 50 l -6 -5 M86 50 l -6 5" /></svg>
-    <span class="cursor__label">Pull</span>
+  <div class="cursor arcs" id="cursor" aria-hidden="true">
+    <svg viewBox="-40 -40 80 80"><g class="arcs__l"><path d="M -9 -15.6 A 18 18 0 0 0 -9 15.6" /></g><g class="arcs__r"><path d="M 9 -15.6 A 18 18 0 0 1 9 15.6" /></g><circle class="arcs__dot" r="2.4" /></svg>
+    <span class="cursor__label">pull</span>
   </div>
   <!-- how far until it gives -->
-  <div class="meter" id="meter" aria-hidden="true"><svg viewBox="0 0 100 100"><circle class="meter__track" cx="50" cy="50" r="47" /><circle class="meter__fill" cx="50" cy="50" r="47" pathLength="1" /></svg></div>
+  <div class="meter arcs" id="meter" aria-hidden="true"><svg viewBox="-40 -40 80 80"><g class="arcs__l"><path d="M -9 -15.6 A 18 18 0 0 0 -9 15.6" /></g><g class="arcs__r"><path d="M 9 -15.6 A 18 18 0 0 1 9 15.6" /></g><circle class="arcs__dot" r="2.4" /></svg></div>
 </main>
 
 <!-- the scroll that pulls the knot out: the page ends with it pulled -->

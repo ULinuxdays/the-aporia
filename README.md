@@ -208,8 +208,8 @@ How it behaves, so it can be checked after a change:
 - Until it is pulled, nothing can be clicked: the menu is hidden and inert, a
   click on the knot only gives it a small tug, and "Pull it apart" is a caption
   for the mouse (the keyboard can still press it, and it is the first Tab stop).
-- Drag a strand: it stretches, and a hairline ring round your hand fills as you
-  pull. When it is full the knot gives and springs out into a line. Let go
+- Drag a strand: it stretches, and the two arcs of the mark at your hand part
+  as you pull. When it is full the knot gives and springs out into a line. Let go
   before then and it springs back. Pulling the arms when it is out does nothing
   but stretch them: the weave never comes out.
 - Scrolling pulls it out too; the page ends with it pulled. Once it is out by
@@ -222,9 +222,10 @@ How it behaves, so it can be checked after a change:
   can be clicked too. The two round grips show where to take hold. Every few
   seconds, until someone takes hold, two fingertips land on the grips and draw
   the lobes apart (the rope really stretches), then let go. Over the knot the
-  pointer becomes a ring that says "Pull" and fills as you pull.
+  pointer becomes a small mark, a dot between two hairline arcs with "pull" in
+  italic under it, and the arcs part as you pull (a finger gets the same mark).
 - Hovering, tied or pulled: the knot turns a few degrees towards the pointer, a
-  soft light follows it across the ribbon (which swells a little under it), the
+  faint light follows it across the ribbon (which swells a little under it), the
   strands lean towards it, and where the pointer comes onto a strand a glint
   runs both ways round that loop.
 - Reduced motion: no scroll, no demonstration, and the button (or a pull)

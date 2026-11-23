@@ -26,7 +26,6 @@ const stage = $('stage'), ui = $('ui'), cv = $('rope'), hint = $('hint'), hintTe
 const title = $('title'), masthead = $('masthead'), meter = $('meter'), menu = $('menu');
 const grips = [$('grip-0'), $('grip-1')];
 const ghosts = [$('ghost-0'), $('ghost-1')], trails = [$('trail-0'), $('trail-1')], cursor = $('cursor');
-const cursorFill = cursor.querySelector('.cursor__fill');
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
 const lobes = {};
 for (const el of document.querySelectorAll('.lobe')) lobes[el.dataset.lobe] = el;
@@ -463,7 +462,7 @@ function start() {
     if (grab) {
       const j = grab.j;
       meter.style.transform = `translate(${rope.x(j).toFixed(1)}px, ${rope.y(j).toFixed(1)}px)`;
-      meter.querySelector('.meter__fill').style.strokeDashoffset = (1 - clamp(grab.tension, 0, 1)).toFixed(3);
+      meter.style.setProperty('--s', clamp(grab.tension, 0, 1).toFixed(3));
     }
     hint.style.setProperty('--p', grab && !grab.wasOpen && !grab.gave ? clamp(grab.tension, 0, 1).toFixed(3) : demoPull.toFixed(3));
     const tied = tiedNow(), label = tied ? (finePointer ? 'Drag to pull it apart' : 'Swipe to pull it apart') : 'Tie it back up';
@@ -527,7 +526,7 @@ function start() {
     const p = grab && !grab.touch ? grab.p : pointerAt.p;
     cursor.style.transform = `translate(${p[0].toFixed(1)}px, ${p[1].toFixed(1)}px)`;
     cursor.classList.toggle('held', !!grab);
-    cursorFill.style.strokeDashoffset = grab ? (1 - clamp(grab.tension, 0, 1)).toFixed(3) : '1';
+    cursor.style.setProperty('--s', grab ? clamp(grab.tension, 0, 1).toFixed(3) : '0');
   }
 
   // The hand over the knot. A soft light follows it across the ribbon (a satin
@@ -581,8 +580,8 @@ function start() {
     lastHand = p && !grab ? p.slice() : null;
 
     // turn towards it
-    const reach = REACH * rope.sc * 1.4, tx = p && !still ? clamp((p[1] - rope.cy) / reach, -1, 1) * 0.085 : 0;
-    const ty = p && !still ? -clamp((p[0] - rope.cx) / reach, -1, 1) * 0.085 : 0;
+    const reach = REACH * rope.sc * 1.4, tx = p && !still ? clamp((p[1] - rope.cy) / reach, -1, 1) * 0.06 : 0;
+    const ty = p && !still ? -clamp((p[0] - rope.cx) / reach, -1, 1) * 0.06 : 0;
     const t0 = turn[0], t1 = turn[1], ease = 1 - Math.exp(-dt * 3.2);
     turn[0] += (tx - turn[0]) * ease; turn[1] += (ty - turn[1]) * ease;
     if (Math.abs(turn[0] - t0) + Math.abs(turn[1] - t1) > 2e-5) busy = true;
